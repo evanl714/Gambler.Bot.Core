@@ -23,7 +23,7 @@ A summary of stuff that doormat should be capable of when finished:
 - Faster simulations. Like waaaay faster. Like 10 000 000 bet simulation in 7 minutes fast.
 - Faster bets. Removed a lot of overhead of waiting for GUI updates etc, so bets might be noticibly faster for sites like yolodice, but mostly the bot will just be more resource efficient. Depends on how the UI is implemented of course.
 - More user settings. Like the error handling, notifications and action triggers, give more control to the user over everything in the bot.
-
+- KeePass 2 integration. The keepass project is pulled from https://github.com/Strangelovian/KeePass2Core. I couldn't get it to work properly just referencing the dll, so I just pulled in the project. (I spent a whole 5 minutes of trying though. I'm sure someone can do better)
 
 The api for the programmer modes have changed. Instead of having a single dobet function and a bunch of global variables, you have a reset function that is required, with a bet parameter (the name and type of bet object depends on the game you're running). The values you set for this bet parameter is your initial bet and will be the bet used when a reset is triggered in the bot. You then also have a dobet function with 3 parameters, your previous bet object, a boolean to specify whether the bet was a win or not, and a next bet object. The name of the method and types of objects for previous bet and next bet depends on the game you're playing. The values set in the nextbet obect will be used to place the next bet. You additionally have some global variables that are updated after every bet (and are read-only) that contains stats, site info and stats received from the site. (these are objects, not just variables anymore).
 
