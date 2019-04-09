@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.329
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DoormatCore", "Doormat\DoormatCore.csproj", "{6769EA5D-1147-4453-A832-F5A6A4CA5E76}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DoormatControllers", "DoormatControllers\DoormatControllers.csproj", "{89085EFB-1E94-4990-ABEC-CD578A9C5E41}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GlobalsObject", "GlobalsObject\GlobalsObject.csproj", "{57632020-6208-46E0-A32E-C392001D9C75}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeePassLibNetStd", "KeePassLib\KeePassLibNetStd.csproj", "{68210CAD-E253-488F-AD1E-CCDBDF8257BB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6769EA5D-1147-4453-A832-F5A6A4CA5E76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6769EA5D-1147-4453-A832-F5A6A4CA5E76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6769EA5D-1147-4453-A832-F5A6A4CA5E76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6769EA5D-1147-4453-A832-F5A6A4CA5E76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89085EFB-1E94-4990-ABEC-CD578A9C5E41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89085EFB-1E94-4990-ABEC-CD578A9C5E41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89085EFB-1E94-4990-ABEC-CD578A9C5E41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89085EFB-1E94-4990-ABEC-CD578A9C5E41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57632020-6208-46E0-A32E-C392001D9C75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57632020-6208-46E0-A32E-C392001D9C75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57632020-6208-46E0-A32E-C392001D9C75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57632020-6208-46E0-A32E-C392001D9C75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68210CAD-E253-488F-AD1E-CCDBDF8257BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68210CAD-E253-488F-AD1E-CCDBDF8257BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68210CAD-E253-488F-AD1E-CCDBDF8257BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68210CAD-E253-488F-AD1E-CCDBDF8257BB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {16B4ADBC-92FE-4289-A6CB-422B77071917}
+	EndGlobalSection
+EndGlobal
