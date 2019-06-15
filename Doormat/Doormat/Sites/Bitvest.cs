@@ -67,8 +67,8 @@ namespace DoormatCore.Sites
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
          | SecurityProtocolType.Tls11
-         | SecurityProtocolType.Tls12
-         | SecurityProtocolType.Ssl3;
+         | SecurityProtocolType.Tls12;
+            ServicePointManager.SecurityProtocol &= SecurityProtocolType.Ssl3;
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip/*, Proxy = this.Prox, UseProxy = Prox != null*/ };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://bitvest.io/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));

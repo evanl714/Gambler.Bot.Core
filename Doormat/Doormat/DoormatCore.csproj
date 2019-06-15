@@ -36,8 +36,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\Documents\GitHub\KeePass2Core\KeePassLib\KeePassLibNetStd.csproj" />
     <ProjectReference Include="..\GlobalsObject\GlobalsObject.csproj" />
+    <ProjectReference Include="..\KeePassLib\KeePassLibNetStd.csproj" />
   </ItemGroup>
 
   <ItemGroup>
