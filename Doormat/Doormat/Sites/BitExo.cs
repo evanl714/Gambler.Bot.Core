@@ -144,7 +144,7 @@ namespace DoormatCore.Sites
                 string chatinit = "42" + id++ + "[\"access_token_data\",{\"access_token\":\"" + accesstoken + "\"}]";
                 chatinit = chatinit.Length + ":" + chatinit;
                 var content = new StringContent(chatinit, Encoding.UTF8, "application/octet-stream");
-                response = Client.PostAsync("socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate() + "&sid=" + c, content).Result.Content.ReadAsStringAsync().Result;
+                //response = Client.PostAsync("socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate() + "&sid=" + c, content).Result.Content.ReadAsStringAsync().Result;
                 Logger.DumpLog("BE login 5", 7);
                 List<KeyValuePair<string, string>> Cookies = new List<KeyValuePair<string, string>>();
                 List<KeyValuePair<string, string>> Headers = new List<KeyValuePair<string, string>>();
@@ -197,11 +197,11 @@ namespace DoormatCore.Sites
             return;
         }
 
-
+        bool FinishedLogin = false;
 
         protected override void _UpdateStats()
         {
-            
+            if (FinishedLogin)
             {
                 ForceUpdateStats = false;
                 lastupdate = DateTime.Now;
@@ -237,25 +237,20 @@ namespace DoormatCore.Sites
 
         private void WSClient_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            //Parent.DumpLog(e.Message, 10);
+            //Logger.DumpLog(e.Message, -1);
             if (e.Message == "3probe")
             {
                 WSClient.Send("5");
+                
                 long tmpid = this.id++;
-                Requests.Add(tmpid, ReqType.hash);
-                WSClient.Send("42" + tmpid + "[\"get_hash\"]");
-                tmpid = this.id++;
+                
                 Requests.Add(tmpid, ReqType.balance);
                 WSClient.Send("42" + tmpid + "[\"access_token_data\",{\"access_token\":\"" + accesstoken + "\"}]");
-                /*string Bet = string.Format(
-                System.Globalization.NumberFormatInfo.InvariantInfo,
-                "42{0}[\"access_token_data\",{{\"app_id\":{1},\"access_token\":\"{2}\",\"currency\":\"{3}\"}}]",
-                id++,
-                APPId,
-                accesstoken,
-                Currency
-                );
-                WSClient.Send(Bet);*/
+                tmpid = this.id++;
+                Thread.Sleep(200);
+                Requests.Add(tmpid, ReqType.hash);
+                WSClient.Send("42" + tmpid + "[\"get_hash\"]");
+                FinishedLogin = true;
 
             }
             else if (e.Message == "3")
@@ -293,7 +288,7 @@ namespace DoormatCore.Sites
                                     else
                                     {
                                         //Parent.updateStatus(response);
-                                        if (response.Contains("HASH ERROR"))
+                                        if (response.Contains("HASH ERROR") || response.Contains("HASH NOT FOUND"))
                                         {
                                             long tmpid = this.id++;
                                             Requests.Add(tmpid, ReqType.balance);
@@ -324,7 +319,7 @@ namespace DoormatCore.Sites
             string request = string.Format("42{3}[\"send_tip\",{{\"uname\":\"{0}\",\"amount\":{1},\"private\":false,\"type\":\"{2}\"}}]",
                User,
                 Math.Floor(amount * 100000000m),
-                Currency,
+                CurrentCurrency,
                 tmpid);
             WSClient.Send(request);
             ForceUpdateStats = true;
@@ -450,7 +445,7 @@ namespace DoormatCore.Sites
                 High ? ">" : "<",
                 High ? MaxRoll - Chance : Chance,
                 Math.Floor((BetDetails.Amount * 100000000m)) * ((100 - Edge) / Chance),
-                Currency,
+                CurrentCurrency,
                 tmpid);
             WSClient.Send(request);
         }
