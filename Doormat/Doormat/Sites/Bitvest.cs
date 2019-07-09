@@ -127,25 +127,36 @@ namespace DoormatCore.Sites
                     Limits = tmpblogin.rate_limits;
 
                     tmplogin = tmpblogin.data;
-                    if (Currency==0)
+                    if (Currencies[0].ToLower()=="btc")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        
                     }
-                    else if (Currency==1)
+                    else if (Currencies[0].ToLower() == "eth")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = tmplogin.ether_total_bet;
+                        Stats.Profit = tmplogin.ether_total_won;
                     }
-                    else if (Currency==2)
+                    else if (Currencies[0].ToLower() == "ltc")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = tmplogin.litecoin_total_bet;
+                        Stats.Profit = tmplogin.litecoin_total_won;
                     }
-                    else if (Currency == 3)
+                    else if (Currencies[0].ToLower() == "bch")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = tmplogin.bcash_total_bet;
+                        Stats.Profit = tmplogin.bcash_total_won;
                     }
-                    else if (Currency == 4)
+                    else if (Currencies[0].ToLower() == "doge")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = tmplogin.token_total_bet;
+                        Stats.Profit = tmplogin.token_total_won;
                     }
                     else
                     {
@@ -153,8 +164,6 @@ namespace DoormatCore.Sites
                     }
                     accesstoken = tmplogin.session_token;
                     secret = tmpblogin.account.secret;
-                    Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(tmplogin.self_total_won_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
                     Stats.Bets = int.Parse(tmplogin.self_total_bets_dice.Replace(",", ""), System.Globalization.NumberFormatInfo.InvariantInfo);
                     Stats.Wins = 0;
                     Stats.Losses = 0;
@@ -260,11 +269,12 @@ namespace DoormatCore.Sites
                         else Stats.Losses++;
                         Stats.Wagered += amount;
                         Stats.Profit += resbet.Profit;
-                        Stats.Balance = decimal.Parse(
-                            Currency == 0?
+                        Stats.Balance = decimal.Parse(CurrencyMap[Currency].ToLower() == "bitcoins" ?
                                 tmp.data.balance :
-                                Currency==1 ? tmp.data.balance_ether
-                                : Currency==2 ? tmp.data.balance_litecoin : tmp.data.token_balance,
+                                CurrencyMap[Currency].ToLower() == "ethers" ? tmp.data.balance_ether
+                                : CurrencyMap[Currency].ToLower() == "litecoins" ? tmp.data.balance_litecoin :
+                                CurrencyMap[Currency].ToLower() == "dogecoins" ? tmp.data.balance_dogecoin :
+                                CurrencyMap[Currency].ToLower() == "bcash" ? tmp.data.balance_bcash : tmp.data.token_balance,
                             System.Globalization.NumberFormatInfo.InvariantInfo);
                         /*tmp.bet.client = tmp.user.client;
                         tmp.bet.serverhash = tmp.user.server;
@@ -421,12 +431,14 @@ namespace DoormatCore.Sites
                 decimal weight = 1;
                 if (Currency == 0)
                 {
-                    switch (Currency)
+                    switch (CurrencyMap[Currency].ToLower())
                     {
-                        case 0: weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case 1: weight = decimal.Parse(Weights.TOK, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case 2: weight = decimal.Parse(Weights.LTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case 3: weight = decimal.Parse(Weights.ETH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        case "bitcoins": weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        case "tokens": weight = decimal.Parse(Weights.TOK, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        case "litecoins": weight = decimal.Parse(Weights.LTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        case "ethers": weight = decimal.Parse(Weights.ETH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        case "dogecoins": weight = decimal.Parse(Weights.DOGE, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        case "bcash": weight = decimal.Parse(Weights.BCH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
 
                         default: weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
                     }
@@ -467,6 +479,7 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("secret", secret));
                 pairs.Add(new KeyValuePair<string, string>("tfa", ""));
                 pairs.Add(new KeyValuePair<string, string>("token", accesstoken));
+                pairs.Add(new KeyValuePair<string, string>("currency", Currencies[Currency]));
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 string sEmitResponse = Client.PostAsync("action.php", Content).Result.Content.ReadAsStringAsync().Result;
@@ -508,10 +521,7 @@ namespace DoormatCore.Sites
             try
             {
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
-                pairs.Add(new KeyValuePair<string, string>("currency", (Currency == 0? "btc" :
-                    Currency == 1 ? "ltc" :
-                    Currency == 2? "eth" :
-                    Currency == 3 ? "tok" : "tok")));
+                pairs.Add(new KeyValuePair<string, string>("currency", Currencies[Currency].ToLower()));
                 pairs.Add(new KeyValuePair<string, string>("username", Username));
                 pairs.Add(new KeyValuePair<string, string>("quantity", Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("act", "send_tip"));
@@ -553,13 +563,17 @@ namespace DoormatCore.Sites
             public string ETH { get; set; }
             public string LTC { get; set; }
             public string TOK { get; set; }
-        }       
+            public string DOGE { get; set; }
+            public string BCH { get; set; }
+        }
         public class bitvestLogin
         {
 
             public string balance { get; set; }
             public string token_balance { get; set; }
             public string balance_litecoin { get; set; }
+            public string balance_dogecoin { get; set; }
+            public string balance_bcash { get; set; }
             public string self_username { get; set; }
             public string self_user_id { get; set; }
             public string self_ref_count { get; set; }
@@ -588,6 +602,12 @@ namespace DoormatCore.Sites
             public decimal litecoin_total_bet { get; set; }
             public decimal litecoin_total_won { get; set; }
             public decimal litecoin_total_profit { get; set; }
+            public decimal dogecoin_total_bet { get; set; }
+            public decimal dogecoin_total_won { get; set; }
+            public decimal dogecoin_total_profit { get; set; }
+            public decimal bcash_total_bet { get; set; }
+            public decimal bcash_total_won { get; set; }
+            public decimal bcash_total_profit { get; set; }
             public int bets { get; set; }
             public string server_hash { get; set; }
 
@@ -657,6 +677,8 @@ namespace DoormatCore.Sites
             public string balance_ether { get; set; }
             public string token_balance { get; set; }
             public string balance_litecoin { get; set; }
+            public string balance_dogecoin { get; set; }
+            public string balance_bcash { get; set; }
             public string self_username { get; set; }
             public string self_user_id { get; set; }
 
