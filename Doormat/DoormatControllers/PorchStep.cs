@@ -180,6 +180,11 @@ namespace DoormatControllers
             DoSomething(true, 1, somethingsbeingdone);
             DoSomething(true, 1, somethingsbeingdoneAgain);
         }
+        
+        void funkycall()
+        {
+            
+        }
 
         private void DoSomething(bool x, int y, Func<bool, int, string, bool> funcc)
         {
