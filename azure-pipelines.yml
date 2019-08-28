@@ -47,4 +47,5 @@ steps:
 - task: PublishBuildArtifacts@1
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
-    artifactName: 'doormattest'
+    artifactName: '$(Build.BuildNumber)'
+     
