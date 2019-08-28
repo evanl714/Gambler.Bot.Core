@@ -28,7 +28,8 @@ namespace DoormatControllers
                     x.WriteLine(y.Name);
                 }
                 x.WriteLine(input["OnGameChanged"]);
-
+                
+                
             }
             if (Instance == null)
             {
@@ -172,6 +173,27 @@ namespace DoormatControllers
         private void Instance_OnGameChanged(object sender, EventArgs e)
         {
             Callbacks["OnGameChanged"](e);
+        }
+
+        void CallFunc()
+        {
+            DoSomething(true, 1, somethingsbeingdone);
+            DoSomething(true, 1, somethingsbeingdoneAgain);
+        }
+
+        private void DoSomething(bool x, int y, Func<bool, int, string, bool> funcc)
+        {
+            bool result = funcc(x, y, "do something");
+                        
+        }
+
+        bool somethingsbeingdone(bool x, int y, string varp)
+        {
+            return (y.ToString() == varp) == x;
+        }
+        bool somethingsbeingdoneAgain(bool x, int y, string varp)
+        {
+            return (y.ToString() == varp) != x;
         }
     }
 }
