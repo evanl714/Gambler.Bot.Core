@@ -76,10 +76,10 @@ namespace DoormatCore.Sites
                 catch { };
             }
         }
-
+        CookieContainer cookies = new CookieContainer();
         protected override void _Login(LoginParamValue[] LoginParams)
         {
-            CookieContainer cookies = new CookieContainer();
+            
             ClientHandlr = new HttpClientHandler { UseCookies = true, CookieContainer = cookies, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip};
             ServicePointManager.ServerCertificateValidationCallback +=
     (sender, cert, chain, sslPolicyErrors) => true;
@@ -98,72 +98,7 @@ namespace DoormatCore.Sites
             try
             {
                 accesstoken = APIKey;
-                string s1 = "";
-                HttpResponseMessage resp = Client.GetAsync("").Result;
-                Logger.DumpLog("BE login 2", 8);
-                if (resp.IsSuccessStatusCode)
-                {
-                    s1 = resp.Content.ReadAsStringAsync().Result;
-                    Logger.DumpLog("BE login 2.1", 7);
-                }
-                else
-                {
-                    Logger.DumpLog("BE login 2.2", 7);
-                    if (resp.StatusCode == HttpStatusCode.ServiceUnavailable)
-                    {
-                        s1 = resp.Content.ReadAsStringAsync().Result;
-                        //cflevel = 0;
-                        /*System.Threading.Tasks.Task.Factory.StartNew(() =>
-                        {
-                            System.Windows.Forms.MessageBox.Show("bit-exo has their cloudflare protection on HIGH\n\nThis will cause a slight delay in logging in. Please allow up to a minute.");
-                        });
-                        if (!Cloudflare.doCFThing(s1, Client, ClientHandlr, 0, "bit-exo.com"))
-                        {
-
-                            finishedlogin(false);
-                            return;
-                        }*/
-
-                    }
-                    Logger.DumpLog("BE login 2.3", 7);
-                }
-                string response = Client.GetStringAsync("socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate()).Result;
-                Logger.DumpLog("BE login 3", 7);
-                string c =
-                response.Substring(response.IndexOf("sid\":\"") + "sid\":\"".Length);
-                c = c.Substring(0, c.IndexOf("\""));
-                Logger.DumpLog("BE login 4", 7);
-                foreach (Cookie c3 in cookies.GetCookies(new Uri("http://" + url)))
-                {
-                    if (c3.Name == "io")
-                        c = c3.Value;
-                    /*if (c3.Name == "__cfduid")
-                        c2 = c3;*/
-                }
-                Logger.DumpLog("BE login 5", 7);
-                string chatinit = "42" + id++ + "[\"access_token_data\",{\"access_token\":\"" + accesstoken + "\"}]";
-                chatinit = chatinit.Length + ":" + chatinit;
-                var content = new StringContent(chatinit, Encoding.UTF8, "application/octet-stream");
-                //response = Client.PostAsync("socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate() + "&sid=" + c, content).Result.Content.ReadAsStringAsync().Result;
-                Logger.DumpLog("BE login 5", 7);
-                List<KeyValuePair<string, string>> Cookies = new List<KeyValuePair<string, string>>();
-                List<KeyValuePair<string, string>> Headers = new List<KeyValuePair<string, string>>();
-                Headers.Add(new KeyValuePair<string, string>("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"));
-                foreach (Cookie x in cookies.GetCookies(new Uri("https://" + url)))
-                {
-                    Cookies.Add(new KeyValuePair<string, string>(x.Name, x.Value));
-                }
-                Cookies.Add(new KeyValuePair<string, string>("io", c));
-                Logger.DumpLog("BE login 6", 7);
-                WSClient = new WebSocket("wss://" + url + "/socket.io/?EIO=3&transport=websocket&sid=" + c, null, Cookies, Headers, "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36", "https://" + url, WebSocketVersion.Rfc6455, null, System.Security.Authentication.SslProtocols.Tls | System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12);
-                WSClient.Closed += WSClient_Closed;
-                WSClient.DataReceived += WSClient_DataReceived;
-                WSClient.Error += WSClient_Error;
-                WSClient.MessageReceived += WSClient_MessageReceived;
-                WSClient.Opened += WSClient_Opened;
-                WSClient.Open();
-                while (WSClient.State == WebSocketState.Connecting)
-                    Thread.Sleep(100);
+                ConnectSocket();
                 if (WSClient.State == WebSocketState.Open)
                 {
                     Logger.DumpLog("BE login 7.1", 7);
@@ -195,6 +130,65 @@ namespace DoormatCore.Sites
             }
             callLoginFinished(false);
             return;
+        }
+
+        private void ConnectSocket()
+        {
+            string s1 = "";
+            HttpResponseMessage resp = Client.GetAsync("").Result;
+            Logger.DumpLog("BE login 2", 8);
+            if (resp.IsSuccessStatusCode)
+            {
+                s1 = resp.Content.ReadAsStringAsync().Result;
+                Logger.DumpLog("BE login 2.1", 7);
+            }
+            else
+            {
+                Logger.DumpLog("BE login 2.2", 7);
+                if (resp.StatusCode == HttpStatusCode.ServiceUnavailable)
+                {
+                    s1 = resp.Content.ReadAsStringAsync().Result;
+                   
+                }
+                Logger.DumpLog("BE login 2.3", 7);
+            }
+            string response = Client.GetStringAsync("socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate()).Result;
+            Logger.DumpLog("BE login 3", 7);
+            string c =
+            response.Substring(response.IndexOf("sid\":\"") + "sid\":\"".Length);
+            c = c.Substring(0, c.IndexOf("\""));
+            Logger.DumpLog("BE login 4", 7);
+            foreach (Cookie c3 in cookies.GetCookies(new Uri("http://" + url)))
+            {
+                if (c3.Name == "io")
+                    c = c3.Value;
+                /*if (c3.Name == "__cfduid")
+                    c2 = c3;*/
+            }
+            Logger.DumpLog("BE login 5", 7);
+            string chatinit = "42" + id++ + "[\"access_token_data\",{\"access_token\":\"" + accesstoken + "\"}]";
+            chatinit = chatinit.Length + ":" + chatinit;
+            var content = new StringContent(chatinit, Encoding.UTF8, "application/octet-stream");
+            //response = Client.PostAsync("socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate() + "&sid=" + c, content).Result.Content.ReadAsStringAsync().Result;
+            Logger.DumpLog("BE login 5", 7);
+            List<KeyValuePair<string, string>> Cookies = new List<KeyValuePair<string, string>>();
+            List<KeyValuePair<string, string>> Headers = new List<KeyValuePair<string, string>>();
+            Headers.Add(new KeyValuePair<string, string>("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"));
+            foreach (Cookie x in cookies.GetCookies(new Uri("https://" + url)))
+            {
+                Cookies.Add(new KeyValuePair<string, string>(x.Name, x.Value));
+            }
+            Cookies.Add(new KeyValuePair<string, string>("io", c));
+            Logger.DumpLog("BE login 6", 7);
+            WSClient = new WebSocket("wss://" + url + "/socket.io/?EIO=3&transport=websocket&sid=" + c, null, Cookies, Headers, "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36", "https://" + url, WebSocketVersion.Rfc6455, null, System.Security.Authentication.SslProtocols.Tls | System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12);
+            WSClient.Closed += WSClient_Closed;
+            WSClient.DataReceived += WSClient_DataReceived;
+            WSClient.Error += WSClient_Error;
+            WSClient.MessageReceived += WSClient_MessageReceived;
+            WSClient.Opened += WSClient_Opened;
+            WSClient.Open();
+            while (WSClient.State == WebSocketState.Connecting)
+                Thread.Sleep(100);
         }
 
         bool FinishedLogin = false;
@@ -432,22 +426,36 @@ namespace DoormatCore.Sites
 
         protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            this.guid = BetDetails.GUID;
-            clientseed = R.Next(0, int.MaxValue).ToString();
-            long tmpid = id++;
-            this.High = BetDetails.High;
-            Chance = BetDetails.Chance;
-            Requests.Add(tmpid, ReqType.bet);
-            string request = string.Format("42{7}[\"dice_bet\",{{\"wager\":{0:0},\"client_seed\":{1},\"hash\":\"{2}\",\"cond\":\"{3}\",\"target\":{4},\"payout\":{5},\"currency\":\"{6}\"}}]",
-                Math.Floor(BetDetails.Amount * 100000000m),
-                clientseed,
-                ServerHash,
-                High ? ">" : "<",
-                High ? MaxRoll - Chance : Chance,
-                Math.Floor((BetDetails.Amount * 100000000m)) * ((100 - Edge) / Chance),
-                CurrentCurrency,
-                tmpid);
-            WSClient.Send(request);
+            try
+            {
+                if (WSClient.State != WebSocketState.Open && ispd)
+                {
+                    callNotify("Attempting Reconnect");
+                    Logger.DumpLog("Reconnecting Bit-Exo socket", 2);
+                    ConnectSocket();
+                    Thread.Sleep(1000);
+                }
+                this.guid = BetDetails.GUID;
+                clientseed = R.Next(0, int.MaxValue).ToString();
+                long tmpid = id++;
+                this.High = BetDetails.High;
+                Chance = BetDetails.Chance;
+                Requests.Add(tmpid, ReqType.bet);
+                string request = string.Format("42{7}[\"dice_bet\",{{\"wager\":{0:0},\"client_seed\":{1},\"hash\":\"{2}\",\"cond\":\"{3}\",\"target\":{4},\"payout\":{5},\"currency\":\"{6}\"}}]",
+                    Math.Floor(BetDetails.Amount * 100000000m),
+                    clientseed,
+                    ServerHash,
+                    High ? ">" : "<",
+                    High ? MaxRoll - Chance : Chance,
+                    Math.Floor((BetDetails.Amount * 100000000m)) * ((100 - Edge) / Chance),
+                    CurrentCurrency,
+                    tmpid);
+                WSClient.Send(request);
+            }
+            catch (Exception e)
+            {
+
+            }
         }
 
         
