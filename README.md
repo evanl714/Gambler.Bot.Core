@@ -1,5 +1,9 @@
 This project contains the code I've written so far for the core library of what I envisioned to be DiceBot v4. 
 
+This project will contain only code relating to site APIs and attempt to provide a standardized API for logging in and placing bets at different crypto casinos. It will contain NO automated betting codes. The aim is to provide a springboard for people that want to develop their own bots by giving them access to several games at several sites in a standardized way.
+
+This will also eventually be a nuget package.
+
 I no longer have enough time to actively work on the project, so it's been standing still for a long time.
 I'm also tired of the almost constant abuse I get for the project. I know it's a very small portion of the people that use that bot that is this way, but it's still tiring.
 
