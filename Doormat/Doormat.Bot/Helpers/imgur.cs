@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 
-namespace DoormatCore.Helpers
+namespace DoormatBot.Helpers
 {
     class imgur
     {

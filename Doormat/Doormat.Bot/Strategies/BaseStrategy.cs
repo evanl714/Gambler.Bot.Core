@@ -7,7 +7,7 @@ using DoormatCore.Games;
 using DoormatCore.Helpers;
 using DoormatCore.Sites;
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public abstract class BaseStrategy
     {

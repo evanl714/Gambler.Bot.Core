@@ -1,4 +1,4 @@
-﻿using DoormatCore;
+﻿using DoormatBot;
 using DoormatCore.Helpers;
 using DoormatCore.Sites;
 using System;

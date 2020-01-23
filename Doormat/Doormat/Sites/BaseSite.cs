@@ -1,6 +1,5 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Helpers;
-using DoormatCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -14,7 +13,7 @@ namespace DoormatCore.Sites
     public abstract class BaseSite
     {
 
-        public List<TriggerAction> ActiveActions { get; set; } = new List<TriggerAction>();
+        public List<SiteAction> ActiveActions { get; set; } = new List<SiteAction>();
         public LoginParameter[] StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("Two Factor Code", false, false, true, true,true) };
         public LoginParameter[] LoginParams { get { return StaticLoginParams; } }
         #region Properties
@@ -180,7 +179,7 @@ namespace DoormatCore.Sites
         /// </summary>
         public void Disconnect()
         {
-
+            _Disconnect();
         }
 
         /// <summary>
@@ -208,106 +207,35 @@ namespace DoormatCore.Sites
         #region Betting methods
         public void PlaceBet(PlaceBet BetDetails)
         {
-            if (BetDetails is PlaceDiceBet)
-            {
-                Thread BetThread = new Thread(new ParameterizedThreadStart(StartDiceThread));
-                BetThread.Start(BetDetails);
-            }
-            if (BetDetails is PlaceCrashBet)
-            {
-                Thread BetThread = new Thread(new ParameterizedThreadStart(StartCrashThread));
-                BetThread.Start(BetDetails);
-            }
-            if (BetDetails is PlacePlinkoBet)
-            {
-                Thread BetThread = new Thread(new ParameterizedThreadStart(StartPlinkoThread));
-                BetThread.Start(BetDetails);
-            }
-            if (BetDetails is PlaceRouletteBet)
-            {
-                Thread BetThread = new Thread(new ParameterizedThreadStart(StartRouletteThread));
-                BetThread.Start(BetDetails);
-            }
-        }
-
-
-        /// <summary>
-        /// Tell the site interface to place the bet. Required function for basic operation of the bot. 
-        /// </summary>
-        /// <param name="Amount">Amount to bet in full Coin.</param>
-        /// <param name="Chance">Chance to win (0-maxroll-edge)</param>
-        /// <param name="High">Roll High/Over or Low/Under</param>
-        protected virtual void _PlaceDiceBet(PlaceDiceBet BetDetails) { throw new NotImplementedException(); } 
-
-
-        /// <summary>
-        /// Thread starting point for placing a bet. Calls the sites place bet method.
-        /// </summary>
-        /// <param name="BetDetails"></param>
-        private void StartDiceThread(object BetDetails)
-        {
-            _PlaceDiceBet(BetDetails as PlaceDiceBet);
-        }
-
-        /// <summary>
-        /// Tell the site interface to place the bet. Required function for basic operation of the bot. 
-        /// </summary>
-        /// <param name="Amount">Amount to bet in full Coin.</param>
-        /// <param name="Chance">Chance to win (0-maxroll-edge)</param>
-        /// <param name="High">Roll High/Over or Low/Under</param>
-        protected virtual void _PlaceCrasheBet(PlaceCrashBet BetDetails) { throw new NotImplementedException(); } 
-
-
-        /// <summary>
-        /// Thread starting point for placing a bet. Calls the sites place bet method.
-        /// </summary>
-        /// <param name="BetDetails"></param>
-        private void StartCrashThread(object BetDetails)
-        {
-            _PlaceCrasheBet(BetDetails as PlaceCrashBet);
-        }
-
-        /// <summary>
-        /// Tell the site interface to place the bet. Required function for basic operation of the bot. 
-        /// </summary>
-        /// <param name="Amount">Amount to bet in full Coin.</param>
-        /// <param name="Chance">Chance to win (0-maxroll-edge)</param>
-        /// <param name="High">Roll High/Over or Low/Under</param>
-        protected virtual void _PlaceRouletteBet(PlaceRouletteBet BetDetails) { throw new NotImplementedException(); } 
-
-
-        /// <summary>
-        /// Thread starting point for placing a bet. Calls the sites place bet method.
-        /// </summary>
-        /// <param name="BetDetails"></param>
-        private void StartRouletteThread(object BetDetails)
-        {
-            _PlaceRouletteBet(BetDetails as PlaceRouletteBet);
-        }
-
-        /// <summary>
-        /// Tell the site interface to place the bet. Required function for basic operation of the bot. 
-        /// </summary>
-        /// <param name="Amount">Amount to bet in full Coin.</param>
-        /// <param name="Chance">Chance to win (0-maxroll-edge)</param>
-        /// <param name="High">Roll High/Over or Low/Under</param>
-        protected virtual void _PlacePlinkoBet(PlacePlinkoBet BetDetails) { throw new NotImplementedException(); }
+            new Thread(new ParameterizedThreadStart(PlaceBetThread)).Start(BetDetails);
+           
+        } 
         
-
-        /// <summary>
-        /// Thread starting point for placing a bet. Calls the sites place bet method.
-        /// </summary>
-        /// <param name="BetDetails"></param>
-        private void StartPlinkoThread(object BetDetails)
+        private void PlaceBetThread(object BetDetails)
         {
-            _PlacePlinkoBet(BetDetails as PlacePlinkoBet);
+            if (BetDetails is PlaceDiceBet && this is iDice)
+            {
+                (this as iDice).PlaceDiceBet(BetDetails as PlaceDiceBet);                
+            }
+            if (BetDetails is PlaceCrashBet && this is iCrash)
+            {
+                (this as iCrash).PlaceCrashBet(BetDetails as PlaceCrashBet);
+            }
+            if (BetDetails is PlacePlinkoBet && this is iPlinko)
+            {
+                (this as iPlinko).PlacePlinkoBet(BetDetails as PlacePlinkoBet);
+            }
+            if (BetDetails is PlaceRouletteBet && this is iRoulette)
+            {
+                (this as iRoulette).PlaceRouletteBet(BetDetails as PlaceRouletteBet);
+            }
         }
         #endregion
 
         #region Extention Methods
         public void ResetSeed(string ClientSeed)
         {
-            ActiveActions.Add(TriggerAction.ResetSeed);
+            ActiveActions.Add(SiteAction.ResetSeed);
             if (CanChangeSeed)
             {
                 _ResetSeed();
@@ -334,7 +262,7 @@ namespace DoormatCore.Sites
 
         public void Invest(decimal Amount)
         {
-            ActiveActions.Add(TriggerAction.Invest);
+            ActiveActions.Add(SiteAction.Invest);
             if (AutoInvest)
             {
                 _Invest(Amount);
@@ -360,7 +288,7 @@ namespace DoormatCore.Sites
 
         public void Withdraw(string Address, decimal Amount)
         {
-            ActiveActions.Add(TriggerAction.Withdraw);
+            ActiveActions.Add(SiteAction.Withdraw);
             if (AutoWithdraw)
             {
                 _Withdraw(Address, Amount);
@@ -457,7 +385,7 @@ namespace DoormatCore.Sites
 
         public void SendTip(string Username, decimal Amount)
         {
-            ActiveActions.Add(TriggerAction.Tip);
+            ActiveActions.Add(SiteAction.Tip);
             if (CanTip)
             {
                 _SendTip(Username, Amount);
@@ -579,38 +507,38 @@ namespace DoormatCore.Sites
         }
         protected void callWithdrawalFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(TriggerAction.Withdraw))
-                ActiveActions.Remove(TriggerAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Withdraw))
+                ActiveActions.Remove(SiteAction.Withdraw);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callTipFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(TriggerAction.Withdraw))
-                ActiveActions.Remove(TriggerAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Withdraw))
+                ActiveActions.Remove(SiteAction.Withdraw);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callResetSeedFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(TriggerAction.Withdraw))
-                ActiveActions.Remove(TriggerAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Withdraw))
+                ActiveActions.Remove(SiteAction.Withdraw);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callDonationFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(TriggerAction.Withdraw))
-                ActiveActions.Remove(TriggerAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Withdraw))
+                ActiveActions.Remove(SiteAction.Withdraw);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callInvestFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(TriggerAction.Withdraw))
-                ActiveActions.Remove(TriggerAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Withdraw))
+                ActiveActions.Remove(SiteAction.Withdraw);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
 
         #endregion
-        [PersistentTableName("LOGINPARAMETER")]
-        public class LoginParameter:PersistentBase
+      
+        public class LoginParameter
         {
             public LoginParameter(string Name, bool Masked, bool Required, bool ClearafterEnter, bool Clearafterlogin, bool ismfa=false)
             {
@@ -633,10 +561,10 @@ namespace DoormatCore.Sites
             public bool ClearAfterLogin { get; set; }
             public bool IsMFA { get; set; }
         }
-        [PersistentTableName("LOGINPARAMVALUE")]
-        public class LoginParamValue: PersistentBase
+        
+        public class LoginParamValue
         {
-            [NonPersistent]
+            
             public int ParameterId { get; set; }
             public LoginParameter Param { get; set; }
             public string Value { get; set; }
@@ -709,7 +637,12 @@ namespace DoormatCore.Sites
         public long Wins { get; set; }
         public long Losses { get; set; }
     }
-    
+    public class Currency 
+    {
+        public string Name { get; set; }
+        public string Symbol { get; set; }
+        public byte[] Icon { get; set; }
+    }
     public class SiteDetails
     {
         public string name { get; set; }

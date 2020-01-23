@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using GlobalsObject;
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public class ProgrammerCS : BaseStrategy, ProgrammerMode
     {
@@ -50,8 +50,8 @@ namespace DoormatCore.Strategies
             /*runtime = runtime.ContinueWithAsync("DoDiceBet(PreviousDiceBet, DiceWin, NextDiceBet)", ScriptOptions.Default.WithReferences(
                     Assembly.GetExecutingAssembly())
                     .WithImports(
-                        "DoormatCore",
-                        "DoormatCore.Games",
+                        "DoormatBot",
+                        "DoormatBot.Games",
                         "System")).Result;*/
 
 
@@ -68,8 +68,8 @@ namespace DoormatCore.Strategies
                 ScriptOptions.Default.WithReferences(
                     Assembly.GetExecutingAssembly())
                     .WithImports(
-                        "DoormatCore", 
-                        "DoormatCore.Games",
+                        "DoormatBot", 
+                        "DoormatBot.Games",
                         "System"), 
                 typeof(Globals));
 

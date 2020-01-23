@@ -1,13 +1,12 @@
 ﻿using DoormatCore.Sites;
-using DoormatCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DoormatCore.Games
 {
-    [MoonSharp.Interpreter.MoonSharpUserData]
-    [PersistentTableName("DICEBET")]
+    
     public class DiceBet:Bet
     {
        
@@ -29,7 +28,7 @@ namespace DoormatCore.Games
             return (((bool)High ? (decimal)Roll > (decimal)Site.MaxRoll - (decimal)(Chance) : (decimal)Roll < (decimal)(Chance)));
         }
     }
-    [MoonSharp.Interpreter.MoonSharpUserData]
+    
     public class PlaceDiceBet: PlaceBet
     {
         /// <summary>
@@ -64,5 +63,10 @@ namespace DoormatCore.Games
             this.Chance = Chance;
 
         }
+    }
+
+    public interface iDice
+    {
+        void PlaceDiceBet(PlaceDiceBet BetDetails);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using DoormatCore.Sites;
 
 namespace DoormatCore.Games
@@ -23,5 +24,10 @@ namespace DoormatCore.Games
     public class PlaceRouletteBet:PlaceBet
     {
 
+    }
+
+    public interface iRoulette
+    {
+        Task PlaceRouletteBet(PlaceRouletteBet BetDetails);
     }
 }

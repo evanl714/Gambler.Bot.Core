@@ -9,7 +9,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    public class YoloDice : BaseSite
+    public class YoloDice : BaseSite, iDice
     {
         public bool ispd = false;
         string username = "";
@@ -561,7 +561,7 @@ namespace DoormatCore.Sites
         }
 
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             this.Guid = BetDetails.GUID;
 

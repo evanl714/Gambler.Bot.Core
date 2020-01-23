@@ -7,7 +7,7 @@ using DoormatCore.Helpers;
 using DoormatCore.Sites;
 using Jint;
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public class ProgrammerJS : BaseStrategy, ProgrammerMode
     {

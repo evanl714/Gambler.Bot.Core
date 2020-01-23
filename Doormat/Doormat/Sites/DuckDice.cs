@@ -9,7 +9,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    public class DuckDice : BaseSite
+    public class DuckDice : BaseSite, iDice
     {
         string accesstoken = "";
         DateTime LastSeedReset = new DateTime();
@@ -142,7 +142,7 @@ namespace DoormatCore.Sites
             }
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             
             decimal amount = BetDetails.Amount;

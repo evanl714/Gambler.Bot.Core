@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
 using DoormatCore.Sites;
-using static DoormatCore.Helpers.PersonalSettings;
+using static DoormatBot.Helpers.PersonalSettings;
+using DoormatCore.Helpers;
 
-namespace DoormatCore.Helpers
+namespace DoormatBot.Helpers
 {
     public class PersonalSettings
     {

@@ -9,7 +9,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    public class CryptoGames : BaseSite
+    public class CryptoGames : BaseSite, iDice
     {
         string accesstoken = "";
 
@@ -128,7 +128,7 @@ namespace DoormatCore.Sites
             catch { }
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             
             string Clients = R.Next(0, int.MaxValue).ToString();

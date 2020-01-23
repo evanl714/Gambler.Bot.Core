@@ -1,5 +1,5 @@
-﻿using DoormatCore.Sites;
-using DoormatCore.Storage;
+﻿using DoormatCore.Helpers;
+using DoormatCore.Sites;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,7 +11,7 @@ namespace DoormatCore.Games
     {
         Dice,Crash,Roulette,Plinko
     }
-    [MoonSharp.Interpreter.MoonSharpUserData]
+    [PersistentTableName("DICEBET")]
     public abstract class Bet:PersistentBase
     {
         public decimal TotalAmount { get; set; }
@@ -19,7 +19,7 @@ namespace DoormatCore.Games
         public decimal Date { get; set; }
 
         [NonPersistent]
-        public DateTime DateValue { get { return SQLBase.DateFromDecimal(Date); } set { Date = SQLBase.DateToDecimal(value); } }
+        public DateTime DateValue { get { return json.DateFromDecimal(Date); } set { Date = json.DateToDecimal(value); } }
 
         public string BetID { get; set; }
         public decimal Profit { get; set; }
@@ -30,11 +30,11 @@ namespace DoormatCore.Games
         public abstract bool GetWin(BaseSite Site);
         public abstract PlaceBet CreateRetry();
     }
-    [MoonSharp.Interpreter.MoonSharpUserData]
+    
     public abstract class PlaceBet
     {
         public string GUID { get; set; }
-        [NonPersistent]
+        
         public virtual decimal TotalAmount { get { return 0; } set { } }
 
     }

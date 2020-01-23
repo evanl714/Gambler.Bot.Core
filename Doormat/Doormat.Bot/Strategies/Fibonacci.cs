@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public class Fibonacci: BaseStrategy
     {

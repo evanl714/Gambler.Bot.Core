@@ -9,7 +9,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    public class Freebitcoin : BaseSite
+    public class Freebitcoin : BaseSite, iDice
     {
         string accesstoken = "";
         DateTime LastSeedReset = new DateTime();
@@ -209,7 +209,7 @@ namespace DoormatCore.Sites
         }
         string clientseed = "";
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {

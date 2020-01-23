@@ -11,7 +11,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    public class Bitvest : BaseSite
+    public class Bitvest : BaseSite, iDice
     {
         HttpClient Client;// = new HttpClient { BaseAddress = new Uri("https://api.primedice.com/api/") };
         HttpClientHandler ClientHandlr;
@@ -212,7 +212,7 @@ namespace DoormatCore.Sites
             return s;
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {
@@ -316,13 +316,13 @@ namespace DoormatCore.Sites
                 if (retrycount++ < 3)
                 {
                     Thread.Sleep(500);
-                    _PlaceDiceBet(BetDetails);
+                    PlaceDiceBet(BetDetails);
                     return;
                 }
                 if (e.InnerException.Message.Contains("429") || e.InnerException.Message.Contains("502"))
                 {
                     Thread.Sleep(500);
-                    _PlaceDiceBet(BetDetails);
+                    PlaceDiceBet(BetDetails);
                 }
 
 

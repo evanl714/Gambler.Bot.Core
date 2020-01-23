@@ -8,7 +8,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    class MegaDice : BaseSite
+    class MegaDice : BaseSite, iDice
     {
         string accesstoken = "";
         DateTime LastSeedReset = new DateTime();
@@ -123,7 +123,7 @@ namespace DoormatCore.Sites
             LastBalance = DateTime.Now;
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {

@@ -1,6 +1,6 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Sites;
-using DoormatCore.Strategies;
+using DoormatBot.Strategies;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,8 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using DoormatCore.Helpers;
 
-namespace DoormatCore.Helpers
+namespace DoormatBot.Helpers
 {
     public class Simulation
     {
@@ -20,7 +21,7 @@ namespace DoormatCore.Helpers
         public string serverseed { get; set; }
         public string clientseed { get; set; }
         public List<string> bets = new List<string>();
-        public Sites.BaseSite Site { get; set; }
+        public DoormatCore.Sites.BaseSite Site { get; set; }
         public Strategies.BaseStrategy DiceStrategy { get; set; }
         public SessionStats Stats { get; set; }
         public InternalBetSettings BetSettings { get; set; }
@@ -35,7 +36,7 @@ namespace DoormatCore.Helpers
         string TmpFileName = "";
         public decimal Profit { get; set; } = 0;
         bool log = true;
-        public Simulation(decimal balance, long bets, Sites.BaseSite Site, Strategies.BaseStrategy DiceStrategy, InternalBetSettings OtherSettings, string TempStorage,bool Log)
+        public Simulation(decimal balance, long bets, DoormatCore.Sites.BaseSite Site, Strategies.BaseStrategy DiceStrategy, InternalBetSettings OtherSettings, string TempStorage,bool Log)
         {
             this.Balance = balance;
             this.Bets = bets;
@@ -74,9 +75,9 @@ namespace DoormatCore.Helpers
             SiteStats.Balance = Balance;
             Running = true;
             Stop = false;
-            if (DiceStrategy is DoormatCore.Strategies.ProgrammerMode)
+            if (DiceStrategy is Strategies.ProgrammerMode)
             {
-                (DiceStrategy as DoormatCore.Strategies.ProgrammerMode).LoadScript();
+                (DiceStrategy as Strategies.ProgrammerMode).LoadScript();
             }
             new Thread(new ThreadStart(SimulationThread)).Start();
         }

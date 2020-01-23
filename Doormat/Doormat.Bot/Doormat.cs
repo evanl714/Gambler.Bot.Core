@@ -2,7 +2,7 @@
 using DoormatCore.Helpers;
 using DoormatCore.Sites;
 using DoormatCore.Storage;
-using DoormatCore.Strategies;
+using DoormatBot.Strategies;
 using KeePassLib;
 using KeePassLib.Keys;
 using KeePassLib.Serialization;
@@ -12,10 +12,11 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using static DoormatCore.Helpers.PersonalSettings;
+using static DoormatBot.Helpers.PersonalSettings;
 using ErrorEventArgs = DoormatCore.Sites.ErrorEventArgs;
+using DoormatBot.Helpers;
 
-namespace DoormatCore
+namespace DoormatBot
 {
     public class Doormat
     {
@@ -61,6 +62,7 @@ namespace DoormatCore
         public PersonalSettings PersonalSettings { get; set; } = new PersonalSettings();
         Bet MostRecentBet = null;
         PlaceBet NextBext = null;
+        int Retries = 0;
         //internal variables
         #endregion
 
@@ -108,7 +110,7 @@ namespace DoormatCore
                         Logger.DumpLog("Found Type - " + x.Name, 6);
                         sites.Add(x.Name);
                         string[] currenices = new string[] { "Btc" };
-                        Games.Games[] games = new Games.Games[] { Games.Games.Dice };
+                        Games[] games = new Games[] { Games.Dice };
                         try
                         {
                             Logger.DumpLog("Fetching currencies for - " + x.Name, 6);
@@ -141,12 +143,12 @@ namespace DoormatCore
                 foreach (SitesList x in Sites)
                 {
                     Logger.DumpLog($"Fetch {x.Name} from SQL", 6);
-                    Site tmp = DBInterface.GetSite(x.Name);
+                    Site tmp = DBInterface.FindSingle<Site>("Name=@1","",x.Name);
                     if (tmp==null)
                     {
                         Logger.DumpLog($"{x.Name} not found in sql, inserting row", 6);
                         tmp = new Site { ClassName=x.SiteType().FullName,  Name=x.Name };                        
-                        tmp = DBInterface.UpdateSite(tmp);
+                        tmp = DBInterface.Save<Site>(tmp);
                     }
                     else
                     {
@@ -218,7 +220,7 @@ namespace DoormatCore
                     baseSite.OnTipFinished += BaseSite_OnTipFinished;
                     baseSite.OnWithdrawalFinished += BaseSite_OnWithdrawalFinished;
                     
-                    if (!new List<Games.Games>(baseSite.SupportedGames).Contains(CurrentGame))
+                    if (!new List<Games>(baseSite.SupportedGames).Contains(CurrentGame))
                     {
                         CurrentGame = baseSite.SupportedGames[0];
                     }
@@ -247,23 +249,23 @@ namespace DoormatCore
             CalculateNextBet();
         }
 
-        private Games.Games currentGame;
+        private Games currentGame;
 
-        public Games.Games CurrentGame
+        public Games CurrentGame
         {
             get { return currentGame; }
             set { currentGame = value; OnGameChanged?.Invoke(this, new EventArgs()); }
         }
 
 
-        public event Sites.BaseSite.dStatsUpdated OnSiteStatsUpdated;
-        public event Sites.BaseSite.dAction OnSiteAction;
-        public event Sites.BaseSite.dChat OnSiteChat;
-        public event Sites.BaseSite.dBetFinished OnSiteBetFinished;
-        public event Sites.BaseSite.dError OnSiteError;
-        public event Sites.BaseSite.dLoginFinished OnSiteLoginFinished;
-        public event Sites.BaseSite.dNotify OnSiteNotify;
-        public event Sites.BaseSite.dRegisterFinished OnSiteRegisterFinished;
+        public event BaseSite.dStatsUpdated OnSiteStatsUpdated;
+        public event BaseSite.dAction OnSiteAction;
+        public event BaseSite.dChat OnSiteChat;
+        public event BaseSite.dBetFinished OnSiteBetFinished;
+        public event BaseSite.dError OnSiteError;
+        public event BaseSite.dLoginFinished OnSiteLoginFinished;
+        public event BaseSite.dNotify OnSiteNotify;
+        public event BaseSite.dRegisterFinished OnSiteRegisterFinished;
         public event EventHandler OnGameChanged;
         public event EventHandler<NotificationEventArgs> OnNotification;
         public event EventHandler<GetConstringPWEventArgs> NeedConstringPassword;
@@ -291,6 +293,7 @@ namespace DoormatCore
         }
         List<ErrorType> BettingErrorTypes = new List<ErrorType>(new ErrorType[] { ErrorType.BalanceTooLow, ErrorType.BetMismatch, ErrorType.InvalidBet, ErrorType.NotImplemented, ErrorType.Other, ErrorType.Unknown });
         List<ErrorType> NonBettingErrorTypes = new List<ErrorType>(new ErrorType[] { ErrorType.Withdrawal, ErrorType.Tip, ErrorType.ResetSeed });
+        
         private void BaseSite_Error(object sender, ErrorEventArgs e)
         {
             ActiveErrors.Add(e);
@@ -310,8 +313,13 @@ namespace DoormatCore
                         {
                             if (Running && !Stop)
                             {
-                                NextBext = (Strategy.RunReset());
-                                CalculateNextBet();
+                                if (Retries <= PersonalSettings.RetryAttempts)
+                                {
+                                    NextBext = (Strategy.RunReset());
+                                    Thread.Sleep(PersonalSettings.RetryDelay);
+                                    Retries++;
+                                    CalculateNextBet();
+                                }
                             }
                         }
                         else if (tmpSetting.Action == ErrorActions.Resume)
@@ -320,7 +328,12 @@ namespace DoormatCore
                         }
                         else if (ErrorActions.Retry == tmpSetting.Action)
                         {
-                            CalculateNextBet();
+                            if (Retries <= PersonalSettings.RetryAttempts)
+                            {
+                                CalculateNextBet(); Thread.Sleep(PersonalSettings.RetryDelay);
+                                Retries++;
+                                CalculateNextBet();
+                            }
                         }
                     }
                     else
@@ -330,11 +343,23 @@ namespace DoormatCore
                             case ErrorActions.Reset:
                                 if (Running && !Stop)
                                 {
-                                    NextBext = (Strategy.RunReset());
-                                    CalculateNextBet();
-                                }break;
+                                    if (Retries <= PersonalSettings.RetryAttempts)
+                                    {
+                                        NextBext = (Strategy.RunReset());
+                                        Thread.Sleep(PersonalSettings.RetryDelay);
+                                        Retries++;
+                                        CalculateNextBet();
+                                    }
+                                }
+                                break;
                             case ErrorActions.Resume:break;
-                            case ErrorActions.Retry: NextBext = MostRecentBet.CreateRetry(); break;
+                            case ErrorActions.Retry:
+                                if (Retries <= PersonalSettings.RetryAttempts)
+                                {
+                                    CalculateNextBet(); Thread.Sleep(PersonalSettings.RetryDelay);
+                                    Retries++;
+                                    CalculateNextBet();
+                                } break;
                         }
                     }
                 }
@@ -352,13 +377,26 @@ namespace DoormatCore
 
         private void BaseSite_DiceBetFinished(object sender, BetFinisedEventArgs e)
         {
-            DBInterface.UpdateBet(e.NewBet);
+            DBInterface.Save<Bet>(e.NewBet);
             MostRecentBet = e.NewBet;
+            Retries = 0;
             /*
              * save bet to DB - invoke async?
              * send bet to GUI - invoke async?
              * */
+            bool win = e.NewBet.GetWin(CurrentSite); 
+            string Response = "";
+            bool Reset = false;
+            Stats.UpdateStats(e.NewBet, win);
+            if (Strategy is ProgrammerMode)
+            {
+                (Strategy as ProgrammerMode).UpdateSessionStats(CopyHelper.CreateCopy<SessionStats>(Stats));
+                (Strategy as ProgrammerMode).UpdateSiteStats(CopyHelper.CreateCopy<SiteStats>(CurrentSite.Stats));
+                (Strategy as ProgrammerMode).UpdateSite(CopyHelper.CreateCopy<SiteDetails>(CurrentSite.SiteDetails));
+            }
             OnSiteBetFinished?.Invoke(sender, e );
+
+
             if (e.NewBet.Guid!=LastBetGuid || LastBetsGuids.Contains(e.NewBet.Guid))
             {
                 StopDice("Last bet did not match the latest bet placed.");
@@ -373,16 +411,7 @@ namespace DoormatCore
             }
 
 
-            bool win = e.NewBet.GetWin(CurrentSite); //(((bool)e.NewBet.High ? (decimal)e.NewBet.Roll > (decimal)CurrentSite.MaxRoll - (decimal)(e.NewBet.Chance) : (decimal)e.NewBet.Roll < (decimal)(e.NewBet.Chance)));
-            string Response = "";
-            bool Reset = false;
-            Stats.UpdateStats(e.NewBet, win);
-            if (Strategy is ProgrammerMode)
-            {
-                (Strategy as ProgrammerMode).UpdateSessionStats(CopyHelper.CreateCopy<SessionStats>(Stats));
-                (Strategy as ProgrammerMode).UpdateSiteStats(CopyHelper.CreateCopy<SiteStats>(CurrentSite.Stats));
-                (Strategy as ProgrammerMode).UpdateSite(CopyHelper.CreateCopy<SiteDetails>(CurrentSite.SiteDetails));
-            }
+            
 
 
             foreach (Trigger x in PersonalSettings.Notifications)
@@ -671,7 +700,7 @@ namespace DoormatCore
             Running = false;
             Stats.EndTime = DateTime.Now;
             Stats.RunningTime += (long)(Stats.EndTime - Stats.EndTime).TotalMilliseconds;
-            Stats= DBInterface.AddSessionStats(Stats);
+            Stats= DBInterface.Save<SessionStats>(Stats);
             //TotalRuntime +=Stats.EndTime - Stats.StartTime;
             Logger.DumpLog(Reason, 3);
         }
@@ -684,7 +713,7 @@ namespace DoormatCore
                 Stats.RunningTime += (long)(Stats.EndTime - Stats.EndTime).TotalMilliseconds;
             }
             TotalRuntime += Stats.RunningTime;
-            Stats = this.DBInterface.AddSessionStats(Stats);
+            Stats = this.DBInterface.Save<SessionStats>(Stats);
 
             Stats = new SessionStats();
         }
@@ -788,9 +817,10 @@ namespace DoormatCore
                 }*/
             }
         }
+
         public void SavePersonalSettings(string FileLocation)
         {
-            string Settings = Helpers.json.JsonSerializer(PersonalSettings);
+            string Settings = DoormatCore.Helpers.json.JsonSerializer(PersonalSettings);
             using (StreamWriter sw = new StreamWriter(FileLocation, false))
             {
                 sw.Write(Settings);
@@ -806,7 +836,7 @@ namespace DoormatCore
                 BetSettings = this.BetSettings
             };
             tmp.SetStrategy(Strategy);
-            string Settings = Helpers.json.JsonSerializer(tmp);
+            string Settings = DoormatCore.Helpers.json.JsonSerializer(tmp);
             using (StreamWriter sw = new StreamWriter(FileLocation, false)) 
             {
                 sw.Write(Settings);
@@ -852,7 +882,11 @@ namespace DoormatCore
             try
             {
                 Logger.DumpLog("Attempting DB Interface Creation", 6);
-                DBInterface = SQLBase.OpenConnection(PersonalSettings.GetConnectionString(pw), PersonalSettings.Provider);
+                //get a list of loaded assemblies
+                //get a list of classes that inherit persistentbase
+                List<Type> PersistentTypes = new List<Type>();
+
+                DBInterface = SQLBase.OpenConnection(PersonalSettings.GetConnectionString(pw), PersonalSettings.Provider, PersistentTypes);
                 Logger.DumpLog("DB Interface Created", 5);
             }
             catch (Exception e)

@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DoormatCore.Games;
-using DoormatCore.Helpers;
-using DoormatCore.Sites;
+using DoormatBot.Games;
+using DoormatBot.Helpers;
+using DoormatBot.Sites;
 using Python.Runtime;
 /*using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting;* /
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public class ProgrammerPython: BaseStrategy, ProgrammerMode
     {

@@ -1,9 +1,10 @@
 ﻿using DoormatCore.Games;
+using DoormatCore.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DoormatCore.Helpers
+namespace DoormatBot.Helpers
 {
     public class InternalBetSettings
     {

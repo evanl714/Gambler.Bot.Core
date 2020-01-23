@@ -4,13 +4,14 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 using WebSocket4Net;
 
 namespace DoormatCore.Sites
 {
-    class EtherCrash : BaseSite
+    class EtherCrash : BaseSite, iCrash
     {
         PlaceCrashBet LastBet = null;
         string Token = "";
@@ -234,10 +235,6 @@ namespace DoormatCore.Sites
             throw new NotImplementedException();
         }
 
-        protected override void _PlaceCrasheBet(PlaceCrashBet BetDetails)
-        {
-            
-        }
 
         DateTime LastPing = DateTime.Now;
         void pingthread()
@@ -399,6 +396,11 @@ namespace DoormatCore.Sites
         private void Sock_Opened(object sender, EventArgs e)
         {
             (sender as WebSocket).Send("2probe");
+        }
+
+        public Task PlaceCrashBet(PlaceCrashBet BetDetails)
+        {
+            throw new NotImplementedException();
         }
 
         public class ECLogin

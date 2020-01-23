@@ -1,10 +1,11 @@
-﻿using DoormatCore.Helpers;
+﻿using DoormatCore.Games;
+using DoormatCore.Helpers;
 using DoormatCore.Sites;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public interface ProgrammerMode
     {
@@ -73,6 +74,6 @@ namespace DoormatCore.Strategies
     }
     public class ResetBuiltInEventArgs : EventArgs
     {
-        public Games.PlaceDiceBet NewBet { get; set; }
+        public PlaceDiceBet NewBet { get; set; }
     }
 }

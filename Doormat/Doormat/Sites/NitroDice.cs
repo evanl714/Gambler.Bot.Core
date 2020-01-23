@@ -9,7 +9,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    class NitroDice : BaseSite
+    class NitroDice : BaseSite, iDice
     {
         string accesstoken = "";
         DateTime LastSeedReset = new DateTime();
@@ -172,7 +172,7 @@ namespace DoormatCore.Sites
             }
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {

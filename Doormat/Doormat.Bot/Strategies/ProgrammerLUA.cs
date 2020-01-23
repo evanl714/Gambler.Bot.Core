@@ -6,7 +6,7 @@ using DoormatCore.Helpers;
 using DoormatCore.Sites;
 using MoonSharp.Interpreter;
 
-namespace DoormatCore.Strategies
+namespace DoormatBot.Strategies
 {
     public class ProgrammerLUA : BaseStrategy, ProgrammerMode
     {
@@ -102,6 +102,7 @@ namespace DoormatCore.Strategies
             CurrentRuntime.Globals["Ching"] = (Action)Ching;
             CurrentRuntime.Globals["ResetBuiltIn"] = (Action)ResetBuiltIn;
             CurrentRuntime.Globals["ExportSim"] = (Action<string>)ExportSim;
+            CurrentRuntime.Globals["Stop"] = (Action)Stop;
         }
 
         public void LoadScript()
@@ -169,6 +170,10 @@ namespace DoormatCore.Strategies
         void ResetStats()
         {
             OnResetStats?.Invoke(this, new EventArgs());
+        }
+        void Stop()
+        {
+            OnStop?.Invoke(this, new EventArgs());
         }
         object Read(string prompt, int DataType)
         {

@@ -10,7 +10,7 @@ using WebSocket4Net;
 
 namespace DoormatCore.Sites
 {
-    class BitExo : BaseSite
+    public class BitExo : BaseSite, iDice
     {
         long id = 1;
         string accesstoken = "";
@@ -424,7 +424,7 @@ namespace DoormatCore.Sites
             Logger.DumpLog("BE socket closed", 1);
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {
@@ -457,8 +457,6 @@ namespace DoormatCore.Sites
 
             }
         }
-
-        
 
         public class BEPayout
         {

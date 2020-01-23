@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using DoormatCore.Sites;
 
 namespace DoormatCore.Games
@@ -22,5 +23,10 @@ namespace DoormatCore.Games
     public class PlacePlinkoBet : PlaceBet
     {
 
+    }
+
+    public interface iPlinko
+    {
+        Task PlacePlinkoBet(PlacePlinkoBet BetDetails);
     }
 }

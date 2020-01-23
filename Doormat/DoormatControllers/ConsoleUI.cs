@@ -1,4 +1,6 @@
-﻿using DoormatCore;
+﻿using DoormatBot;
+using DoormatBot.Helpers;
+using DoormatBot.Strategies;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 using DoormatCore.Sites;
@@ -440,7 +442,7 @@ namespace DoormatControllers
                         if (inint > 0 && inint <= strats.Count)
                         {
 
-                            DoormatCore.Strategies.BaseStrategy x = Activator.CreateInstance(strats[Names[inint - 1]]) as DoormatCore.Strategies.BaseStrategy;
+                            DoormatBot.Strategies.BaseStrategy x = Activator.CreateInstance(strats[Names[inint - 1]]) as DoormatBot.Strategies.BaseStrategy;
                             DiceBot.Strategy = x;
                             break;
                         }
@@ -479,7 +481,7 @@ namespace DoormatControllers
                                 {
                                     string ClassName = Names[inint - 1];
                                     Type NewType = strats[ClassName];
-                                    DoormatCore.Strategies.BaseStrategy x = Activator.CreateInstance(NewType) as DoormatCore.Strategies.BaseStrategy;
+                                    BaseStrategy x = Activator.CreateInstance(NewType) as BaseStrategy;
                                     DiceBot.Strategy = x;
                                     break;
                                 }

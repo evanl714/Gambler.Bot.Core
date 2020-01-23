@@ -1,4 +1,4 @@
-﻿using DoormatCore;
+﻿using DoormatBot;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;

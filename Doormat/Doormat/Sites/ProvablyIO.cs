@@ -10,7 +10,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    class ProvablyIO : BaseSite
+    class ProvablyIO : BaseSite, iDice
     {
         string lasthash = "";
         string accesstoken = "";
@@ -103,7 +103,7 @@ namespace DoormatCore.Sites
             
         }
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {

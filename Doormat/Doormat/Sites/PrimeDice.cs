@@ -11,7 +11,7 @@ using GraphQL.Common.Response;
 
 namespace DoormatCore.Sites
 {
-    public class PrimeDice : BaseSite
+    public class PrimeDice : BaseSite, iDice
     {
         protected string URL = "https://api.primedice.com/graphql";
         protected string RolName = "primediceRoll";
@@ -155,7 +155,7 @@ namespace DoormatCore.Sites
         int retrycount = 0;
         DateTime Lastbet = DateTime.Now;
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {

@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Sites
 {
-    public class Bitsler : BaseSite
+    public class Bitsler : BaseSite, iDice
     {
         bool IsBitsler = false;
         string accesstoken = "";
@@ -69,7 +69,7 @@ namespace DoormatCore.Sites
         }
 
 
-        protected override void _PlaceDiceBet(PlaceDiceBet BetObj)
+        public void PlaceDiceBet(PlaceDiceBet BetObj)
         {
             try
             {
@@ -493,7 +493,7 @@ devise:btc*/
 
         protected override void _Disconnect()
         {
-            throw new NotImplementedException();
+            this.IsBitsler = false;
         }
 
         public override void SetProxy(ProxyDetails ProxyInfo)
@@ -640,11 +640,8 @@ devise:btc*/
             }
             catch { }
         }
-    
 
-
-
-    public class bsLogin
+        public class bsLogin
     {
         public string success { get; set; }
         public string value { get; set; }

@@ -9,7 +9,7 @@ using DoormatCore.Helpers;
 
 namespace DoormatCore.Sites
 {
-    public class Dice999 : BaseSite
+    public class Dice999 : BaseSite, iDice
     {
         string sessionCookie = "";
         Random r = new Random();
@@ -80,6 +80,15 @@ namespace DoormatCore.Sites
             {
                 string sitea = SiteA[site];                
                 string Username = "", Password = "", twofa = "";
+                foreach (LoginParamValue x in LoginParams)
+                {
+                    if (x.Param.Name.ToLower() == "username")
+                        Username = x.Value;
+                    if (x.Param.Name.ToLower() == "password")
+                        Password = x.Value;
+                    if (x.Param.Name.ToLower() == "2fa code")
+                        twofa = x.Value;
+                }
                 ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,  }; ;
                 Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(sitea) };
                 Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -147,13 +156,13 @@ namespace DoormatCore.Sites
             if (!Loggedin)
             {
                 callLoginFinished(sessionCookie != "");
-                Loggedin = true;
+                //Loggedin = true;
             }
         }
 
         int retrycount = 0;
         string next = "";
-        protected override void _PlaceDiceBet(PlaceDiceBet BetDetails)
+        public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             string err = "";
             try
@@ -187,7 +196,7 @@ namespace DoormatCore.Sites
                         {
                             if (e.InnerException.Message.Contains("ssl"))
                             {
-                                _PlaceDiceBet(BetDetails);
+                                PlaceDiceBet(BetDetails);
                                 return;
                             }
                         }
