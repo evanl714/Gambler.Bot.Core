@@ -12,7 +12,7 @@ namespace DoormatCore.Sites
     public class Dice999 : BaseSite, iDice
     {
         string sessionCookie = "";
-        Random r = new Random();
+        
         long uid = 0;
 
         bool isD999 = false;
@@ -215,7 +215,7 @@ namespace DoormatCore.Sites
                     }
                     string Hash = next = json.JsonDeserialize<d999Hash>(responseData).Hash;
                 }
-                string ClientSeed = r.Next(0, int.MaxValue).ToString();
+                string ClientSeed = R.Next(0, int.MaxValue).ToString();
                 pairs = new List<KeyValuePair<string, string>>();
                 pairs.Add(new KeyValuePair<string, string>("a", "PlaceBet"));
                 pairs.Add(new KeyValuePair<string, string>("s", sessionCookie));

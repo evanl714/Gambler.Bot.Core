@@ -286,7 +286,7 @@ namespace DoormatCore.Sites
                     this.guid = "";
                     //open betting for user
                     betsOpen = true;
-                    callNotify("Game starting - waiting for bet");
+                    callGameMessage("Game starting - waiting for bet");
                 }
                 else if (e.Message.StartsWith("42[\"game_started\","))
                 {
@@ -379,7 +379,7 @@ namespace DoormatCore.Sites
                                 message = string.Format("Game running - Cashed out - {2:0.00}x", LastBet.TotalAmount, LastBet.Payout, mult / 100);
                             }
 
-                            callNotify(message);
+                            callGameMessage(message);
                         }
                     }
                 }
@@ -398,9 +398,18 @@ namespace DoormatCore.Sites
             (sender as WebSocket).Send("2probe");
         }
 
-        public Task PlaceCrashBet(PlaceCrashBet BetDetails)
+        public void PlaceCrashBet(PlaceCrashBet BetDetails)
         {
-            throw new NotImplementedException();
+            if (betsOpen && Sock.State == WebSocketState.Open)
+            {
+                decimal amount = Math.Round(BetDetails.TotalAmount, 6);
+
+                decimal payout = BetDetails.Payout;
+                decimal returna = payout * 100;
+                Sock.Send("42" + (reqid++).ToString() + "[\"place_bet\"," + (amount * 100000000).ToString("0") + "," + returna.ToString("0") + "]");
+                this.guid = BetDetails.GUID;
+                callNotify(string.Format("Game Starting - Betting {0:0.00000000} at {1:0.00}x", amount, payout));
+            }
         }
 
         public class ECLogin

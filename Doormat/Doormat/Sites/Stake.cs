@@ -31,7 +31,6 @@ namespace DoormatCore.Sites
             this.Edge = 2;
             URL = "https://api.stake.com/graphql/";
             RolName = "diceRoll";
-            CaptchaKey = "6Ld1gjkUAAAAAJW4iRQd5p4seCm0Tqg3ou-kMFVQ";
             GameName = "BetGameDice";
             StatGameName = "dice";
         }

@@ -158,7 +158,7 @@ devise:btc*/
         }
 
 
-        Random R = new Random();
+        
         DateTime LastReset = new DateTime();
         protected override void _ResetSeed()
         {

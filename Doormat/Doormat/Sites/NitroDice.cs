@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using DoormatCore.Games;
@@ -19,7 +20,7 @@ namespace DoormatCore.Sites
         DateTime lastupdate = new DateTime();
         HttpClient Client;// = new HttpClient { BaseAddress = new Uri("https://api.primedice.com/api/") };
         HttpClientHandler ClientHandlr;
-        Random r = new Random();
+        
         public static string[] sCurrencies = new string[] { "Bch", "Btc", "Doge" };
 
         string lastHash = "";
@@ -180,7 +181,7 @@ namespace DoormatCore.Sites
                 decimal amount = BetDetails.Amount;
                 decimal chance = BetDetails.Chance;
                 bool High = BetDetails.High;
-                string clientseed = r.Next(0, int.MaxValue).ToString();
+                string clientseed = R.Next(0, int.MaxValue).ToString();
 
                 string jsoncontent = json.JsonSerializer<NDPlaceBet>(new NDPlaceBet()
                 {
@@ -205,7 +206,7 @@ namespace DoormatCore.Sites
                         ServerHash = lastHash,
                         Guid = BetDetails.GUID,
                         High = High,
-                        BetID = BetResult.n.ToString(),
+                        BetID = BetResult.no.ToString(),
                         Nonce = BetResult.index,
                         Roll = BetResult.n / 10000m,
                         ServerSeed = BetResult.sseed,
@@ -242,6 +243,69 @@ namespace DoormatCore.Sites
             }
         }
 
+        protected override decimal _GetLucky(string Hash, string ServerSeed, string ClientSeed, int Nonce)
+        {
+            SHA512 betgenerator = SHA512.Create();
+
+            int charstouse = 5;
+
+            List<byte> buffer = new List<byte>();
+            string msg = ServerSeed + ":" + Nonce.ToString() + ":" + ClientSeed;
+            foreach (char c in msg)
+            {
+                buffer.Add(Convert.ToByte(c));
+            }
+
+            byte[] hash = betgenerator.ComputeHash(buffer.ToArray());
+            StringBuilder hex2 = new StringBuilder(hash.Length * 2);
+            foreach (byte b in hash)
+                hex2.AppendFormat("{0:x2}", b);
+            msg = hex2.ToString();
+            buffer.Clear();
+            foreach (char c in msg)
+            {
+                buffer.Add(Convert.ToByte(c));
+            }
+            hash = betgenerator.ComputeHash(hash);
+            StringBuilder hex = new StringBuilder(hash.Length * 2);
+            foreach (byte b in hash)
+                hex.AppendFormat("{0:x2}", b);
+            int SIZE = 4;
+            var r = new string[] { "0", "0", "0", "0", };
+            string Hashsh = hex.ToString();
+            
+            for (var i = 0; i < Hashsh.Length; ++i)
+            {
+                try
+                {
+                    int tmp = int.Parse(r[i % SIZE], System.Globalization.NumberStyles.HexNumber) + Hashsh[i];
+                    var stringVal = tmp % 256;
+                    r[i % SIZE] = (stringVal.ToString("X"));
+                }
+                catch
+                {
+                    r[i % SIZE] = "0";
+                }
+
+            }
+            string hexres = "";
+            for (int i = 0; i < r.Length; i++)
+            {
+                string tmp = r[i];
+                if (tmp.Length < 2)
+                {
+
+                }
+
+                hexres += tmp.Length < 2 ? "0" + tmp : tmp;
+            }
+            long Lucky = long.Parse(hexres, System.Globalization.NumberStyles.HexNumber);
+            decimal result = ((decimal)(Lucky % 1000000)) / 10000m;
+
+            return result;
+
+            return 0;
+        }
 
         public class NDGetAuth
         {

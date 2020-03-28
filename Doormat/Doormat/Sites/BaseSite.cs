@@ -141,7 +141,7 @@ namespace DoormatCore.Sites
 
         public string SiteAbbreviation { get; set; }
 
-        public Random R { get; internal set; } = new Random();
+        public Helpers.Random R { get; internal set; } = new Helpers.Random();
         #endregion
 
         public bool ForceUpdateStats { get; protected set; }
@@ -162,11 +162,15 @@ namespace DoormatCore.Sites
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
         public void LogIn(LoginParamValue[] LoginParams)
         {
-
             /*bool Success =*/
-            _Login(LoginParams);
-            UpdateStats();
+            new Thread(new ParameterizedThreadStart(LoginThread)).Start(LoginParams);
             //LoginFinished?.Invoke(this, new LoginFinishedEventArgs(Success, this.Stats));
+        }
+
+        private void LoginThread(object LoginParams)
+        {
+            _Login(LoginParams as LoginParamValue[]);
+            UpdateStats();
         }
 
         /// <summary>
@@ -433,6 +437,7 @@ namespace DoormatCore.Sites
         public delegate void dRegisterFinished(object sender, GenericEventArgs e);
         public delegate void dError(object sender, ErrorEventArgs e);
         public delegate void dNotify(object sender, GenericEventArgs e);
+        public delegate void dGameMessage(object sender, GenericEventArgs e);
         public delegate void dAction(object sender, GenericEventArgs e);
         public delegate void dChat(object sender, GenericEventArgs e);
         
@@ -449,6 +454,7 @@ namespace DoormatCore.Sites
         public event dAction OnResetSeedFinished;
         public event dAction OnDonationFinished;
         public event dAction OnInvestFinished;
+        public event dGameMessage OnGameMessage;
 
         protected void callStatsUpdated(SiteStats Stats)
         {
@@ -490,6 +496,10 @@ namespace DoormatCore.Sites
             {
                 Notify(this, new GenericEventArgs { Message = Message });
             }
+        }
+        protected void callGameMessage(string Message)
+        {            
+            OnGameMessage?.Invoke(this, new GenericEventArgs { Message = Message });            
         }
         protected void callAction(string CurrentAction)
         {
@@ -625,7 +635,7 @@ namespace DoormatCore.Sites
         public bool Fatal { get; set; }
 
     }
-
+    
     public class SiteStats
     {
         public Currency Currency { get; set; }
@@ -643,6 +653,7 @@ namespace DoormatCore.Sites
         public string Symbol { get; set; }
         public byte[] Icon { get; set; }
     }
+    
     public class SiteDetails
     {
         public string name { get; set; }

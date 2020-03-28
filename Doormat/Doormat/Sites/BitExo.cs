@@ -21,8 +21,7 @@ namespace DoormatCore.Sites
         DateTime lastupdate = new DateTime();
         HttpClient Client;
         HttpClientHandler ClientHandlr;
-        WebSocket WSClient;
-        Random R = new Random();
+        WebSocket WSClient;        
         new public static string[] sCurrencies = new string[] { "BTC", "BXO", "CLAM", "DOGE", "LTC" };
         string url = "bit-exo.com";
         public enum ReqType { balance, bet, hash, tip }

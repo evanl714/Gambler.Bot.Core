@@ -98,7 +98,7 @@ namespace DoormatCore.Sites
                     string message = "";
                     try
                     {
-                        NBitcoin.Key tmpkey = NBitcoin.Key.Parse(privkey);
+                        NBitcoin.Key tmpkey = NBitcoin.Key.Parse(privkey, NBitcoin.Network.Main);
                         address = tmpkey.ScriptPubKey.GetDestinationAddress(NBitcoin.Network.GetNetwork("Main")).ToString();
                         message = tmpkey.SignMessage(tmp.result);
                     }
@@ -490,7 +490,7 @@ namespace DoormatCore.Sites
                         /*finishedlogin(false);
                         return;*/
                     }
-                    NBitcoin.Key tmpkey = NBitcoin.Key.Parse(privkey);
+                    NBitcoin.Key tmpkey = NBitcoin.Key.Parse(privkey, NBitcoin.Network.Main);
                     string address = tmpkey.ScriptPubKey.GetDestinationAddress(NBitcoin.Network.GetNetwork("Main")).ToString();
                     string message = tmpkey.SignMessage(tmp.result);
 

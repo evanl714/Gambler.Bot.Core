@@ -1,4 +1,5 @@
-﻿using DoormatCore.Sites;
+﻿using DoormatCore.Helpers;
+using DoormatCore.Sites;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Games
 {
-    
+    [PersistentTableName("DICEBET")]
     public class DiceBet:Bet
     {
        

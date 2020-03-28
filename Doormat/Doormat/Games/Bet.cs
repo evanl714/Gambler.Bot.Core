@@ -11,7 +11,7 @@ namespace DoormatCore.Games
     {
         Dice,Crash,Roulette,Plinko
     }
-    [PersistentTableName("DICEBET")]
+    
     public abstract class Bet:PersistentBase
     {
         public decimal TotalAmount { get; set; }

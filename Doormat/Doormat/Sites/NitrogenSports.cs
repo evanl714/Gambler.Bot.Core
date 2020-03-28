@@ -107,8 +107,7 @@ namespace DoormatCore.Sites
             }
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
      | SecurityProtocolType.Tls11
-     | SecurityProtocolType.Tls12
-     | SecurityProtocolType.Ssl3;
+     | SecurityProtocolType.Tls12;
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://nitrogensports.eu/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -374,17 +373,20 @@ Sec-WebSocket-Version:13*/
 
         protected override void _UpdateStats()
         {
-            string s = CreateRandomString();
-            //Requests.Add(s,1);
-            NSSocket.Send("[2,\"0." + s + "\",\"ping\",{}]");
-            string result = Client.GetStringAsync("php/login/load_login.php").Result;
-            NSLogin tmplogin = json.JsonDeserialize<NSLogin>(result);
-            Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
-            Thread.Sleep(1);
-            string t = CreateRandomString();
-            s = "[2,\"0." + t + "\",\"game\",{}]";
-            Requests.Add(t, 1);
-            NSSocket.Send(s);
+            if (NSSocket != null && NSSocket.State == WebSocketState.Open && iskd)
+            {
+                string s = CreateRandomString();
+                //Requests.Add(s,1);
+                NSSocket.Send("[2,\"0." + s + "\",\"ping\",{}]");
+                string result = Client.GetStringAsync("php/login/load_login.php").Result;
+                NSLogin tmplogin = json.JsonDeserialize<NSLogin>(result);
+                Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                Thread.Sleep(1);
+                string t = CreateRandomString();
+                s = "[2,\"0." + t + "\",\"game\",{}]";
+                Requests.Add(t, 1);
+                NSSocket.Send(s);
+            }
             //GetStats();
         }
 
