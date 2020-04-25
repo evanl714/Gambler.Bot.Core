@@ -18,7 +18,7 @@ namespace DoormatCore.Games
         public string ServerHash { get; set; }
         public string ServerSeed { get; set; }
         public string ClientSeed { get; set; }
-
+        public int WinnableType { get; set; }
         public override PlaceBet CreateRetry()
         {
             return new PlaceDiceBet(TotalAmount, High, Chance);
@@ -27,6 +27,31 @@ namespace DoormatCore.Games
         public override bool GetWin(BaseSite Site)
         {
             return (((bool)High ? (decimal)Roll > (decimal)Site.MaxRoll - (decimal)(Chance) : (decimal)Roll < (decimal)(Chance)));
+        }
+
+        public int CalculateWinnableType(BaseSite Site)
+        {
+            if (Chance>=50 && Roll > Site.MaxRoll-Chance && Roll < Chance)
+            {
+                WinnableType = 1;
+            }
+            else if (Chance < 50 && Roll < Site.MaxRoll - Chance && Roll > Chance)
+            {
+                WinnableType = 2;
+            }
+            else if (GetWin(Site))
+            {
+                WinnableType = 3;
+            }
+            else
+            {
+                WinnableType = 4;
+            }
+            //check if roll is between overlap
+            //else if chance <50% check if roll is between non overlap
+            //else if win
+            //else if loss
+            return WinnableType;
         }
     }
     

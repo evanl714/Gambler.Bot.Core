@@ -215,6 +215,7 @@ namespace DoormatCore.Sites
                         }
                     }
                     DiceBet tmpbet = tmp.ToBet();
+                    tmpbet.IsWin = tmpbet.GetWin(this);
                     tmpbet.Guid = BetDetails.GUID;
                     callBetFinished(tmpbet);
                     retrycount = 0;

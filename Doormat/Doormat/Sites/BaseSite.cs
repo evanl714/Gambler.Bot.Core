@@ -465,6 +465,10 @@ namespace DoormatCore.Sites
         }
         protected void callBetFinished(Bet NewBet)
         {
+            if (NewBet is DiceBet dicebet)
+            {
+                dicebet.CalculateWinnableType(this);                
+            }
             if (BetFinished != null)
             {
                 BetFinished(this, new BetFinisedEventArgs(NewBet));

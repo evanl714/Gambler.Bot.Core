@@ -26,7 +26,8 @@ namespace DoormatCore.Games
         public long Userid { get; set; }
         public string Currency { get; set; }
         public string Guid { get; set; }
-
+        public decimal Edge { get; set; }
+        public bool IsWin { get; set; }
         public abstract bool GetWin(BaseSite Site);
         public abstract PlaceBet CreateRetry();
     }

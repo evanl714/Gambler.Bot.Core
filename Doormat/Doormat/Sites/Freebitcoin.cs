@@ -205,6 +205,7 @@ namespace DoormatCore.Sites
                     lastupdate = DateTime.Now;
                     UpdateStats();
                 }
+                Thread.Sleep(100);
             }
         }
         string clientseed = "";
@@ -276,6 +277,7 @@ namespace DoormatCore.Sites
                             Roll = decimal.Parse(msgs[2], System.Globalization.NumberFormatInfo.InvariantInfo) / 100.0m
 
                         };
+                        tmp.IsWin = tmp.GetWin(this);
                         Stats.Balance = decimal.Parse(msgs[3], System.Globalization.NumberFormatInfo.InvariantInfo);
                         if (msgs[1] == "w")
                             Stats.Wins++;
