@@ -217,9 +217,10 @@ namespace DoormatCore.Sites
         
         private void PlaceBetThread(object BetDetails)
         {
-            if (BetDetails is PlaceDiceBet && this is iDice)
+            if (BetDetails is PlaceDiceBet dicebet && this is iDice)
             {
-                (this as iDice).PlaceDiceBet(BetDetails as PlaceDiceBet);                
+                callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:p4} chance to win, {(dicebet.High?"High":"Low")}");
+                (this as iDice).PlaceDiceBet(dicebet);                
             }
             if (BetDetails is PlaceCrashBet && this is iCrash)
             {
@@ -467,6 +468,7 @@ namespace DoormatCore.Sites
         {
             if (NewBet is DiceBet dicebet)
             {
+                dicebet.IsWin = dicebet.GetWin(this);
                 dicebet.CalculateWinnableType(this);                
             }
             if (BetFinished != null)

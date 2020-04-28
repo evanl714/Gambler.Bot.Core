@@ -22,10 +22,12 @@ namespace DoormatCore.Sites
         DateTime Lastbet = DateTime.Now;
         string secret = "";
         bitvestCurWeight Weights = null;
-        decimal[] Limits = new decimal[0];
+        double[] Limits = new double[0];
         string pw = "";
         string lasthash = "";
         string[] CurrencyMap = new string[] { };
+        string seed = "";
+        
         public Bitvest()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
@@ -167,8 +169,8 @@ namespace DoormatCore.Sites
                     Stats.Bets = int.Parse(tmplogin.self_total_bets_dice.Replace(",", ""), System.Globalization.NumberFormatInfo.InvariantInfo);
                     Stats.Wins = 0;
                     Stats.Losses = 0;
-                    
-                    
+                    seed = tmpblogin.last_user_seed;
+
                     lastupdate = DateTime.Now;
                     isbv = true;
                     pw = Password;
@@ -200,30 +202,32 @@ namespace DoormatCore.Sites
             callLoginFinished(false);
         }
 
-        public override string GenerateNewClientSeed()
+       
+        string RandomSeed()
         {
             string s = "";
             string chars = "0123456789abcdef";
-            while (s.Length < 20)
+            int length = R.Next(8, 64);
+            while (s.Length <= length)
             {
                 s += chars[R.Next(0, chars.Length)];
             }
 
             return s;
         }
-
         public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {
-                
+                if (string.IsNullOrWhiteSpace(seed))
+                    seed = RandomSeed();
                 decimal amount = BetDetails.Amount;
                 decimal chance = BetDetails.Chance;
                 bool High = BetDetails.High;
 
                 decimal tmpchance = High ? MaxRoll - chance + 0.0001m : chance - 0.0001m;
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
-                string seed = GenerateNewClientSeed();
+               
                 pairs.Add(new KeyValuePair<string, string>("bet", (amount).ToString(System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("target", tmpchance.ToString("0.0000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("side", High ? "high" : "low"));
@@ -342,6 +346,7 @@ namespace DoormatCore.Sites
                 {
                     UpdateStats();
                 }
+                Thread.Sleep(1000);
             }
         }
 
@@ -401,12 +406,16 @@ namespace DoormatCore.Sites
                         {
                             switch (Currency)
                             {
+                                //"btc", "tok", "ltc", "eth", "doge","bch" 
                                 case 0:
                                     Stats.Balance = (decimal)tmpbase.data.balance; break;
                                 case 1:
-                                    Stats.Balance = (decimal)tmpbase.data.ether_balance; break;
+                                    Stats.Balance = (decimal)tmpbase.data.token_balance; break;
                                 case 2:
                                     Stats.Balance = (decimal)tmpbase.data.litecoin_balance; break;
+                                case 3: Stats.Balance = (decimal)tmpbase.data.ether_balance; break;
+                                case 4: Stats.Balance = (decimal)tmpbase.data.balance_dogecoin; break;
+                                case 5: Stats.Balance = (decimal)tmpbase.data.balance_bcash; break;
                                 default:
                                     Stats.Balance = (decimal)tmpbase.data.token_balance; break;
                             }
@@ -555,7 +564,8 @@ namespace DoormatCore.Sites
             public string server_hash { get; set; }
             public bitvesttip tip { get; set; }
             public bitvestCurWeight currency_weight { get; set; }
-            public decimal[] rate_limits { get; set; }
+            public double[] rate_limits { get; set; }
+            public string last_user_seed { get; set; }
         }
         public class bitvestCurWeight
         {
@@ -566,6 +576,28 @@ namespace DoormatCore.Sites
             public string DOGE { get; set; }
             public string BCH { get; set; }
         }
+        /*{"data":{"self-user-id":46534,"self-username":"Seuntjie",
+          "balance":0.00586720655,
+          "token_balance":39775.605,
+          "ether_balance":0.0001,
+          "litecoin_balance":0.0001,"pending":0,"ether_pending":0,"litecoin_pending":0,"address":"12Nfe1Dp9VAFRqKLKE9vgrP28qJH3Aaad4",
+          "ether_address":"0x3e10685213a68b3321d6b65352ac9cc94da559f1",
+          "litecoin_address":"LQe1t6YCiteYfVJ9n1BXHdXopzmp94CMWd",
+          "total_bet":0.01493638,
+          "total_won":0.0082235001,
+          "total_profit":-0.0067128799,
+          "token_total_bet":811453,
+          "token_total_won":761301.63,
+          "token_total_profit":-50151.37,
+          "ether_total_bet":0,
+          "ether_total_won":0,
+          "ether_total_profit":0,
+          "litecoin_total_bet":0,
+          "litecoin_total_won":0,
+          "litecoin_total_profit":0,
+          "bets":2272,
+          "server_hash":"30e01c8a1385bd3bd7cf8a2856e73bf639807eccced705159538b074582839a9"}}
+          */
         public class bitvestLogin
         {
 
@@ -615,6 +647,7 @@ namespace DoormatCore.Sites
 
 
         }
+
         public class BitVestGetBalance
         {
             public int self_user_id { get; set; }
@@ -623,6 +656,8 @@ namespace DoormatCore.Sites
             public decimal token_balance { get; set; }
             public decimal ether_balance { get; set; }
             public decimal litecoin_balance { get; set; }
+            public decimal balance_dogecoin { get; set; }
+            public decimal balance_bcash { get; set; }
             public decimal pending { get; set; }
             public decimal ether_pending { get; set; }
             public decimal litecoin_pending { get; set; }
@@ -641,13 +676,21 @@ namespace DoormatCore.Sites
             public decimal litecoin_total_bet { get; set; }
             public decimal litecoin_total_won { get; set; }
             public decimal litecoin_total_profit { get; set; }
+            public decimal dogecoin_total_bet { get; set; }
+            public decimal dogecoin_total_won { get; set; }
+            public decimal dogecoin_total_profit { get; set; }
+            public decimal bcash_total_bet { get; set; }
+            public decimal bcash_total_won { get; set; }
+            public decimal bcash_total_profit { get; set; }
             public decimal bets { get; set; }
             public string server_hash { get; set; }
         }
+
         public class BivestGetBalanceRoot
         {
             public BitVestGetBalance data { get; set; }
         }
+
         public class bitvesttip
         {
             public bool enabled { get; set; }
@@ -659,6 +702,7 @@ namespace DoormatCore.Sites
             public string secret { get; set; }
 
         }
+
         public class bitvestbet
         {
             public bool success { get; set; }
@@ -669,6 +713,7 @@ namespace DoormatCore.Sites
             public string result { get; set; }
             public string server_seed { get; set; }
             public string server_hash { get; set; }
+            public string player_seed { get; set; }
         }
         public class bitvestbetdata
         {
