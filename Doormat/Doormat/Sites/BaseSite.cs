@@ -219,7 +219,7 @@ namespace DoormatCore.Sites
         {
             if (BetDetails is PlaceDiceBet dicebet && this is iDice)
             {
-                callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:p4} chance to win, {(dicebet.High?"High":"Low")}");
+                callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High?"High":"Low")}");
                 (this as iDice).PlaceDiceBet(dicebet);                
             }
             if (BetDetails is PlaceCrashBet && this is iCrash)

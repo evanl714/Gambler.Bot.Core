@@ -255,11 +255,11 @@ namespace DoormatCore.Sites
                             Chance = chance,
                             High = High,
                             ClientSeed = seed,
-                            ServerHash = lasthash,
+                            ServerHash = tmp.server_hash,
                             ServerSeed = tmp.server_seed,
                             Roll = (decimal)tmp.game_result.roll,
                             Profit = tmp.game_result.win == 0 ? -amount : (decimal)tmp.game_result.win - amount,
-                            Nonce = -1,
+                            Nonce = long.Parse(tmp.player_seed.Substring(tmp.player_seed.IndexOf("|") + 1)),
                             BetID = tmp.game_id.ToString(),
                             Currency = Currencies[Currency]
 

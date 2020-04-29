@@ -47,7 +47,7 @@ namespace DoormatCore.Helpers
                 if (string.IsNullOrWhiteSpace(currencyString))
                 {
                     currencyString = "";
-                    foreach (Games.Games x in SupportedGames)
+                    foreach (string x in Currencies)
                     {
                         if (currencyString != "")
                             currencyString += ", ";
@@ -80,6 +80,9 @@ namespace DoormatCore.Helpers
                 return vmgames;
             }
         }
+
+        public CurrencyVM SelectedCurrency { get; set; }
+        public CurrencyVM SelectedGame { get; set; }
     }
 
     public class CurrencyVM
