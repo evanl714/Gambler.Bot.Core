@@ -8,8 +8,6 @@ using System.Threading;
 
 namespace DoormatCore.Sites
 {
-
-
     public abstract class BaseSite
     {
 
@@ -240,9 +238,11 @@ namespace DoormatCore.Sites
         #region Extention Methods
         public void ResetSeed(string ClientSeed)
         {
-            ActiveActions.Add(SiteAction.ResetSeed);
+            
             if (CanChangeSeed)
             {
+                ActiveActions.Add(SiteAction.ResetSeed);
+                callNotify("Resetting seed.");
                 _ResetSeed();
                 if (CanSetClientSeed)
                 {
@@ -267,9 +267,11 @@ namespace DoormatCore.Sites
 
         public void Invest(decimal Amount)
         {
-            ActiveActions.Add(SiteAction.Invest);
+            
             if (AutoInvest)
             {
+                ActiveActions.Add(SiteAction.Invest);
+                callNotify($"Investing {Amount} {CurrentCurrency}");
                 _Invest(Amount);
                 UpdateStats();
             }
@@ -283,6 +285,7 @@ namespace DoormatCore.Sites
             //ActiveActions.Add(TriggerAction.Donate);
             if (AutoWithdraw || CanTip)
             {
+                callNotify($"Donating {Amount} {CurrentCurrency}");
                 _Donate(Amount);
                 UpdateStats();
             }
@@ -293,9 +296,11 @@ namespace DoormatCore.Sites
 
         public void Withdraw(string Address, decimal Amount)
         {
-            ActiveActions.Add(SiteAction.Withdraw);
+            
             if (AutoWithdraw)
             {
+                ActiveActions.Add(SiteAction.Withdraw);
+                callNotify($"Withdrawing {Amount} {CurrentCurrency} to {Address}");
                 _Withdraw(Address, Amount);
                 UpdateStats();
             }
@@ -390,9 +395,11 @@ namespace DoormatCore.Sites
 
         public void SendTip(string Username, decimal Amount)
         {
-            ActiveActions.Add(SiteAction.Tip);
+            
             if (CanTip)
             {
+                ActiveActions.Add(SiteAction.Tip);
+                callNotify($"Tipping {Amount} {CurrentCurrency} to {Username}");
                 _SendTip(Username, Amount);
             }
             else

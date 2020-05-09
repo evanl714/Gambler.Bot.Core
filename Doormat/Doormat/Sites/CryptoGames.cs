@@ -40,7 +40,7 @@ namespace DoormatCore.Sites
             this.CanTip = false;
             this.CanVerify = true;
             this.Currencies = sCurrencies;
-            SupportedGames = new Games.Games[] { Games.Games.Dice, Games.Games.Plinko, Games.Games.Roulette };
+            SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://www.crypto-games.net/fair.aspx?coin=BTC&type=3&id={0}";
             this.Edge = 0.8m;

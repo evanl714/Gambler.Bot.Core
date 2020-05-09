@@ -46,7 +46,7 @@ namespace DoormatCore.Sites
             this.CanTip = true;
             this.CanVerify = true;
             this.Currencies = new string[] { "btc"};
-            SupportedGames = new Games.Games[] { Games.Games.Dice, Games.Games.Plinko, Games.Games.Roulette };
+            SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;

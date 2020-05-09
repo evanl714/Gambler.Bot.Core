@@ -48,7 +48,7 @@ namespace DoormatCore.Sites
             this.CanVerify = true;
             this.Currencies = new string[] { "btc", "tok", "ltc", "eth", "doge","bch" };
             CurrencyMap = new string[] { "bitcoins", "tokens", "litecoins", "ethers", "dogecoins", "bcash" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice, Games.Games.Plinko, Games.Games.Roulette };
+            SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
@@ -307,6 +307,10 @@ namespace DoormatCore.Sites
                             placebetthread(bet);
                             return;*/
                         }
+                        else
+                        {
+                            callError(tmp.msg, false, ErrorType.InvalidBet);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -553,6 +557,11 @@ namespace DoormatCore.Sites
                 }
             }
             //return false;
+        }
+
+        protected override void _ResetSeed()
+        {
+            
         }
 
         public class bitvestLoginBase

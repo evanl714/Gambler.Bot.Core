@@ -38,7 +38,7 @@ namespace DoormatCore.Sites
             this.CanSetClientSeed = false;
             this.CanTip = false;
             this.CanVerify = false;
-            this.Currencies = new string[] { "BTC", "LTC", "ETH", "CSNO", "EOS" };
+            this.Currencies = new string[] { "btc", "doge", "ltc", "eth", "csno", "eos" };
             SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://www.bitdice.me/{0}";
@@ -66,6 +66,15 @@ namespace DoormatCore.Sites
                 {
                     if (!string.IsNullOrWhiteSpace(NewBet.error))
                     {
+                        if(NewBet.error.ToLower().StartsWith("minimum bet amount is") || NewBet.error.ToLower().StartsWith("you can bet on "))
+                        {
+                            callError(NewBet.error, false, ErrorType.InvalidBet);
+                        }
+                        else if (NewBet.error.ToLower()== "your balance is too low")
+                        {
+                            callError(NewBet.error, false, ErrorType.BalanceTooLow);
+                        }
+                        
                         callError(NewBet.error, false, ErrorType.Unknown);                        
                         return;
                     }

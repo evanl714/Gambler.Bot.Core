@@ -49,7 +49,7 @@ namespace DoormatCore.Sites
             this.CanTip = false;
             this.CanVerify = false;
 
-            SupportedGames = new Games.Games[] { Games.Games.Dice, Games.Games.Roulette };
+            SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
