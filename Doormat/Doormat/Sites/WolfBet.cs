@@ -19,7 +19,7 @@ namespace DoormatCore.Sites
         HttpClient Client;
         HttpClientHandler ClientHandlr;        
         string URL = "https://wolf.bet";
-        public override void SetProxy(ProxyDetails ProxyInfo)
+        public WolfBet()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
             this.MaxRoll = 99.99m;
@@ -42,6 +42,12 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://bit-exo.com/{0}";
             this.Edge = 1;
+        }
+
+
+        public override void SetProxy(ProxyDetails ProxyInfo)
+        {
+            
         }
 
         protected override void _Disconnect()

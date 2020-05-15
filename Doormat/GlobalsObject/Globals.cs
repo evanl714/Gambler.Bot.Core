@@ -24,5 +24,6 @@ namespace GlobalsObject
         public Action Ching{ get; set; }
         public Action ResetBuiltIn{ get; set; }
         public Action<string> ExportSim { get; set; }
+        public Action Stop { get; set; }
     }
 }

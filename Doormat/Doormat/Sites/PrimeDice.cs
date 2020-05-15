@@ -51,7 +51,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://primedice.com/bet/{0}";
             this.Edge = 1;
-            
+            NonceBased = true;
         }
 
         public override void SetProxy(ProxyDetails ProxyInfo)
