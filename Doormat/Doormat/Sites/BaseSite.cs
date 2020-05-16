@@ -1,5 +1,6 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Jint.Native.String;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -130,7 +131,8 @@ namespace DoormatCore.Sites
                               maxroll=MaxRoll,
                                name=SiteName,
                                 siteurl=SiteURL,
-                                 tipusingname=TipUsingName
+                                 tipusingname=TipUsingName,
+                                  Currencies=CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
                     };
                 }
                 return siteDetails;
@@ -536,26 +538,24 @@ namespace DoormatCore.Sites
         }
         protected void callTipFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(SiteAction.Withdraw))
-                ActiveActions.Remove(SiteAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Tip))
+                ActiveActions.Remove(SiteAction.Tip);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callResetSeedFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(SiteAction.Withdraw))
-                ActiveActions.Remove(SiteAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.ResetSeed))
+                ActiveActions.Remove(SiteAction.ResetSeed);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callDonationFinished(bool Success, string Message)
-        {
-            if (ActiveActions.Contains(SiteAction.Withdraw))
-                ActiveActions.Remove(SiteAction.Withdraw);
+        {   
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callInvestFinished(bool Success, string Message)
         {
-            if (ActiveActions.Contains(SiteAction.Withdraw))
-                ActiveActions.Remove(SiteAction.Withdraw);
+            if (ActiveActions.Contains(SiteAction.Invest))
+                ActiveActions.Remove(SiteAction.Invest);
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
 
@@ -677,8 +677,10 @@ namespace DoormatCore.Sites
         public bool canwithdraw { get; set; }
         public bool canresetseed { get; set; }
         public bool caninvest { get; set; }
-        public string siteurl { get; set; }       
-        
+        public string siteurl { get; set; }
+        public string[] Currencies { get; set; }
+        public string[] Games { get; set; }
+
     }
 
 }

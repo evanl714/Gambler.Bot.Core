@@ -175,6 +175,8 @@ devise:btc*/
                     FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                     string sEmitResponse = Client.PostAsync("api/change-seeds", Content).Result.Content.ReadAsStringAsync().Result;
                     bsResetSeedBase bsbase = json.JsonDeserialize<bsResetSeedBase>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    callResetSeedFinished(true, "");
+                    return;
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server_hashed, bsbase._return.last_seeds_revealed.seed_server_revealed);
 
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server, bsbase._return.last_seeds_revealed.seed_server_revealed);
@@ -195,6 +197,8 @@ devise:btc*/
                     {
                         Thread.Sleep(2000);
                         _ResetSeed();
+
+                        return;
                     }
                 }
             }
@@ -203,6 +207,8 @@ devise:btc*/
                 callNotify("Too soon to update seed.");
             }
             Thread.Sleep(51);
+            callResetSeedFinished(false, "");
+            return;
         }
 
 

@@ -21,7 +21,7 @@ namespace DoormatCore.Sites
         SslStream sslStream;
         long id = 0;
         string basestring = "{{\"id\":{0},\"method\":\"{1}\"{2}}}\r\n";
-        public static string[] sCurrencies = new string[] { "Btc", "Ltc", "Eth" };
+        public static string[] sCurrencies = new string[] { "Btc", "Ltc", "Eth","Doge" };
 
         public YoloDice()
         {
