@@ -31,7 +31,9 @@ namespace DoormatCore.Sites
         string ServerHash = "";
         bool High;
         decimal Chance;
-
+        System.Timers.Timer LoginTimer = new System.Timers.Timer(100);
+        bool LoginStarted = false;
+        DateTime LoginTime = new DateTime();
         public BitExo()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false)};
@@ -55,8 +57,19 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://bit-exo.com/{0}";
             this.Edge = 1;
+            LoginTimer.Elapsed += LoginTimer_Elapsed;
+            LoginTimer.Enabled = false;
         }
 
+        private void LoginTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (LoginStarted && (DateTime.Now- LoginTime).TotalSeconds>30)
+            {
+                LoginStarted = false;
+                LoginTimer.Enabled = false;
+                callLoginFinished(false);
+            }
+        }
 
         public override void SetProxy(ProxyDetails ProxyInfo)
         {
@@ -97,6 +110,9 @@ namespace DoormatCore.Sites
             try
             {
                 accesstoken = APIKey;
+                LoginStarted = true;
+                LoginTime = DateTime.Now;
+                LoginTimer.Enabled = true;
                 ConnectSocket();
                 if (WSClient.State == WebSocketState.Open)
                 {
@@ -104,9 +120,13 @@ namespace DoormatCore.Sites
                     ispd = true;
 
                     lastupdate = DateTime.Now;
-                    ForceUpdateStats = false;
+                   
+
+                    //ForceUpdateStats = true;
                     new Thread(new ThreadStart(GetBalanceThread)).Start();
-                    callLoginFinished(true); return;
+                    
+                    //callLoginFinished(true); 
+                    return;
                 }
                 else
                 {
@@ -230,7 +250,7 @@ namespace DoormatCore.Sites
 
         private void WSClient_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            //Logger.DumpLog(e.Message, -1);
+            Logger.DumpLog(e.Message, -1);
             if (e.Message == "3probe")
             {
                 WSClient.Send("5");
@@ -287,9 +307,31 @@ namespace DoormatCore.Sites
                                             Requests.Add(tmpid, ReqType.balance);
                                             WSClient.Send("42" + tmpid + "[\"get_hash\"]");
                                         }
-
+                                        else if (response.Contains("balance too low"))
+                                        {
+                                            callError("balance too low", false, ErrorType.BalanceTooLow);
+                                        }
+                                        else if (response.Contains("wager too low"))
+                                        {
+                                            callError("wager too low", false, ErrorType.BetTooLow);
+                                        }
+                                        else //if (response.Contains("bet profit too low"))
+                                        {
+                                            callError(response, false, ErrorType.InvalidBet);
+                                        }
                                     }
                                     break;
+                                case ReqType.tip:
+                                    if (e.Message.Contains("SENT"))
+                                        callTipFinished(true, "");
+                                    else
+                                    { 
+                                        callTipFinished(false, e.Message);
+                                        callError(e.Message, false, ErrorType.Tip);
+                                            
+                                    }
+                                    break;
+                                
                             }
                         }
                     }
@@ -322,6 +364,12 @@ namespace DoormatCore.Sites
         void ProcessBalance(string Res)
         {
             BEBalanceBase tmpResult = json.JsonDeserialize<BEBalanceBase>(Res);
+            if (LoginStarted)
+            {
+                LoginTimer.Enabled = false;
+                LoginStarted = false;
+                callLoginFinished(true);
+            }
             switch (CurrentCurrency.ToLower())
             {
                 case "btc":
@@ -366,7 +414,8 @@ namespace DoormatCore.Sites
                     Stats.Wagered = tmpResult.user.stats.ltc.wager / 100000000m;
                     Stats.Profit = tmpResult.user.stats.ltc.profit / 100000000m;
                     break;
-            }            
+            }
+            callStatsUpdated(Stats);
         }
 
         void ProcessHash(string Res)
@@ -420,6 +469,12 @@ namespace DoormatCore.Sites
 
         private void WSClient_Closed(object sender, EventArgs e)
         {
+            if(LoginStarted)
+            {
+                LoginStarted = false;
+                LoginTimer.Enabled = false;
+                callLoginFinished(false);
+            }
             Logger.DumpLog("BE socket closed", 1);
         }
 
@@ -455,6 +510,8 @@ namespace DoormatCore.Sites
             {
 
             }
+
+            
         }
 
         public class BEPayout

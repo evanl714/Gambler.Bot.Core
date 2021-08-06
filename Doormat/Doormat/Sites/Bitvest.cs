@@ -496,7 +496,7 @@ namespace DoormatCore.Sites
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 string sEmitResponse = Client.PostAsync("action.php", Content).Result.Content.ReadAsStringAsync().Result;
-
+                callWithdrawalFinished(false, "This needs to be fixed. The withdrawal might have succeeded");
                 //return true;
             }
             catch (Exception e)
@@ -543,8 +543,8 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("secret", secret));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 string sEmitResponse = Client.PostAsync("action.php", Content).Result.Content.ReadAsStringAsync().Result;
-
-               // return (sEmitResponse.Contains("true"));
+                callTipFinished(false, "This needs to be fixed. The withdrawal might have succeeded");
+                // return (sEmitResponse.Contains("true"));
             }
             catch (WebException e)
             {

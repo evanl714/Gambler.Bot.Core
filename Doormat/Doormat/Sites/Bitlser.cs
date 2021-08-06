@@ -106,45 +106,50 @@ devise:btc*/
 
                 if (bsbase != null)
                    // if (bsbase._return != null)
-                        if (bsbase.success)
+                    if (bsbase.success)
+                    {
+                        Stats.Balance = decimal.Parse(bsbase.new_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        lastupdate = DateTime.Now;
+                        DiceBet tmp = bsbase.ToBet();
+                        tmp.Guid = BetObj.GUID;
+                        Stats.Profit += (decimal)tmp.Profit;
+                        Stats.Wagered += (decimal)tmp.TotalAmount;
+                        tmp.DateValue = DateTime.Now;
+                        bool win = false;
+                        if ((tmp.Roll > 99.99m - tmp.Chance && tmp.High) || (tmp.Roll < tmp.Chance && !tmp.High))
                         {
-                            Stats.Balance = decimal.Parse(bsbase.new_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
-                            lastupdate = DateTime.Now;
-                            DiceBet tmp = bsbase.ToBet();
-                            tmp.Guid = BetObj.GUID;
-                            Stats.Profit += (decimal)tmp.Profit;
-                            Stats.Wagered += (decimal)tmp.TotalAmount;
-                            tmp.DateValue = DateTime.Now;
-                            bool win = false;
-                            if ((tmp.Roll > 99.99m - tmp.Chance && tmp.High) || (tmp.Roll < tmp.Chance && !tmp.High))
-                            {
-                                win = true;
-                            }
-                            //set win
-                            if (win)
-                                Stats.Wins++;
-                            else
-                                Stats.Losses++;
-                            Stats.Bets++;
-                            LastBetAmount = (double)BetObj.Amount;
-                            LastBet = DateTime.Now;
-                            callBetFinished(tmp);
-                            return;
+                            win = true;
                         }
+                        //set win
+                        if (win)
+                            Stats.Wins++;
                         else
+                            Stats.Losses++;
+                        Stats.Bets++;
+                        LastBetAmount = (double)BetObj.Amount;
+                        LastBet = DateTime.Now;
+                        callBetFinished(tmp);
+                        return;
+                    }
+                    else
+                    {
+                        if (bsbase.error != null)
                         {
-                            if (bsbase.error != null)
+                            if (bsbase.error.StartsWith("Maximum bet") || bsbase.error== "Bet amount not valid")
                             {
-                                if (bsbase.error.Contains("Bet in progress, please wait few seconds and retry."))
-                                {
-                                    callNotify("Bet in progress. You need to log in with your browser and place a bet manually to fix this.");
-                                }
-                                else
-                                {
-                                    callNotify(bsbase.error);
-                                }
+                                callError(bsbase.error, false, ErrorType.InvalidBet);
+                            }
+
+                            if (bsbase.error.Contains("Bet in progress, please wait few seconds and retry."))
+                            {
+                                callNotify("Bet in progress. You need to log in with your browser and place a bet manually to fix this.");
+                            }
+                            else
+                            {
+                                callNotify(bsbase.error);
                             }
                         }
+                    }
                 //
 
             }

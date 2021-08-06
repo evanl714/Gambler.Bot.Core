@@ -145,6 +145,7 @@ namespace DoormatCore.Sites
         #endregion
 
         public bool ForceUpdateStats { get; protected set; }
+        public DateTime LastStats { get; set; } = DateTime.Now;
 
         public Games.Games[] SupportedGames { get; set; } = new Games.Games[] { Games.Games.Dice };
 
@@ -197,6 +198,7 @@ namespace DoormatCore.Sites
         /// </summary>
         public void UpdateStats()
         {
+            ForceUpdateStats = false;
             _UpdateStats();
 
             StatsUpdated?.Invoke(this, new StatsUpdatedEventArgs(this.Stats));
@@ -217,28 +219,55 @@ namespace DoormatCore.Sites
         
         private void PlaceBetThread(object BetDetails)
         {
+            
+            
             if (BetDetails is PlaceDiceBet dicebet && this is iDice)
             {
+                if (dicebet.TotalAmount<0)
+                {
+                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                    return;
+                }
+                else if (dicebet.Chance<=0)
+                {
+                    callError("Chance to win must be > 0", false, ErrorType.BetTooLow);
+                    return;
+                }
                 callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High?"High":"Low")}");
                 (this as iDice).PlaceDiceBet(dicebet);                
             }
-            if (BetDetails is PlaceCrashBet && this is iCrash)
+            if (BetDetails is PlaceCrashBet crashBet&& this is iCrash)
             {
+                if (crashBet.TotalAmount < 0)
+                {
+                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                    return;
+                }
                 (this as iCrash).PlaceCrashBet(BetDetails as PlaceCrashBet);
             }
-            if (BetDetails is PlacePlinkoBet && this is iPlinko)
+            if (BetDetails is PlacePlinkoBet plinkoBet && this is iPlinko)
             {
+                if (plinkoBet.TotalAmount < 0)
+                {
+                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                    return;
+                }
                 (this as iPlinko).PlacePlinkoBet(BetDetails as PlacePlinkoBet);
             }
-            if (BetDetails is PlaceRouletteBet && this is iRoulette)
+            if (BetDetails is PlaceRouletteBet rouletteBet && this is iRoulette)
             {
+                if (rouletteBet.TotalAmount < 0)
+                {
+                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                    return;
+                }
                 (this as iRoulette).PlaceRouletteBet(BetDetails as PlaceRouletteBet);
             }
         }
         #endregion
 
         #region Extention Methods
-        public void ResetSeed(string ClientSeed)
+        public void ResetSeed(string ClientSeed = null)
         {
             
             if (CanChangeSeed)
@@ -254,7 +283,7 @@ namespace DoormatCore.Sites
             else
                 callError("Reset Seed not allowed!", false, ErrorType.NotImplemented);
         }
-        protected virtual void _ResetSeed() { }
+        protected virtual void _ResetSeed() { callError("Reset Seed not implemented", false, ErrorType.NotImplemented); }
 
         public void SetClientSeed(string ClientSeed)
         {
@@ -309,7 +338,7 @@ namespace DoormatCore.Sites
             else
                 callError("Withdrawing not allowed!", false, ErrorType.NotImplemented);
         }
-        protected virtual void _Withdraw(string Address, decimal Amount) { }
+        protected virtual void _Withdraw(string Address, decimal Amount) { callError("Withdrawing not implemented", false, ErrorType.Withdrawal); }
 
         public void Register(string Username, string Password)
         {
@@ -534,19 +563,21 @@ namespace DoormatCore.Sites
         {
             if (ActiveActions.Contains(SiteAction.Withdraw))
                 ActiveActions.Remove(SiteAction.Withdraw);
+            ForceUpdateStats = true;
             OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callTipFinished(bool Success, string Message)
         {
             if (ActiveActions.Contains(SiteAction.Tip))
                 ActiveActions.Remove(SiteAction.Tip);
-            OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
+            ForceUpdateStats = true;
+            OnTipFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callResetSeedFinished(bool Success, string Message)
         {
             if (ActiveActions.Contains(SiteAction.ResetSeed))
                 ActiveActions.Remove(SiteAction.ResetSeed);
-            OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
+            OnResetSeedFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callDonationFinished(bool Success, string Message)
         {   
@@ -556,7 +587,8 @@ namespace DoormatCore.Sites
         {
             if (ActiveActions.Contains(SiteAction.Invest))
                 ActiveActions.Remove(SiteAction.Invest);
-            OnWithdrawalFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
+            ForceUpdateStats = true;
+            OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
 
         #endregion
@@ -598,6 +630,7 @@ namespace DoormatCore.Sites
     {
         InvalidBet,
         BalanceTooLow,
+        BetTooLow,
         ResetSeed,
         Withdrawal,
         Tip,

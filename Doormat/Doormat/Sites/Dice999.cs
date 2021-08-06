@@ -55,9 +55,9 @@ namespace DoormatCore.Sites
         {
             while (isD999)
             {
-                if (sessionCookie != "" && sessionCookie != null && ((DateTime.Now - Lastbalance).TotalSeconds >= 60 || ForceUpdateStats))
+                if (sessionCookie != "" && sessionCookie != null && ((DateTime.Now - LastStats).TotalSeconds >= 60 || ForceUpdateStats))
                 {
-                    Lastbalance = DateTime.Now;
+                    LastStats = DateTime.Now;
                     UpdateStats();
                 }
                 Thread.Sleep(1100);
@@ -124,7 +124,7 @@ namespace DoormatCore.Sites
                 d999Login tmpU = json.JsonDeserialize<d999Login>(responseData);
                 if (tmpU.SessionCookie != "" && tmpU.SessionCookie != null)
                 {
-                    Lastbalance = DateTime.Now;
+                    LastStats = DateTime.Now;
                     sessionCookie = tmpU.SessionCookie;
                     Stats.Balance = tmpU.Balance / 100000000.0m;
                     Stats.Profit = tmpU.Profit / 100000000.0m;
@@ -132,7 +132,7 @@ namespace DoormatCore.Sites
                     Stats.Bets = (int)tmpU.BetCount;
                     Stats.Wins = (int)tmpU.BetWinCount;
                     Stats.Losses = (int)tmpU.BetLoseCount;
-                    Lastbalance = DateTime.Now.AddMinutes(-2);
+                    LastStats = DateTime.Now.AddMinutes(-2);
                     UpdateStats();                    
                     uid = tmpU.Accountid;
                 }
@@ -154,7 +154,8 @@ namespace DoormatCore.Sites
                     _Login(LoginParams);
             }
             if (!Loggedin)
-            {
+            {   
+                
                 callLoginFinished(sessionCookie != "");
                 //Loggedin = true;
             }
@@ -250,19 +251,37 @@ namespace DoormatCore.Sites
                 {
 
                 }
-                if (tmpBet.ChanceTooHigh == 1 || tmpBet.ChanceTooLow == 1 | tmpBet.InsufficientFunds == 1 || tmpBet.MaxPayoutExceeded == 1 || tmpBet.NoPossibleProfit == 1)
+                if (tmpBet.ChanceTooHigh == 1 || tmpBet.ChanceTooLow == 1 || tmpBet.InsufficientFunds == 1 || tmpBet.MaxPayoutExceeded == 1 || tmpBet.NoPossibleProfit == 1 || tmpBet.error!=null)
                 {
+                    
+                    ErrorType typ = ErrorType.Unknown;
+                    string msg = tmpBet.error;
                     if (tmpBet.ChanceTooHigh == 1)
-                        err = "Chance too high";
+                    { 
+                        typ = ErrorType.InvalidBet;
+                        msg = "Chance too high";
+                    }
                     if (tmpBet.ChanceTooLow == 1)
-                        err += "Chance too Low";
+                    {
+                        typ = ErrorType.InvalidBet;
+                        msg = "Chance too Low";
+                    }
                     if (tmpBet.InsufficientFunds == 1)
-                        err += "Insufficient Funds";
+                    {
+                        typ = ErrorType.BalanceTooLow; 
+                        msg = "Insufficient Funds";
+                    }
                     if (tmpBet.MaxPayoutExceeded == 1)
-                        err += "Max Payout Exceeded";
+                    {
+                        typ = ErrorType.InvalidBet;
+                        msg = "Max Payout Exceeded";
+                    }
                     if (tmpBet.NoPossibleProfit == 1)
-                        err += "No Possible Profit";
-                    throw new Exception();
+                    {
+                        typ = ErrorType.InvalidBet;
+                        msg = "No Possible Profit";
+                    }
+                    callError(msg, false, typ);
                 }
                 else if (tmpBet.BetId == 0)
                 {
@@ -315,12 +334,12 @@ namespace DoormatCore.Sites
                 callError(e.ToString(), true, ErrorType.Unknown);
             }
         }
-        DateTime Lastbalance = DateTime.Now;
+        
         protected override void _UpdateStats()
         {
-            if (sessionCookie != "" && sessionCookie != null && (DateTime.Now - Lastbalance).TotalSeconds > 60)
+            if (sessionCookie != "" && sessionCookie != null && (DateTime.Now - LastStats).TotalSeconds > 60)
             {
-                Lastbalance = DateTime.Now;
+                LastStats = DateTime.Now;
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
                 pairs.Add(new KeyValuePair<string, string>("a", "GetBalance"));
                 pairs.Add(new KeyValuePair<string, string>("s", sessionCookie));
@@ -358,7 +377,72 @@ namespace DoormatCore.Sites
 
                 }
             }
+
+            
         }
+
+        protected override void _Withdraw(string Address, decimal Amount)
+        {
+            List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+            pairs.Add(new KeyValuePair<string, string>("a", "Withdraw"));
+            pairs.Add(new KeyValuePair<string, string>("s", sessionCookie));
+            pairs.Add(new KeyValuePair<string, string>("Currency", CurrentCurrency));
+            pairs.Add(new KeyValuePair<string, string>("Amount", (Amount * 100000000m).ToString("0", System.Globalization.NumberFormatInfo.InvariantInfo)));
+            pairs.Add(new KeyValuePair<string, string>("Address", Address));
+
+            FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+            string responseData = "";
+            using (var response = Client.PostAsync("", Content).Result)
+            {
+                var result = response.Content.ReadAsStringAsync().Result;
+                if (result.Contains("Pending"))
+                {
+                    callWithdrawalFinished(true, "");
+                    return;
+                }
+                else
+                {
+                    callError(result, false, ErrorType.Withdrawal);
+                    callWithdrawalFinished(false, "");
+                    return;
+                }
+                return;
+            }
+            callError("", false, ErrorType.Withdrawal);
+            callWithdrawalFinished(false, "");
+        }
+
+        protected override void _SendTip(string Username, decimal Amount)
+        {
+            List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+            pairs.Add(new KeyValuePair<string, string>("a", "Withdraw"));
+            pairs.Add(new KeyValuePair<string, string>("s", sessionCookie));
+            pairs.Add(new KeyValuePair<string, string>("Currency", CurrentCurrency));
+            pairs.Add(new KeyValuePair<string, string>("Amount", (Amount * 100000000m).ToString("0", System.Globalization.NumberFormatInfo.InvariantInfo)));
+            pairs.Add(new KeyValuePair<string, string>("Address", Username));
+
+            FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+            string responseData = "";
+            using (var response = Client.PostAsync("", Content).Result)
+            {
+                var result = response.Content.ReadAsStringAsync().Result;
+                if (result.Contains("Pending"))
+                {
+                    callTipFinished(true, "");
+                    return;
+                }
+                else
+                {
+                    callError(result, false, ErrorType.Withdrawal);
+                    callTipFinished(false, "");
+                    return;
+                }
+                return;
+            }
+            callError("", false, ErrorType.Tip);
+            callTipFinished(false, "");
+        }
+
         public class d999Register
         {
             public string AccountCookie { get; set; }
@@ -413,6 +497,7 @@ namespace DoormatCore.Sites
             public int InsufficientFunds { get; set; }
             public int NoPossibleProfit { get; set; }
             public int MaxPayoutExceeded { get; set; }
+            public string error { get; set; }
         }
 
 

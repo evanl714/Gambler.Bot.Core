@@ -151,23 +151,32 @@ namespace DoormatCore.Sites
             {
                 string Response = Client.GetStringAsync($"user/balance?api_key={APIKey}&currency={CurrentCurrency}").Result;
                 BDSTats tmpStats = json.JsonDeserialize<BDSTats>(Response);
-                //Parent.DumpLog(Response, -1);
-                string SecretResponse = Client.GetStringAsync($"dice/secret?api_key={APIKey}").Result;
-                BDSeed tmpSeed = json.JsonDeserialize<BDSeed>(SecretResponse);
-                //Parent.DumpLog(SecretResponse, -1);
-                Stats.Balance = tmpStats.balance;
-                Stats.Wagered = tmpStats.wagered;
-                Stats.Profit = tmpStats.profit;
+                if (string.IsNullOrWhiteSpace(tmpStats.error))
+                {
+                    //Parent.DumpLog(Response, -1);
+                    string SecretResponse = Client.GetStringAsync($"dice/secret?api_key={APIKey}").Result;
+                    BDSeed tmpSeed = json.JsonDeserialize<BDSeed>(SecretResponse);
+                    //Parent.DumpLog(SecretResponse, -1);
+                    Stats.Balance = tmpStats.balance;
+                    Stats.Wagered = tmpStats.wagered;
+                    Stats.Profit = tmpStats.profit;
 
-                
 
-                CurrentSeed = tmpSeed;
-                LastUpdate = DateTime.Now;
-                isbitdice = true;
-                new Thread(new ThreadStart(GetBalanceThread)).Start();
 
-                callLoginFinished(true);
-                return;
+                    CurrentSeed = tmpSeed;
+                    LastUpdate = DateTime.Now;
+                    isbitdice = true;
+                    new Thread(new ThreadStart(GetBalanceThread)).Start();
+
+                    callLoginFinished(true);
+                    return;
+                }
+                else
+                {
+                    Logger.DumpLog(tmpStats.error, 5);
+                    callLoginFinished(false);
+                    return;
+                }
             }
             catch (Exception e)
             {
@@ -252,6 +261,7 @@ namespace DoormatCore.Sites
 
         public class BDSTats
         {
+            public string error { get; set; }
             public decimal balance { get; set; }
             public string currency { get; set; }
             public decimal profit { get; set; }
@@ -259,17 +269,20 @@ namespace DoormatCore.Sites
         }
         public class BDSeed
         {
+            public string error { get; set; }
             public string hash { get; set; }
             public long id { get; set; }
         }
         public class BDUser
         {
+            public string error { get; set; }
             public int level { get; set; }
             public string username { get; set; }
         }
 
         public class BDBetData
         {
+            public string error { get; set; }
             public decimal chance { get; set; }
             public bool high { get; set; }
             public decimal lucky { get; set; }
@@ -283,6 +296,7 @@ namespace DoormatCore.Sites
 
         public class BDBet
         {
+            public string error { get; set; }
             public decimal amount { get; set; }
             public string currency { get; set; }
             public BDBetData data { get; set; }
@@ -296,11 +310,13 @@ namespace DoormatCore.Sites
 
         public class BDJackpot
         {
+            public string error { get; set; }
             public bool status { get; set; }
         }
 
         public class BDOld
         {
+            public string error { get; set; }
             public string client { get; set; }
             public string hash { get; set; }
             public string secret { get; set; }
@@ -308,6 +324,7 @@ namespace DoormatCore.Sites
 
         public class BDSecret
         {
+            public string error { get; set; }
             public decimal game { get; set; }
             public string hash { get; set; }
             public long id { get; set; }

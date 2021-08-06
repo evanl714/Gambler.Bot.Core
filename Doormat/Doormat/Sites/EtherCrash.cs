@@ -300,7 +300,7 @@ namespace DoormatCore.Sites
                     CrashBet bet = new CrashBet
                     {
                         TotalAmount = (decimal)LastBet.TotalAmount,
-                        Profit = -(decimal)LastBet.TotalAmount,                        
+                        Profit = cashedout? LastBet.Payout * LastBet.TotalAmount - LastBet.TotalAmount: - (decimal)LastBet.TotalAmount,                        
                         Currency = CurrentCurrency,
                         DateValue = DateTime.Now,
                         BetID = GameId != "" ? GameId : Guid.NewGuid().ToString(),                        
@@ -309,10 +309,13 @@ namespace DoormatCore.Sites
                         Crash = 0//get crash payout from game message
                     };
 
-                    Stats.Balance -= (decimal)LastBet.TotalAmount;
-                    Stats.Profit -= (decimal)LastBet.TotalAmount;
-                    Stats.Wagered += (decimal)LastBet.TotalAmount;
-                    Stats.Losses++;
+                    Stats.Balance += (decimal)bet.Profit;
+                    Stats.Profit += (decimal)bet.Profit;
+                    Stats.Wagered += (decimal)bet.TotalAmount;
+                    if (cashedout)
+                        Stats.Wins++;
+                    else
+                        Stats.Losses++;
                     Stats.Bets++;
                     guid = "";
                     callBetFinished(bet);
@@ -325,7 +328,7 @@ namespace DoormatCore.Sites
                     if (e.Message.Contains("\"" + username + "\""))
                     {
                         cashedout = true;
-                        CrashBet bet = new CrashBet
+                        /*CrashBet bet = new CrashBet
                         {
                             TotalAmount = (decimal)LastBet.TotalAmount,
                             Profit = LastBet.Payout * LastBet.TotalAmount - LastBet.TotalAmount,                            
@@ -342,7 +345,7 @@ namespace DoormatCore.Sites
                         Stats.Wagered += LastBet.TotalAmount;
                         Stats.Wins++;
                         Stats.Bets++;
-                        callBetFinished(bet);
+                        callBetFinished(bet);*/
                     }
                 }
                 else if (e.Message.StartsWith("430[null,{\"state"))
