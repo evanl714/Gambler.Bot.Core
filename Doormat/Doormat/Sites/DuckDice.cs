@@ -75,7 +75,7 @@ namespace DoormatCore.Sites
         protected override void _Login(LoginParamValue[] LoginParams)
         {
             System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-            ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip};
+            ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             ClientHandlr.CookieContainer = new CookieContainer();
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://duckdice.io/api/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -85,8 +85,8 @@ namespace DoormatCore.Sites
             {
 
                 accesstoken = LoginParams[0].Value;
-               
-                
+
+
                 string sEmitResponse = Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
                 Quackbalance balance = json.JsonDeserialize<Quackbalance>(sEmitResponse);
                 sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
@@ -95,20 +95,20 @@ namespace DoormatCore.Sites
                 currentseed = json.JsonDeserialize<QuackSeed>(sEmitResponse).current;
                 if (balance != null && _Stats != null)
                 {
-                    Stats.Balance = decimal.Parse(balance.user.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                    Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
                     Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
                     Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
                     Stats.Bets = _Stats.bets;
                     Stats.Wins = _Stats.wins;
                     Stats.Losses = _Stats.bets - _Stats.wins;
-                    
+
 
                     ispd = true;
                     lastupdate = DateTime.Now;
                     new Thread(new ThreadStart(GetBalanceThread)).Start();
-                    callLoginFinished (true);
+                    callLoginFinished(true);
                     return;
-                }                
+                }
             }
             catch (Exception e)
             {
@@ -126,7 +126,7 @@ namespace DoormatCore.Sites
 
                 string sEmitResponse = Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
                 Quackbalance balance = json.JsonDeserialize<Quackbalance>(sEmitResponse);
-                Stats.Balance = decimal.Parse(balance.user.balance, System.Globalization.NumberFormatInfo.InvariantInfo);                
+                Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
                 sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
                 QuackStatsDetails _Stats = json.JsonDeserialize<QuackStatsDetails>(sEmitResponse);
                 Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
@@ -134,7 +134,7 @@ namespace DoormatCore.Sites
                 Stats.Bets = _Stats.bets;
                 Stats.Wins = _Stats.wins;
                 Stats.Losses = _Stats.bets - _Stats.wins;
-                
+
             }
             catch
             {
@@ -144,7 +144,7 @@ namespace DoormatCore.Sites
 
         public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            
+
             decimal amount = BetDetails.Amount;
             decimal chance = BetDetails.Chance;
             bool High = BetDetails.High;
@@ -159,7 +159,7 @@ namespace DoormatCore.Sites
                     return;
                 }
                 DiceBet tmp = new DiceBet
-                {   
+                {
                     TotalAmount = decimal.Parse(newbet.bet.betAmount, System.Globalization.NumberFormatInfo.InvariantInfo),
                     Chance = newbet.bet.chance,
                     ClientSeed = currentseed.clientSeed,
@@ -184,7 +184,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                callError("There was an error placing your bet.",true, ErrorType.Unknown);
+                callError("There was an error placing your bet.", true, ErrorType.Unknown);
                 Logger.DumpLog(e);
             }
         }
@@ -193,6 +193,7 @@ namespace DoormatCore.Sites
         {
             public string token { get; set; }
         }
+        /*
         public class Quackbalance
         {
             public QuackStats user { get; set; }
@@ -200,7 +201,7 @@ namespace DoormatCore.Sites
             public string username { get; set; }
             public string balance { get; set; }
             public QuackStats session { get; set; }
-        }
+        }*/
         public class QuackStats
         {
 
@@ -253,5 +254,28 @@ namespace DoormatCore.Sites
             public string error { get; set; }
 
         }
+
+
+        public class Quackbalance
+        {
+            public QuackUser user { get; set; }
+            public QuackBet[] bets { get; set; }
+        }
+
+        public class QuackUser
+        {
+            public Balances balances { get; set; }
+            public object[] presets { get; set; }
+            public string hash { get; set; }
+            public string username { get; set; }
+        }
+
+        public class Balances
+        {
+            public string main { get; set; }
+            public string faucet { get; set; }
+        }      
+    
+
     }
 }

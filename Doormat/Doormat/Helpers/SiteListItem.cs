@@ -17,7 +17,7 @@ namespace DoormatCore.Helpers
         {
             return _SiteType;
         }
-        public string Img { get {return  Environment.CurrentDirectory + $@"\Images\Sites\{Name}.png"; } }
+        public string Img { get {return  $@"Assets\Images\Sites\{Name}.png"; } }
         public string[] Currencies { get; set; } = new string[0];
         public Games.Games[] SupportedGames { get; set; } = new Games.Games[0];
         public string URL { get; set; }
@@ -29,7 +29,7 @@ namespace DoormatCore.Helpers
                 if (string.IsNullOrWhiteSpace(gamesString))
                 {
                     gamesString = "";
-                    foreach (Games.Games x in SupportedGames)
+                    foreach (Games.Games x in SupportedGames?? new Games.Games[0])
                     {
                         if (gamesString != "")
                             gamesString += ", ";
@@ -47,7 +47,7 @@ namespace DoormatCore.Helpers
                 if (string.IsNullOrWhiteSpace(currencyString))
                 {
                     currencyString = "";
-                    foreach (string x in Currencies)
+                    foreach (string x in Currencies?? new string[0])
                     {
                         if (currencyString != "")
                             currencyString += ", ";
@@ -83,6 +83,7 @@ namespace DoormatCore.Helpers
 
         public CurrencyVM SelectedCurrency { get; set; }
         public CurrencyVM SelectedGame { get; set; }
+       
     }
 
     public class CurrencyVM
