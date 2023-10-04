@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net7.0-windows10.0.19041.0</TargetFramework>
+    <TargetFrameworks>net7.0-windows;net7.0-android</TargetFrameworks>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>BotmaSoftwaressc2019.pfx</AssemblyOriginatorKeyFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -32,6 +32,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Sites\BitDice.cs" />
+    <Compile Remove="Sites\BitExo.cs" />
+    <Compile Remove="Sites\Dice999.cs" />
+    <Compile Remove="Sites\Kingdice.cs" />
+    <Compile Remove="Sites\MegaDice.cs" />
+    <Compile Remove="Sites\NitroDice.cs" />
+    <Compile Remove="Sites\ProvablyIO.cs" />
     <Compile Remove="Sites\YoloDice.cs" />
   </ItemGroup>
 
@@ -44,6 +51,13 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="Sites\BitDice.cs" />
+    <None Include="Sites\BitExo.cs" />
+    <None Include="Sites\Dice999.cs" />
+    <None Include="Sites\Kingdice.cs" />
+    <None Include="Sites\MegaDice.cs" />
+    <None Include="Sites\NitroDice.cs" />
+    <None Include="Sites\ProvablyIO.cs" />
     <None Include="Sites\YoloDice.cs" />
   </ItemGroup>
 
@@ -52,21 +66,14 @@
     <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.0.1" />
     <PackageReference Include="Jint" Version="3.0.0-beta-1715" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.11" />
     <PackageReference Include="MongoDB.Driver" Version="2.21.0" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
     <PackageReference Include="MySql.Data" Version="8.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Npgsql" Version="7.0.6" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
     <PackageReference Include="System.Xml.ReaderWriter" Version="4.3.1" />
     <PackageReference Include="WebSocket4Net" Version="0.15.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="System.Data">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Data.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

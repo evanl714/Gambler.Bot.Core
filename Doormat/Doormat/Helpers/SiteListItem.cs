@@ -17,7 +17,7 @@ namespace DoormatCore.Helpers
         {
             return _SiteType;
         }
-        public string Img { get {return  $@"Assets\Images\Sites\{Name}.png"; } }
+        public string Img { get {return  $@"Images/Sites/{Name}.png"; } }
         public string[] Currencies { get; set; } = new string[0];
         public Games.Games[] SupportedGames { get; set; } = new Games.Games[0];
         public string URL { get; set; }
