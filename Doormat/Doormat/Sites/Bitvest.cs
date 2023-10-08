@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
@@ -96,7 +97,7 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("type", "secret"));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 resp = Client.PostAsync("https://bitvest.io/login.php", Content).Result.Content.ReadAsStringAsync().Result;
-                bitvestLoginBase tmpblogin = json.JsonDeserialize<bitvestLoginBase>(resp.Replace("-", "_"));
+                bitvestLoginBase tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(resp.Replace("-", "_"));
                 bitvestLogin tmplogin = tmpblogin.data;
                 secret = tmpblogin.account.secret;
                 pairs = new List<KeyValuePair<string, string>>();
@@ -110,7 +111,7 @@ namespace DoormatCore.Sites
                 resp = Client.PostAsync("https://bitvest.io/update.php", Content).Result.Content.ReadAsStringAsync().Result;
 
                 string tmpresp = resp.Replace("-", "_");
-                tmpblogin = json.JsonDeserialize<bitvestLoginBase>(tmpresp);
+                tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(tmpresp);
                 tmplogin = tmpblogin.data;
                 if (tmplogin.session_token != null)
                 {
@@ -124,7 +125,7 @@ namespace DoormatCore.Sites
                     Content = new FormUrlEncodedContent(pairs);
                     resp = Client.PostAsync("https://bitvest.io/login.php", Content).Result.Content.ReadAsStringAsync().Result;
                     tmpresp = resp.Replace("-", "_");
-                    tmpblogin = json.JsonDeserialize<bitvestLoginBase>(tmpresp);
+                    tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(tmpresp);
                     Weights = tmpblogin.currency_weight;
                     Limits = tmpblogin.rate_limits;
 
@@ -245,7 +246,7 @@ namespace DoormatCore.Sites
                 try
                 {
                     string x = sEmitResponse.Replace("f-", "f_").Replace("n-", "n_").Replace("ce-", "ce_").Replace("r-", "r_");
-                    bitvestbet tmp = json.JsonDeserialize<bitvestbet>(x);
+                    bitvestbet tmp = JsonSerializer.Deserialize<bitvestbet>(x);
                     if (tmp.success)
                     {
                         DiceBet resbet = new DiceBet
@@ -403,7 +404,7 @@ namespace DoormatCore.Sites
                     string sEmitResponse = Client.PostAsync("https://bitvest.io/update.php", Content).Result.Content.ReadAsStringAsync().Result;
                     sEmitResponse = sEmitResponse.Replace("r-", "r_").Replace("n-", "n_");
 
-                    BivestGetBalanceRoot tmpbase = json.JsonDeserialize<BivestGetBalanceRoot>(sEmitResponse);
+                    BivestGetBalanceRoot tmpbase = JsonSerializer.Deserialize<BivestGetBalanceRoot>(sEmitResponse);
                     if (tmpbase != null)
                     {
                         if (tmpbase.data != null)

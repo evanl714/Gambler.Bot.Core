@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using static DoormatCore.Sites.Bitsler;
@@ -97,7 +98,7 @@ devise:btc*/
                 bsBet bsbase = null;
                 try
                 {
-                    bsbase = json.JsonDeserialize<bsBet>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    bsbase = JsonSerializer.Deserialize<bsBet>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                 }
                 catch (Exception e)
                 {
@@ -179,7 +180,7 @@ devise:btc*/
                     pairs.Add(new KeyValuePair<string, string>("seed_client", R.Next(0, int.MaxValue).ToString()));
                     FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                     string sEmitResponse = Client.PostAsync("api/change-seeds", Content).Result.Content.ReadAsStringAsync().Result;
-                    bsResetSeedBase bsbase = json.JsonDeserialize<bsResetSeedBase>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    bsResetSeedBase bsbase = JsonSerializer.Deserialize<bsResetSeedBase>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                     callResetSeedFinished(true, "");
                     return;
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server_hashed, bsbase._return.last_seeds_revealed.seed_server_revealed);
@@ -263,7 +264,7 @@ devise:btc*/
                 string sEmitResponse = tmpresp.Content.ReadAsStringAsync().Result;
 
                 //getuserstats 
-                bsLogin bsbase = json.JsonDeserialize<bsLogin>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                bsLogin bsbase = JsonSerializer.Deserialize<bsLogin>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
 
                 if (bsbase != null)
                     if (bsbase != null)
@@ -278,7 +279,7 @@ devise:btc*/
                             pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
                             Content = new FormUrlEncodedContent(pairs);
                             sEmitResponse = Client.PostAsync("api/getuserstats", Content).Result.Content.ReadAsStringAsync().Result;
-                            bsStats bsstatsbase = json.JsonDeserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                            bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                             if (bsstatsbase != null)
                                
                                     if (bsstatsbase.success == "true")
@@ -611,7 +612,7 @@ devise:btc*/
                 }
                 if (sEmitResponse != "")
                 {
-                    bsStats bsstatsbase = json.JsonDeserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                     if (bsstatsbase != null)
                         //if (bsstatsbase._return != null)
                             if (bsstatsbase.success == "true")

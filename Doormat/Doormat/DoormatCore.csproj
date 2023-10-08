@@ -32,14 +32,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Sites\BitDice.cs" />
-    <Compile Remove="Sites\BitExo.cs" />
-    <Compile Remove="Sites\Dice999.cs" />
-    <Compile Remove="Sites\Kingdice.cs" />
-    <Compile Remove="Sites\MegaDice.cs" />
-    <Compile Remove="Sites\NitroDice.cs" />
-    <Compile Remove="Sites\ProvablyIO.cs" />
-    <Compile Remove="Sites\YoloDice.cs" />
+    <Compile Remove="Sites\PrimeDice.cs" />
+    <Compile Remove="Sites\Stake.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,14 +45,8 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Include="Sites\BitDice.cs" />
-    <None Include="Sites\BitExo.cs" />
-    <None Include="Sites\Dice999.cs" />
-    <None Include="Sites\Kingdice.cs" />
-    <None Include="Sites\MegaDice.cs" />
-    <None Include="Sites\NitroDice.cs" />
-    <None Include="Sites\ProvablyIO.cs" />
-    <None Include="Sites\YoloDice.cs" />
+    <None Include="Sites\PrimeDice.cs" />
+    <None Include="Sites\Stake.cs" />
   </ItemGroup>
 
   <ItemGroup>

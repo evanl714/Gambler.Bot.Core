@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using Random = DoormatCore.Helpers.Random;
 
@@ -65,7 +66,7 @@ namespace DoormatCore.Sites
                 high = BetDetails.Chance * 100 - 1;
                 low = 0;
             }
-            string loginjson = json.JsonSerializer<WDPlaceBet>(new WDPlaceBet()
+            string loginjson = JsonSerializer.Serialize<WDPlaceBet>(new WDPlaceBet()
             {
                 curr = CurrentCurrency,
                 bet = BetDetails.Amount,
@@ -81,7 +82,7 @@ namespace DoormatCore.Sites
             if (resp2.IsSuccessStatusCode)
             {
                 string response = resp2.Content.ReadAsStringAsync().Result;
-                WDBet tmpBalance = json.JsonDeserialize<WDBet>(response);
+                WDBet tmpBalance = JsonSerializer.Deserialize<WDBet>(response);
                 if (tmpBalance.status == "success")
                 {
                     DiceBet Result = new DiceBet()
@@ -129,10 +130,6 @@ namespace DoormatCore.Sites
 
         protected override void _Login(LoginParamValue[] LoginParams)
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-      | SecurityProtocolType.Tls11
-      | SecurityProtocolType.Tls12
-      | SecurityProtocolType.Ssl3;
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://windice.io/api/v1/api/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -184,7 +181,7 @@ namespace DoormatCore.Sites
         bool getbalance()
         {
             string response = Client.GetStringAsync("user").Result;
-            WDUserResponse tmpBalance = json.JsonDeserialize<WDUserResponse>(response);
+            WDUserResponse tmpBalance = JsonSerializer.Deserialize<WDUserResponse>(response);
             if (tmpBalance.data != null)
             {
                 PropertyInfo tmp = typeof(WDBalance).GetProperty(CurrentCurrency.ToLower());
@@ -199,7 +196,7 @@ namespace DoormatCore.Sites
         bool getstats()
         {
             string response = Client.GetStringAsync("stats").Result;
-            WDStatsResponse tmpBalance = json.JsonDeserialize<WDStatsResponse>(response);
+            WDStatsResponse tmpBalance = JsonSerializer.Deserialize<WDStatsResponse>(response);
             if (tmpBalance.data != null)
             {
                 foreach (WDStatistic x in tmpBalance.data.statistics)
@@ -221,7 +218,7 @@ namespace DoormatCore.Sites
         bool getseed()
         {
             string response = Client.GetStringAsync("seed").Result;
-            WDGetSeed tmpBalance = json.JsonDeserialize<WDGetSeed>(response);
+            WDGetSeed tmpBalance = JsonSerializer.Deserialize<WDGetSeed>(response);
             if (tmpBalance.data != null)
             {
                 currentseed = tmpBalance.data;

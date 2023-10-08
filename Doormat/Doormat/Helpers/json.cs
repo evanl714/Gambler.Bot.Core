@@ -11,38 +11,7 @@ namespace DoormatCore.Helpers
     /// </summary>
 public class json
     {
-        public static T JsonDeserialize<T>(string jsonString)
-        {
-            try
-            {
-                Logger.DumpLog("Attempting Deserialize", 6);
-                T m = JsonConvert.DeserializeObject<T>(jsonString);
-                Logger.DumpLog("Successful Deserialize", 6);
-                return m;
-            }
-            catch (Exception E)
-            {
-                Logger.DumpLog(E);
-
-                throw E;
-            }
-        }
-
-        public static string JsonSerializer<T>(T t)
-        {
-            try
-            {
-                Logger.DumpLog("Attempting Serialize", 6);
-                string jsonString = JsonConvert.SerializeObject(t);
-                Logger.DumpLog("Successful Serialize", 6);
-                return jsonString;
-            }
-            catch (Exception E)
-            {
-                Logger.DumpLog(E);
-                throw E;
-            }
-        }
+        
         public static string ToDateString(DateTime Value)
         {
             

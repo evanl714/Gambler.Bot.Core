@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
@@ -352,7 +353,7 @@ namespace DoormatCore.Sites
                 {
                     string content = e.Message.Substring(e.Message.IndexOf("{"));
                     content = content.Substring(0, content.LastIndexOf("}"));
-                    ECLogin tmplogin = json.JsonDeserialize<ECLogin>(content);
+                    ECLogin tmplogin = JsonSerializer.Deserialize<ECLogin>(content);
                     if (tmplogin != null)
                     {
                         username = tmplogin.username;

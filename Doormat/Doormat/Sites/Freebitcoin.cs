@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
@@ -135,7 +136,7 @@ namespace DoormatCore.Sites
                         Cookies.Add(new Cookie("have_account", "1", "/", "freebitco.in"));
 
                         s = Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats").Result;
-                        FreebtcStats stats = json.JsonDeserialize<FreebtcStats>(s);
+                        FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(s);
                         if (stats != null)
                         {
                             Stats.Balance = stats.balance / 100000000m;
@@ -177,7 +178,7 @@ namespace DoormatCore.Sites
             {
                 lastupdate = DateTime.Now;
                 string s = Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats").Result;
-                FreebtcStats stats = json.JsonDeserialize<FreebtcStats>(s);
+                FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(s);
                 if (stats != null)
                 {
                     Stats.Balance = stats.balance / 100000000m;

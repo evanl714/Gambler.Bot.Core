@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
@@ -88,11 +89,11 @@ namespace DoormatCore.Sites
 
 
                 string sEmitResponse = Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
-                Quackbalance balance = json.JsonDeserialize<Quackbalance>(sEmitResponse);
+                Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
                 sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
-                QuackStatsDetails _Stats = json.JsonDeserialize<QuackStatsDetails>(sEmitResponse);
+                QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
                 sEmitResponse = Client.GetStringAsync("randomize" + "?api_key=" + accesstoken).Result;
-                currentseed = json.JsonDeserialize<QuackSeed>(sEmitResponse).current;
+                currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
                 if (balance != null && _Stats != null)
                 {
                     Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
@@ -125,10 +126,10 @@ namespace DoormatCore.Sites
             {
 
                 string sEmitResponse = Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
-                Quackbalance balance = json.JsonDeserialize<Quackbalance>(sEmitResponse);
+                Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
                 Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
                 sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
-                QuackStatsDetails _Stats = json.JsonDeserialize<QuackStatsDetails>(sEmitResponse);
+                QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
                 Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Stats.Bets = _Stats.bets;
@@ -152,7 +153,7 @@ namespace DoormatCore.Sites
             try
             {
                 string sEmitResponse = Client.PostAsync("play" + "?api_key=" + accesstoken, Content).Result.Content.ReadAsStringAsync().Result;
-                QuackBet newbet = json.JsonDeserialize<QuackBet>(sEmitResponse);
+                QuackBet newbet = JsonSerializer.Deserialize<QuackBet>(sEmitResponse);
                 if (newbet.error != null)
                 {
                     callError(newbet.error, true, ErrorType.Unknown);

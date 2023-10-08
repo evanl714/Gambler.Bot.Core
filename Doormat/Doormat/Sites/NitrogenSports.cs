@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
@@ -147,7 +148,7 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("otp", otp/*==""?"undefined":twofa*/));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 string sEmitResponse = Client.PostAsync("php/login/login.php", Content).Result.Content.ReadAsStringAsync().Result;
-                NSLogin tmpLogin = json.JsonDeserialize<NSLogin>(sEmitResponse);
+                NSLogin tmpLogin = JsonSerializer.Deserialize<NSLogin>(sEmitResponse);
                 if (tmpLogin.errno != 0)
                 {
                     callLoginFinished(false);
@@ -296,9 +297,9 @@ Sec-WebSocket-Version:13*/
                     {
                         switch (Requests[key])
                         {
-                            case 0: processbet(json.JsonDeserialize<NSBet>(tmp)); break;
-                            case 1: processStats(json.JsonDeserialize<NSGame>(tmp)); break;
-                            case 2: ProcessSeed(json.JsonDeserialize<NSSeed>(tmp)); break;
+                            case 0: processbet(JsonSerializer.Deserialize<NSBet>(tmp)); break;
+                            case 1: processStats(JsonSerializer.Deserialize<NSGame>(tmp)); break;
+                            case 2: ProcessSeed(JsonSerializer.Deserialize<NSSeed>(tmp)); break;
                         }
                         Requests.Remove(key);
                     }
@@ -379,7 +380,7 @@ Sec-WebSocket-Version:13*/
                 //Requests.Add(s,1);
                 NSSocket.Send("[2,\"0." + s + "\",\"ping\",{}]");
                 string result = Client.GetStringAsync("php/login/load_login.php").Result;
-                NSLogin tmplogin = json.JsonDeserialize<NSLogin>(result);
+                NSLogin tmplogin = JsonSerializer.Deserialize<NSLogin>(result);
                 Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Thread.Sleep(1);
                 string t = CreateRandomString();

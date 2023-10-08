@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 
 namespace DoormatCore.Sites
@@ -77,7 +78,7 @@ namespace DoormatCore.Sites
                 string sEmitResponse = Client.GetStringAsync("user/balances").Result;
                 try
                 {
-                    WolfBetProfile tmpProfile = json.JsonDeserialize<WolfBetProfile>(sEmitResponse);
+                    WolfBetProfile tmpProfile = JsonSerializer.Deserialize<WolfBetProfile>(sEmitResponse);
                     if (tmpProfile.balances != null)
                     {
                         //set balance here
@@ -91,7 +92,7 @@ namespace DoormatCore.Sites
                         //get stats
                         //set stats
                         sEmitResponse = Client.GetStringAsync("user/stats/bets").Result;
-                        WolfBetStats tmpStats = json.JsonDeserialize<WolfBetStats>(sEmitResponse);
+                        WolfBetStats tmpStats = JsonSerializer.Deserialize<WolfBetStats>(sEmitResponse);
                         SetStats(tmpStats);
                         ispd = true;
                         lastupdate = DateTime.Now;
@@ -138,7 +139,7 @@ namespace DoormatCore.Sites
         protected override void _UpdateStats()
         {
             string sEmitResponse = Client.GetStringAsync("user/balances").Result;
-            WolfBetProfile tmpProfile = json.JsonDeserialize<WolfBetProfile>(sEmitResponse);
+            WolfBetProfile tmpProfile = JsonSerializer.Deserialize<WolfBetProfile>(sEmitResponse);
             if (tmpProfile.user != null)
             {
                 //set balance here
@@ -152,7 +153,7 @@ namespace DoormatCore.Sites
                 //get stats
                 //set stats
                 sEmitResponse = Client.GetStringAsync("user/stats/bets").Result;
-                WolfBetStats tmpStats = json.JsonDeserialize<WolfBetStats>(sEmitResponse);
+                WolfBetStats tmpStats = JsonSerializer.Deserialize<WolfBetStats>(sEmitResponse);
                 SetStats(tmpStats);
 
             }

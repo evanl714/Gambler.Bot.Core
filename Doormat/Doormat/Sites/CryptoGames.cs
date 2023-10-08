@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
@@ -60,7 +61,7 @@ namespace DoormatCore.Sites
         protected override void _Login(LoginParamValue[] LoginParams)
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://api.crypto-games.net/v1/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://api.crypto.games/v1/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             try
@@ -68,9 +69,9 @@ namespace DoormatCore.Sites
                 accesstoken = LoginParams[0].Value;
 
                 string sEmitResponse = Client.GetStringAsync("user/" + CurrentCurrency + "/" + accesstoken).Result;
-                cgUser tmpBal = json.JsonDeserialize<cgUser>(sEmitResponse);
+                cgUser tmpBal = JsonSerializer.Deserialize<cgUser>(sEmitResponse);
                 sEmitResponse = Client.GetStringAsync("nextseed/" + CurrentCurrency + "/" + accesstoken).Result;
-                cgNextSeed tmpSeed = json.JsonDeserialize<cgNextSeed>(sEmitResponse);
+                cgNextSeed tmpSeed = JsonSerializer.Deserialize<cgNextSeed>(sEmitResponse);
                 CurrenyHash = tmpSeed.NextServerSeedHash;
                 Stats.Balance = tmpBal.Balance;
                 Stats.Wagered = tmpBal.Wagered;
@@ -118,7 +119,7 @@ namespace DoormatCore.Sites
             {
 
                 string sEmitResponse = Client.GetStringAsync("user/" + CurrentCurrency + "/" + accesstoken).Result;
-                cgUser tmpBal = json.JsonDeserialize<cgUser>(sEmitResponse);
+                cgUser tmpBal = JsonSerializer.Deserialize<cgUser>(sEmitResponse);
                 Stats.Balance = tmpBal.Balance;
                 Stats.Wagered = tmpBal.Wagered;
                 Stats.Profit = tmpBal.Profit;
@@ -135,7 +136,7 @@ namespace DoormatCore.Sites
             decimal payout = decimal.Parse(((100m - Edge) / (decimal)BetDetails.Chance).ToString("0.0000"));
             cgPlaceBet tmpPlaceBet = new cgPlaceBet() { Bet = BetDetails.Amount, ClientSeed = Clients, UnderOver = BetDetails.High, Payout = (decimal)payout };
 
-            string post = json.JsonSerializer<cgPlaceBet>(tmpPlaceBet);
+            string post = JsonSerializer.Serialize<cgPlaceBet>(tmpPlaceBet);
             HttpContent cont = new StringContent(post);
             cont.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
@@ -147,8 +148,9 @@ namespace DoormatCore.Sites
             try
             {
 
-                string sEmitResponse = Client.PostAsync("placebet/" + CurrentCurrency + "/" + accesstoken, cont).Result.Content.ReadAsStringAsync().Result;
-                cgGetBet Response = json.JsonDeserialize<cgGetBet>(sEmitResponse);
+                var response = Client.PostAsync("placebet/" + CurrentCurrency + "/" + accesstoken, cont).Result;
+                string sEmitResponse = response.Content.ReadAsStringAsync().Result;
+                cgGetBet Response = JsonSerializer.Deserialize<cgGetBet>(sEmitResponse);
                 if (Response.Message != "" && Response.Message != null)
                 {
                     callError(Response.Message,true, ErrorType.Unknown );
