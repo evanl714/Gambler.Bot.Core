@@ -7,19 +7,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
-using GraphQL;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.Newtonsoft;
+using Esprima.Ast;
+using Google.Protobuf.WellKnownTypes;
+using MongoDB.Bson.IO;
+using MySqlX.XDevAPI;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace DoormatCore.Sites
 {
     public class PrimeDice : BaseSite, iDice
     {
-        protected string URL = "https://api.primedice.com/graphql";
+        protected string URL = "https://primedice.com/_api/graphql";
         protected string RolName = "primediceRoll";
         protected string GameName = "CasinoGamePrimedice";
         protected string StatGameName = "primedice";
-        GraphQLHttpClient GQLClient;
+        HttpClient Client;
        
         string accesstoken = "";
         DateTime LastSeedReset = new DateTime();
@@ -80,26 +82,44 @@ namespace DoormatCore.Sites
             try
             {   
                 string APIKey = "";
-                GQLClient = new GraphQL.Client.Http.GraphQLHttpClient(
-                    new GraphQLHttpClientOptions { EndPoint=new Uri(URL), OnWebsocketConnected= OnWSConnected }, new NewtonsoftJsonSerializer());
-                
+               
                 foreach (LoginParamValue x in LoginParams)
                 {
                     if (x.Param.Name.ToLower() == "api key")
                         APIKey = x.Value;
                     
                 }
+                //CookieContainer cookies = new CookieContainer();
+                var cookies = CallBypassRequired(URL );
                 
-                GQLClient.HttpClient.DefaultRequestHeaders.Add("x-access-token", APIKey);
-                GQLClient.InitializeWebsocketConnection();
-                GraphQLRequest LoginReq = new GraphQLRequest
+                HttpClientHandler handler = new HttpClientHandler
                 {
-                    Query = "query {user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
-                
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = true,
+                    CookieContainer = cookies,
+
                 };
-                //var /*GraphQLResponse<pdUser>*/ Resp2 = GQLClient.SendQueryAsync<dynamic>(LoginReq).Result;
-                var /*GraphQLResponse<pdUser>*/ Resp = GQLClient.SendQueryAsync<pdUser>(LoginReq).Result;
-                pdUser user = Resp.Data.User;                
+                Client = new HttpClient(handler);
+
+                Client.DefaultRequestHeaders.Add("Referrer", SiteURL);
+                Client.DefaultRequestHeaders.Add("Origin", SiteURL);
+                Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.60");
+                Client.DefaultRequestHeaders.Add("x-access-token", APIKey);
+                Client.DefaultRequestHeaders.Add("authorization", "Bearer " + APIKey);
+
+                GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
+                    {
+                        query = "query DiceBotLogin{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
+                        ,
+                        operationName = "DiceBotLogin"
+                    };
+
+                StringContent content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json");
+
+                var resp = Client.PostAsync(URL, content).Result;
+                string respostring = resp.Content.ReadAsStringAsync().Result;
+                var Resp = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring);
+                pdUser user = Resp.data.user;                
                 userid = user.id;
                 if (string.IsNullOrWhiteSpace(userid))
                     callLoginFinished(false);
@@ -112,8 +132,8 @@ namespace DoormatCore.Sites
                             this.Stats.Bets = (int)x.bets;
                             this.Stats.Wins = (int)x.wins;
                             this.Stats.Losses = (int)x.losses;
-                            this.Stats.Profit = x.profit;
-                            this.Stats.Wagered = x.amount;
+                            this.Stats.Profit = x.profit??0;
+                            this.Stats.Wagered = x.amount??0;
                             
                             break;
                         }
@@ -122,7 +142,7 @@ namespace DoormatCore.Sites
                     {
                         if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
                         {
-                            this.Stats.Balance  = x.available.amount;
+                            this.Stats.Balance  = x.available.amount??0;
                             break;
                         }
                     }
@@ -182,40 +202,54 @@ namespace DoormatCore.Sites
                     Thread.Sleep((int)(500.0 - (DateTime.Now - Lastbet).TotalMilliseconds));
                 }*/
                 decimal tmpchance = High ? MaxRoll - chance : chance;
-                string query = "mutation{" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + CurrentCurrency.ToLower() + ") { id nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses betAmount profit currency}}}}";
+
                 //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + Currencies[Currency].ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
                 //var primediceRoll = GQLClient.SendMutationAsync<dynamic>(new GraphQLRequest { Query = query }).Result;
-                GraphQLResponse< RollDice> betresult = GQLClient.SendMutationAsync<RollDice>(new GraphQLRequest { Query = query}).Result;
-                
-                RollDice tmp = betresult.Data.primediceRoll;
+                GraphqlRequestPayload betresult = new GraphqlRequestPayload
+                {
+                    query = "mutation DiceBotDiceBet($amount: Float! \r\n            $target: Float!\r\n            $condition: CasinoGamePrimediceConditionEnum!\r\n            $currency: CurrencyEnum!\r\n            $identifier: String!){ primediceRoll(amount: $amount, target: $target,condition: $condition,currency: $currency, identifier: $identifier) { id nonce currency amount payout state { ... on CasinoGamePrimedice { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} }}",
+                    variables = new
+                    {
+                        amount = amount,
+                        target = tmpchance,
+                        condition = (High ? "above" : "below"),
+                        currency = Currencies[base.Currency].ToLower(),
+                        identifier = R.Next().ToString()
+                    }
+                };
+                var response = Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json")).Result;
+                var responsestring = response.Content.ReadAsStringAsync().Result;
+                RollDice tmp = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring).data.primediceRoll;
                 
                 Lastbet = DateTime.Now;
                 try
                 {
 
                     lastupdate = DateTime.Now;
-                    foreach (Statistic x in tmp.user.statistic)
+                    /*foreach (Statistic x in tmp.user?.statistic)
                     {
                         if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
-                        {
-                            this.Stats.Bets = (int)x.bets;
-                            this.Stats.Wins = (int)x.wins;
-                            this.Stats.Losses = (int)x.losses;
-                            this.Stats.Profit = x.profit;
-                            this.Stats.Wagered = x.amount;
-                            break;
-                        }
-                    }
-                    foreach (Balance x in tmp.user.balances)
-                    {
-                        if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
-                        {
-                            this.Stats.Balance = x.available.amount;
-                            break;
-                        }
-                    }
+                        {*/
                     DiceBet tmpbet = tmp.ToBet();
                     tmpbet.IsWin = tmpbet.GetWin(this);
+                    this.Stats.Bets++; ;
+                    this.Stats.Wins += tmpbet.IsWin ? 1 : 0; ;
+                    this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;
+                    this.Stats.Profit += tmpbet.Profit;
+                    this.Stats.Wagered += tmpbet.TotalAmount;
+                            
+                        /*}
+                    }*/
+                    /*foreach (Balance x in tmp.user.balances)
+                    {
+                        if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                        {*/
+                            this.Stats.Balance += tmpbet.Profit;
+                            /*break;
+                        }
+                    }*/
+                    
+                    
                     tmpbet.Guid = BetDetails.GUID;
                     callBetFinished(tmpbet);
                     retrycount = 0;
@@ -239,12 +273,16 @@ namespace DoormatCore.Sites
             {
                 ForceUpdateStats = false;
                 lastupdate = DateTime.Now;
-                GraphQLRequest LoginReq = new GraphQLRequest
+
+                GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
                 {
-                    Query = "query{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses amount profit currency}}}"
+                    query = "query{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses amount profit currency}}}"
                 };
-                GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
-                pdUser user = Resp.Data;
+                var Resp = Client.PostAsync("", new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json")).Result;
+                string respostring = Resp.Content.ReadAsStringAsync().Result;
+                pdUser user = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring)?.data.user;
+                //GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
+                 
                 foreach (Statistic x in user.statistic)
                 {
                     if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
@@ -252,8 +290,8 @@ namespace DoormatCore.Sites
                         this.Stats.Bets = (int)x.bets;
                         this.Stats.Wins = (int)x.wins;
                         this.Stats.Losses = (int)x.losses;
-                        this.Stats.Profit = x.profit;
-                        this.Stats.Wagered = x.amount;
+                        this.Stats.Profit = x.profit ?? 0;
+                        this.Stats.Wagered = x.amount ?? 0;
                         break;
                     }
                 }
@@ -261,7 +299,7 @@ namespace DoormatCore.Sites
                 {
                     if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
                     {
-                        this.Stats.Balance = x.available.amount;
+                        this.Stats.Balance = x.available.amount ?? 0;
                         break;
                     }
                 }
@@ -398,14 +436,24 @@ namespace DoormatCore.Sites
                 return bet;
             }
         }
+        public class GraphqlRequestPayload
+        {
+            public string operationName { get; set; }
+
+            public string query { get; set; }
+
+            public object variables { get; set; }
+
+            public string identifier { get; set; }
+        }
         public class Statistic
         {
             public string game { get; set; }
-            public decimal bets { get; set; }
-            public decimal wins { get; set; }
-            public decimal losses { get; set; }
-            public decimal amount { get; set; }
-            public decimal profit { get; set; }
+            public decimal? bets { get; set; }
+            public decimal? wins { get; set; }
+            public decimal? losses { get; set; }
+            public decimal? amount { get; set; }
+            public decimal? profit { get; set; }
             public string currency { get; set; }
             public string __typename { get; set; }
         }
@@ -414,7 +462,7 @@ namespace DoormatCore.Sites
         {
             public ChatMessages chatMessages { get; set; }
             public Messages messages { get; set; }
-            public RollDice rollDice { get; set; }
+            public RollDice primediceRoll { get; set; }
             public pdUser user { get; set; }
             public RollDice bet { get; set; }
         }
@@ -442,7 +490,7 @@ namespace DoormatCore.Sites
         }
         public class Available
         {
-            public decimal amount { get; set; }
+            public decimal? amount { get; set; }
             public string currency { get; set; }
             public string __typename { get; set; }
         }

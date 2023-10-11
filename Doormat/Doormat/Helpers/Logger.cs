@@ -51,7 +51,7 @@ namespace DoormatCore.Helpers
         {
             try
             {
-                using (StreamWriter sw = System.IO.File.AppendText("dicebotlog.log"))
+                using (StreamWriter sw = System.IO.File.AppendText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dicebotlog.log")))
                 {
                     sw.WriteLine(string.Format(@"{1} {0}
 ------------------------------------------------------------------------------------------------------", Message, DateTime.UtcNow));

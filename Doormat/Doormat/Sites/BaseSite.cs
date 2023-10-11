@@ -3,6 +3,7 @@ using DoormatCore.Helpers;
 using Jint.Native.String;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -494,6 +495,7 @@ namespace DoormatCore.Sites
         public event dAction OnDonationFinished;
         public event dAction OnInvestFinished;
         public event dGameMessage OnGameMessage;
+        public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
 
         protected void callStatsUpdated(SiteStats Stats)
         {
@@ -590,7 +592,12 @@ namespace DoormatCore.Sites
             ForceUpdateStats = true;
             OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
-
+        protected CookieContainer CallBypassRequired(string URL)
+        {
+            var args = new BypassRequiredArgs { URL = URL };
+            OnBrowserBypassRequired?.Invoke(this, args);
+            return args.Cookie;
+        }
         #endregion
       
         public class LoginParameter
@@ -680,6 +687,12 @@ namespace DoormatCore.Sites
         public bool Success { get; set; }
         public bool Fatal { get; set; }
 
+    }
+
+    public class BypassRequiredArgs:EventArgs
+    {
+        public string URL { get; set; }
+        public CookieContainer Cookie { get; set; }
     }
     
     public class SiteStats
