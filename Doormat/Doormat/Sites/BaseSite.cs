@@ -592,11 +592,11 @@ namespace DoormatCore.Sites
             ForceUpdateStats = true;
             OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
-        protected CookieContainer CallBypassRequired(string URL)
+        protected BrowserConfig CallBypassRequired(string URL)
         {
             var args = new BypassRequiredArgs { URL = URL };
             OnBrowserBypassRequired?.Invoke(this, args);
-            return args.Cookie;
+            return args.Config;
         }
         #endregion
       
@@ -692,7 +692,7 @@ namespace DoormatCore.Sites
     public class BypassRequiredArgs:EventArgs
     {
         public string URL { get; set; }
-        public CookieContainer Cookie { get; set; }
+        public BrowserConfig Config { get; set; }
     }
     
     public class SiteStats

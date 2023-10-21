@@ -96,14 +96,14 @@ namespace DoormatCore.Sites
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = true,
-                    CookieContainer = cookies,
+                    CookieContainer = cookies.Cookies,
 
                 };
                 Client = new HttpClient(handler);
 
                 Client.DefaultRequestHeaders.Add("Referrer", SiteURL);
                 Client.DefaultRequestHeaders.Add("Origin", SiteURL);
-                Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.60");
+                Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
                 Client.DefaultRequestHeaders.Add("x-access-token", APIKey);
                 Client.DefaultRequestHeaders.Add("authorization", "Bearer " + APIKey);
 
