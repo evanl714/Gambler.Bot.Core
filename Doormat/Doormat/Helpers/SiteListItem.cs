@@ -89,5 +89,6 @@ namespace DoormatCore.Helpers
     public class CurrencyVM
     {
         public string Name { get; set; }
+        public string path { get { return $@"avares://Assets/Images/Currencies/{Name.ToLower()}.svg"; } }
     }
 }
