@@ -7,11 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
-using Esprima.Ast;
-using Google.Protobuf.WellKnownTypes;
-using MongoDB.Bson.IO;
-using MySqlX.XDevAPI;
-using Org.BouncyCastle.Asn1.X509;
 
 namespace DoormatCore.Sites
 {

@@ -1,6 +1,5 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Helpers;
-using Jint.Native.String;
 using System;
 using System.Collections.Generic;
 using System.Net;
