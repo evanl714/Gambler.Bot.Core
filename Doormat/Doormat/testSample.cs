@@ -14,13 +14,13 @@ namespace DoormatCore
             //Initialize the site you want to test
              Site = new Bitsler();
             //Create a list of param values
-            List<BaseSite.LoginParamValue> param = new List<BaseSite.LoginParamValue>();
+            List<LoginParamValue> param = new List<LoginParamValue>();
             
             foreach (var x in Site.LoginParams)
             {
                 Console.Write(x.Name + ": ");
                 string value = Console.ReadLine();
-                param.Add(new BaseSite.LoginParamValue
+                param.Add(new LoginParamValue
                 {
                     Param = x,
                     Value = value

@@ -599,39 +599,39 @@ namespace DoormatCore.Sites
         }
         #endregion
       
-        public class LoginParameter
+       
+    }
+    public class LoginParameter
+    {
+        public LoginParameter(string Name, bool Masked, bool Required, bool ClearafterEnter, bool Clearafterlogin, bool ismfa = false)
         {
-            public LoginParameter(string Name, bool Masked, bool Required, bool ClearafterEnter, bool Clearafterlogin, bool ismfa=false)
-            {
-                this.Name = Name;
-                this.Masked = Masked;
-                this.Required = Required;
-                this.ClearAfterEnter = ClearafterEnter;
-                this.ClearAfterLogin = Clearafterlogin;
-                this.IsMFA = IsMFA;
-            }
-
-            public LoginParameter()
-            {
-            }
-
-            public string Name { get; set; }
-            public bool Masked { get; set; }
-            public bool Required { get; set; }
-            public bool ClearAfterEnter { get; set; }
-            public bool ClearAfterLogin { get; set; }
-            public bool IsMFA { get; set; }
+            this.Name = Name;
+            this.Masked = Masked;
+            this.Required = Required;
+            this.ClearAfterEnter = ClearafterEnter;
+            this.ClearAfterLogin = Clearafterlogin;
+            this.IsMFA = IsMFA;
         }
-        
-        public class LoginParamValue
+
+        public LoginParameter()
         {
-            
-            public int ParameterId { get; set; }
-            public LoginParameter Param { get; set; }
-            public string Value { get; set; }
         }
+
+        public string Name { get; set; }
+        public bool Masked { get; set; }
+        public bool Required { get; set; }
+        public bool ClearAfterEnter { get; set; }
+        public bool ClearAfterLogin { get; set; }
+        public bool IsMFA { get; set; }
     }
 
+    public class LoginParamValue
+    {
+
+        public int ParameterId { get; set; }
+        public LoginParameter Param { get; set; }
+        public string Value { get; set; }
+    }
     public enum ErrorType
     {
         InvalidBet,
