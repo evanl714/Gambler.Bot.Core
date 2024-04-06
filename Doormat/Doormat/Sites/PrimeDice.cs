@@ -96,18 +96,22 @@ namespace DoormatCore.Sites
                 };
                 Client = new HttpClient(handler);
 
-                Client.DefaultRequestHeaders.Add("Referrer", SiteURL);
-                Client.DefaultRequestHeaders.Add("Origin", SiteURL);
+                Client.DefaultRequestHeaders.Add("referrer", SiteURL);
+                Client.DefaultRequestHeaders.Add("accept", "*/*");
+                Client.DefaultRequestHeaders.Add("origin", SiteURL);
                 Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
                 Client.DefaultRequestHeaders.Add("x-access-token", APIKey);
                 Client.DefaultRequestHeaders.Add("authorization", "Bearer " + APIKey);
+                Client.DefaultRequestHeaders.Add("sec-fetch-dest", "empty");
+                Client.DefaultRequestHeaders.Add("sec-fetch-mode", "cors");
+                Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
 
                 GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
                     {
                         query = "query DiceBotLogin{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
                         ,
                         operationName = "DiceBotLogin"
-                    };
+                };
 
                 StringContent content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json");
 
@@ -202,7 +206,7 @@ namespace DoormatCore.Sites
                 //var primediceRoll = GQLClient.SendMutationAsync<dynamic>(new GraphQLRequest { Query = query }).Result;
                 GraphqlRequestPayload betresult = new GraphqlRequestPayload
                 {
-                    query = "mutation DiceBotDiceBet($amount: Float! \r\n            $target: Float!\r\n            $condition: CasinoGamePrimediceConditionEnum!\r\n            $currency: CurrencyEnum!\r\n            $identifier: String!){ primediceRoll(amount: $amount, target: $target,condition: $condition,currency: $currency, identifier: $identifier) { id nonce currency amount payout state { ... on CasinoGamePrimedice { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} }}",
+                    query = "mutation DiceRoll($amount: Float! \r\n  $target: Float!\r\n  $condition: CasinoGameDiceConditionEnum!\r\n  $currency: CurrencyEnum!\r\n  $identifier: String!){ diceRoll(amount: $amount, target: $target, condition: $condition, currency: $currency, identifier: $identifier) { id payoutMultiplier amountMultiplier nonce currency amount payout state { ... on CasinoGameDice { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses betAmount profit currency}}}}",
                     variables = new
                     {
                         amount = amount,
@@ -211,10 +215,11 @@ namespace DoormatCore.Sites
                         currency = Currencies[base.Currency].ToLower(),
                         identifier = R.Next().ToString()
                     }
+                    , operationName = "DiceRoll"
                 };
                 var response = Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json")).Result;
                 var responsestring = response.Content.ReadAsStringAsync().Result;
-                RollDice tmp = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring).data.primediceRoll;
+                RollDice tmp = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring).data.diceRoll;
                 
                 Lastbet = DateTime.Now;
                 try
@@ -457,7 +462,7 @@ namespace DoormatCore.Sites
         {
             public ChatMessages chatMessages { get; set; }
             public Messages messages { get; set; }
-            public RollDice primediceRoll { get; set; }
+            public RollDice diceRoll { get; set; }
             public pdUser user { get; set; }
             public RollDice bet { get; set; }
         }

@@ -595,6 +595,7 @@ namespace DoormatCore.Sites
         {
             var args = new BypassRequiredArgs { URL = URL };
             OnBrowserBypassRequired?.Invoke(this, args);
+            
             return args.Config;
         }
         #endregion
