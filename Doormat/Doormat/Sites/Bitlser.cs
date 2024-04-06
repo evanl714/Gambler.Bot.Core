@@ -2,6 +2,7 @@
 using DoormatCore.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -106,12 +107,14 @@ devise:btc*/
                 }
 
                 if (bsbase != null)
-                   // if (bsbase._return != null)
+                    // if (bsbase._return != null)
                     if (bsbase.success)
                     {
                         Stats.Balance = decimal.Parse(bsbase.new_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                         lastupdate = DateTime.Now;
                         DiceBet tmp = bsbase.ToBet();
+                        tmp.High = BetObj.High;
+                        tmp.Chance = BetObj.Chance;
                         tmp.Guid = BetObj.GUID;
                         Stats.Profit += (decimal)tmp.Profit;
                         Stats.Wagered += (decimal)tmp.TotalAmount;
@@ -136,7 +139,7 @@ devise:btc*/
                     {
                         if (bsbase.error != null)
                         {
-                            if (bsbase.error.StartsWith("Maximum bet") || bsbase.error== "Bet amount not valid")
+                            if (bsbase.error.StartsWith("Maximum bet") || bsbase.error == "Bet amount not valid")
                             {
                                 callError(bsbase.error, false, ErrorType.InvalidBet);
                             }
@@ -165,7 +168,7 @@ devise:btc*/
         }
 
 
-        
+
         DateTime LastReset = new DateTime();
         protected override void _ResetSeed()
         {
@@ -233,7 +236,7 @@ devise:btc*/
                 if (x.Param.Name.ToLower() == "2fa code")
                     twofa = x.Value;
                 if (x.Param.Name.ToLower() == "api key")
-                    APIKey = x.Value;
+                    APIKey = x.Value?.Trim();
             }
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://www.bitsler.com/") };
@@ -247,7 +250,7 @@ devise:btc*/
                 HttpResponseMessage resp = Client.GetAsync("https://www.bitsler.com").Result;
                 string s1 = "";
 
-                
+
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
                 pairs.Add(new KeyValuePair<string, string>("username", Username));
                 pairs.Add(new KeyValuePair<string, string>("password", Password));
@@ -266,46 +269,45 @@ devise:btc*/
                 //getuserstats 
                 bsLogin bsbase = JsonSerializer.Deserialize<bsLogin>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
 
-                if (bsbase != null)
-                    if (bsbase != null)
-                        //if (bsbase._return.success == "true")
+
+                if (bsbase?.success ?? false)
+                {
+                    accesstoken = bsbase.access_token;
+                    IsBitsler = true;
+                    lastupdate = DateTime.Now;
+
+
+                    pairs = new List<KeyValuePair<string, string>>();
+                    pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
+                    Content = new FormUrlEncodedContent(pairs);
+                    sEmitResponse = Client.PostAsync("api/getuserstats", Content).Result.Content.ReadAsStringAsync().Result;
+                    bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    if (bsstatsbase != null)
+
+                        if (bsstatsbase.success)
                         {
-                            accesstoken = bsbase.access_token;
-                            IsBitsler = true;
-                            lastupdate = DateTime.Now;
-
-
-                            pairs = new List<KeyValuePair<string, string>>();
-                            pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
-                            Content = new FormUrlEncodedContent(pairs);
-                            sEmitResponse = Client.PostAsync("api/getuserstats", Content).Result.Content.ReadAsStringAsync().Result;
-                            bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
-                            if (bsstatsbase != null)
-                               
-                                    if (bsstatsbase.success == "true")
-                                    {
-                                        GetStatsFromStatsBase(bsstatsbase);
-                                        this.username = Username;
-                                    }
-                                    else
-                                    {
-                                        if (bsstatsbase.error != null)
-                                        {
-                                            callNotify(bsstatsbase.error);
-                                        }
-                                    }
-
-                            IsBitsler = true;
-                            Thread t = new Thread(GetBalanceThread);
-                            t.Start();
-                            callLoginFinished(true);
-                            return;
+                            GetStatsFromStatsBase(bsstatsbase);
+                            this.username = Username;
                         }
                         else
                         {
-                            if (bsbase.error != null)
-                                callNotify(bsbase.error);
+                            if (bsstatsbase.error != null)
+                            {
+                                callNotify(bsstatsbase.error);
+                            }
                         }
+
+                    IsBitsler = true;
+                    Thread t = new Thread(GetBalanceThread);
+                    t.Start();
+                    callLoginFinished(true);
+                    return;
+                }
+                else
+                {
+                    if (bsbase.error != null)
+                        callNotify(bsbase.error);
+                }
 
             }
             catch (Exception e)
@@ -324,7 +326,8 @@ devise:btc*/
             decimal amount = BetDetails.TotalAmount;
             int type_delay = 0;
 
-            if (Currencies[Currency].ToLower() == "btc") {
+            if (Currencies[Currency].ToLower() == "btc")
+            {
                 if (LastBetAmount <= 0.00000005 || (double)amount <= 0.00000005)
                     type_delay = 1;
                 else
@@ -496,89 +499,67 @@ devise:btc*/
             switch (Currencies[Currency].ToLower())
             {
                 case "btc":
-                    Stats.Balance = bsstatsbase.btc_balance;
-                    Stats.Profit = bsstatsbase.btc_profit;
-                    Stats.Wagered = bsstatsbase.btc_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.btc_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.btc_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.btc_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "ltc":
-                    Stats.Balance = bsstatsbase.ltc_balance;
-                    Stats.Profit = bsstatsbase.ltc_profit;
-                    Stats.Wagered = bsstatsbase.ltc_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.ltc_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.ltc_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.ltc_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "doge":
-                    Stats.Balance = bsstatsbase.doge_balance;
-                    Stats.Profit = bsstatsbase.doge_profit;
-                    Stats.Wagered = bsstatsbase.doge_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.doge_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.doge_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.doge_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "eth":
-                    Stats.Balance = bsstatsbase.eth_balance;
-                    Stats.Profit = bsstatsbase.eth_profit;
-                    Stats.Wagered = bsstatsbase.eth_wagered; break;
-                case "burst":
-                    Stats.Balance = bsstatsbase.burst_balance;
-                    Stats.Profit = bsstatsbase.burst_profit;
-                    Stats.Wagered = bsstatsbase.burst_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.eth_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.eth_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.eth_wagered, NumberFormatInfo.InvariantInfo); break;
+
                 case "dash":
-                    Stats.Balance = bsstatsbase.dash_balance;
-                    Stats.Profit = bsstatsbase.dash_profit;
-                    Stats.Wagered = bsstatsbase.dash_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.dash_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.dash_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.dash_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "zec":
-                    Stats.Balance = bsstatsbase.zec_balance;
-                    Stats.Profit = bsstatsbase.zec_profit;
-                    Stats.Wagered = bsstatsbase.zec_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.zec_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.zec_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.zec_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "bch":
-                    Stats.Balance = bsstatsbase.bch_balance;
-                    Stats.Profit = bsstatsbase.bch_profit;
-                    Stats.Wagered = bsstatsbase.bch_wagered; break;
-                case "xmr":
-                    Stats.Balance = bsstatsbase.xmr_balance;
-                    Stats.Profit = bsstatsbase.xmr_profit;
-                    Stats.Wagered = bsstatsbase.xmr_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.bch_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.bch_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.bch_wagered, NumberFormatInfo.InvariantInfo); break;
+
                 case "etc":
-                    Stats.Balance = bsstatsbase.etc_balance;
-                    Stats.Profit = bsstatsbase.etc_profit;
-                    Stats.Wagered = bsstatsbase.etc_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.etc_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.etc_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.etc_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "neo":
-                    Stats.Balance = bsstatsbase.neo_balance;
-                    Stats.Profit = bsstatsbase.neo_profit;
-                    Stats.Wagered = bsstatsbase.neo_wagered; break;
-                case "strat":
-                    Stats.Balance = bsstatsbase.strat_balance;
-                    Stats.Profit = bsstatsbase.strat_profit;
-                    Stats.Wagered = bsstatsbase.strat_wagered; break;
-                case "kmd":
-                    Stats.Balance = bsstatsbase.kmd_balance;
-                    Stats.Profit = bsstatsbase.kmd_profit;
-                    Stats.Wagered = bsstatsbase.kmd_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.neo_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.neo_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.neo_wagered, NumberFormatInfo.InvariantInfo); break;
+
                 case "xrp":
-                    Stats.Balance = bsstatsbase.xrp_balance;
-                    Stats.Profit = bsstatsbase.xrp_profit;
-                    Stats.Wagered = bsstatsbase.xrp_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.xrp_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.xrp_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.xrp_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "btg":
-                    Stats.Balance = bsstatsbase.btg_balance;
-                    Stats.Profit = bsstatsbase.btg_profit;
-                    Stats.Wagered = bsstatsbase.btg_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.btg_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.btg_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.btg_wagered, NumberFormatInfo.InvariantInfo); break;
                 case "qtum":
-                    Stats.Balance = bsstatsbase.qtum_balance;
-                    Stats.Profit = bsstatsbase.qtum_profit;
-                    Stats.Wagered = bsstatsbase.qtum_wagered; break;
-                case "lsk":
-                    Stats.Balance = bsstatsbase.lsk_balance;
-                    Stats.Profit = bsstatsbase.lsk_profit;
-                    Stats.Wagered = bsstatsbase.lsk_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.qtum_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.qtum_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.qtum_wagered, NumberFormatInfo.InvariantInfo); break;
+
                 case "dgb":
-                    Stats.Balance = bsstatsbase.dgb_balance;
-                    Stats.Profit = bsstatsbase.dgb_profit;
-                    Stats.Wagered = bsstatsbase.dgb_wagered; break;
-                case "waves":
-                    Stats.Balance = bsstatsbase.waves_balance;
-                    Stats.Profit = bsstatsbase.waves_profit;
-                    Stats.Wagered = bsstatsbase.waves_wagered; break;
-                case "btslr":
-                    Stats.Balance = bsstatsbase.btslr_balance;
-                    Stats.Profit = bsstatsbase.btslr_profit;
-                    Stats.Wagered = bsstatsbase.btslr_wagered; break;
+                    Stats.Balance = decimal.Parse(bsstatsbase.dgb_balance, NumberFormatInfo.InvariantInfo);
+                    Stats.Profit = decimal.Parse(bsstatsbase.dgb_profit, NumberFormatInfo.InvariantInfo);
+                    Stats.Wagered = decimal.Parse(bsstatsbase.dgb_wagered, NumberFormatInfo.InvariantInfo); break;
+
+
             }
-            Stats.Bets = int.Parse(bsstatsbase.bets, System.Globalization.NumberFormatInfo.InvariantInfo);
-            Stats.Wins = int.Parse(bsstatsbase.wins, System.Globalization.NumberFormatInfo.InvariantInfo);
-            Stats.Losses = int.Parse(bsstatsbase.losses, System.Globalization.NumberFormatInfo.InvariantInfo);
+            Stats.Bets = bsstatsbase.bets;
+            Stats.Wins = bsstatsbase.wins;
+            Stats.Losses = bsstatsbase.losses;
 
         }
 
@@ -615,17 +596,17 @@ devise:btc*/
                     bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                     if (bsstatsbase != null)
                         //if (bsstatsbase._return != null)
-                            if (bsstatsbase.success == "true")
+                        if (bsstatsbase.success)
+                        {
+                            GetStatsFromStatsBase(bsstatsbase);
+                        }
+                        else
+                        {
+                            if (bsstatsbase.error != null)
                             {
-                                GetStatsFromStatsBase(bsstatsbase);
+                                callNotify(bsstatsbase.error);
                             }
-                            else
-                            {
-                                if (bsstatsbase.error != null)
-                                {
-                                    callNotify(bsstatsbase.error);
-                                }
-                            }
+                        }
                 }
             }
             catch { }
@@ -634,129 +615,143 @@ devise:btc*/
 
         public class bsLogin
         {
-            public string success { get; set; }
-            public string error { get; set; }
+            public bool success { get; set; }
             public string access_token { get; set; }
+            public string session_token { get; set; }
+            public string error { get; set; }
         }
+
         public class bsloginbase
         {
             public bsLogin _return { get; set; }
         }
         //"{\"return\":{\"success\":\"true\",\"balance\":1.0e-5,\"wagered\":0,\"profit\":0,\"bets\":\"0\",\"wins\":\"0\",\"losses\":\"0\"}}"
         //{"return":{"success":"true","bets":0,"wins":0,"losses":0,"btc_profit":"0.00000000","btc_wagered":"0.00000000","btc_balance":"0.00000000","eth_profit":"0.00000000","eth_wagered":"0.00000000","eth_balance":"0.00000000","ltc_profit":"0.00000000","ltc_wagered":"0.00000000","ltc_balance":"0.00000000","bch_profit":"0.00000000","bch_wagered":"0.00000000","bch_balance":"0.00000000","doge_profit":"0.00000000","doge_wagered":"0.00000000","doge_balance":"0.00000000","dash_profit":"0.00000000","dash_wagered":"0.00000000","dash_balance":"0.00000000","zec_profit":"0.00000000","zec_wagered":"0.00000000","zec_balance":"0.00000000","burst_profit":"0.00000000","burst_wagered":"0.00000000","burst_balance":"0.00000000"}}
+
+
         public class bsStats
         {
-            public string success { get; set; }
             public string error { get; set; }
-            public decimal btc_balance { get; set; }
-            public decimal btc_wagered { get; set; }
-            public decimal btc_profit { get; set; }
-            public string bets { get; set; }
-            public decimal ltc_balance { get; set; }
-            public decimal ltc_wagered { get; set; }
-            public decimal ltc_profit { get; set; }
-
-            public decimal doge_balance { get; set; }
-            public decimal doge_wagered { get; set; }
-            public decimal doge_profit { get; set; }
-            public decimal eth_balance { get; set; }
-            public decimal eth_wagered { get; set; }
-            public decimal eth_profit { get; set; }
-            public decimal burst_balance { get; set; }
-            public decimal burst_wagered { get; set; }
-            public decimal zec_profit { get; set; }
-            public decimal zec_balance { get; set; }
-            public decimal zec_wagered { get; set; }
-            public decimal bch_profit { get; set; }
-            public decimal bch_balance { get; set; }
-            public decimal bch_wagered { get; set; }
-            public decimal dash_profit { get; set; }
-            public decimal dash_balance { get; set; }
-            public decimal dash_wagered { get; set; }
-            public decimal burst_profit { get; set; }
-            public decimal etc_balance { get; set; }
-            public decimal etc_wagered { get; set; }
-            public decimal etc_profit { get; set; }
-
-            public decimal xmr_balance { get; set; }
-            public decimal xmr_wagered { get; set; }
-            public decimal xmr_profit { get; set; }
-
-            public decimal neo_balance { get; set; }
-            public decimal neo_wagered { get; set; }
-            public decimal neo_profit { get; set; }
-
-            public decimal strat_balance { get; set; }
-            public decimal strat_wagered { get; set; }
-            public decimal strat_profit { get; set; }
-
-            public decimal kmd_balance { get; set; }
-            public decimal kmd_wagered { get; set; }
-            public decimal kmd_profit { get; set; }
-
-            public decimal xrp_balance { get; set; }
-            public decimal xrp_wagered { get; set; }
-            public decimal xrp_profit { get; set; }
-
-            public decimal btg_balance { get; set; }
-            public decimal btg_wagered { get; set; }
-            public decimal btg_profit { get; set; }
-
-            public decimal lsk_balance { get; set; }
-            public decimal lsk_wagered { get; set; }
-            public decimal lsk_profit { get; set; }
-
-            public decimal dgb_balance { get; set; }
-            public decimal dgb_wagered { get; set; }
-            public decimal dgb_profit { get; set; }
-
-            public decimal qtum_balance { get; set; }
-            public decimal qtum_wagered { get; set; }
-            public decimal qtum_profit { get; set; }
-
-            public decimal waves_balance { get; set; }
-            public decimal waves_wagered { get; set; }
-            public decimal waves_profit { get; set; }
-            public decimal btslr_balance { get; set; }
-            public decimal btslr_wagered { get; set; }
-            public decimal btslr_profit { get; set; }
-            public decimal bsv_balance { get; set; }
-            public decimal bsv_wagered { get; set; }
-            public decimal bsv_profit { get; set; }
-            public decimal xlm_balance { get; set; }
-            public decimal xlm_wagered { get; set; }
-            public decimal xlm_profit { get; set; }
-
-            public string wins { get; set; }
-            public string losses { get; set; }
+            public bool success { get; set; }
+            public int bets { get; set; }
+            public int wins { get; set; }
+            public int losses { get; set; }
+            public string btc_profit { get; set; }
+            public string btc_wagered { get; set; }
+            public string eth_profit { get; set; }
+            public string eth_wagered { get; set; }
+            public string xrp_profit { get; set; }
+            public string xrp_wagered { get; set; }
+            public string ltc_profit { get; set; }
+            public string ltc_wagered { get; set; }
+            public string doge_profit { get; set; }
+            public string doge_wagered { get; set; }
+            public string etc_profit { get; set; }
+            public string etc_wagered { get; set; }
+            public string bnb_profit { get; set; }
+            public string bnb_wagered { get; set; }
+            public string busd_profit { get; set; }
+            public string busd_wagered { get; set; }
+            public string usdc_profit { get; set; }
+            public string usdc_wagered { get; set; }
+            public string sol_profit { get; set; }
+            public string sol_wagered { get; set; }
+            public string ada_profit { get; set; }
+            public string ada_wagered { get; set; }
+            public string bch_profit { get; set; }
+            public string bch_wagered { get; set; }
+            public string dash_profit { get; set; }
+            public string dash_wagered { get; set; }
+            public string btg_profit { get; set; }
+            public string btg_wagered { get; set; }
+            public string zec_profit { get; set; }
+            public string zec_wagered { get; set; }
+            public string dgb_profit { get; set; }
+            public string dgb_wagered { get; set; }
+            public string eos_profit { get; set; }
+            public string eos_wagered { get; set; }
+            public string xlm_profit { get; set; }
+            public string xlm_wagered { get; set; }
+            public string trx_profit { get; set; }
+            public string trx_wagered { get; set; }
+            public string neo_profit { get; set; }
+            public string neo_wagered { get; set; }
+            public string qtum_profit { get; set; }
+            public string qtum_wagered { get; set; }
+            public string usdt_profit { get; set; }
+            public string usdt_wagered { get; set; }
+            public string ethw_profit { get; set; }
+            public string ethw_wagered { get; set; }
+            public string matic_profit { get; set; }
+            public string matic_wagered { get; set; }
+            public string shib_profit { get; set; }
+            public string shib_wagered { get; set; }
+            public string link_profit { get; set; }
+            public string link_wagered { get; set; }
+            public string dai_profit { get; set; }
+            public string dai_wagered { get; set; }
+            public string ton_profit { get; set; }
+            public string ton_wagered { get; set; }
+            public string avax_profit { get; set; }
+            public string avax_wagered { get; set; }
+            public string btslr_profit { get; set; }
+            public string btslr_wagered { get; set; }
+            public string brl_profit { get; set; }
+            public string brl_wagered { get; set; }
+            public string fdusd_profit { get; set; }
+            public string fdusd_wagered { get; set; }
+            public string btc_balance { get; set; }
+            public string eth_balance { get; set; }
+            public string ltc_balance { get; set; }
+            public string doge_balance { get; set; }
+            public string bch_balance { get; set; }
+            public string etc_balance { get; set; }
+            public string zec_balance { get; set; }
+            public string neo_balance { get; set; }
+            public string dgb_balance { get; set; }
+            public string btg_balance { get; set; }
+            public string qtum_balance { get; set; }
+            public string bnb_balance { get; set; }
+            public string ethw_balance { get; set; }
+            public string sol_balance { get; set; }
+            public string ada_balance { get; set; }
+            public string usdt_balance { get; set; }
+            public string trx_balance { get; set; }
+            public string matic_balance { get; set; }
+            public string xlm_balance { get; set; }
+            public string xrp_balance { get; set; }
+            public string dash_balance { get; set; }
+            public string eos_balance { get; set; }
         }
-        public class bsStatsBase
-        {
-            public bsStats _return { get; set; }
-        }
+
+
+
         public class bsBetBase
         {
             public bsBet _return { get; set; }
         }
+
+
+
         public class bsBet
         {
             public bool success { get; set; }
             public string username { get; set; }
             public string id { get; set; }
             public string currency { get; set; }
-            public long timestamp { get; set; }
+            public int timestamp { get; set; }
             public string amount { get; set; }
-            public decimal result { get; set; }
-            public bool over { get; set; }
-            public decimal target { get; set; }
-            public decimal payout { get; set; }
-            public decimal chance { get; set; }
+            public float result { get; set; }
+            public int payout { get; set; }
             public string profit { get; set; }
             public string new_balance { get; set; }
+            public float xp { get; set; }
+            public float xp_add { get; set; }
             public string server_seed { get; set; }
             public string client_seed { get; set; }
-            public long nonce { get; set; }
-            public List<object> notifications { get; set; }
+            public int nonce { get; set; }
+            public object[] notifications { get; set; }
+            
             public string error { get; set; }
             public DiceBet ToBet()
             {
@@ -767,8 +762,7 @@ devise:btc*/
                     BetID = id,
                     Profit = decimal.Parse(profit, System.Globalization.NumberFormatInfo.InvariantInfo),
                     Roll = (decimal)result,
-                    High = over,
-                    Chance = chance,
+                   
                     Nonce = nonce,
                     ServerHash = server_seed,
                     ClientSeed = client_seed
