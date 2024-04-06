@@ -88,7 +88,7 @@ namespace DoormatCore.Sites
                 accesstoken = LoginParams[0].Value;
 
 
-                string sEmitResponse = Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
+                string sEmitResponse = Client.GetStringAsync("bot/user-info/?api_key=" + accesstoken).Result;
                 Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
                 sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
                 QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
