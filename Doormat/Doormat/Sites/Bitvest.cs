@@ -22,13 +22,13 @@ namespace DoormatCore.Sites
         int retrycount = 0;
         DateTime Lastbet = DateTime.Now;
         string secret = "";
-        bitvestCurWeight Weights = null;
+        //bitvestCurWeight Weights = null;
         double[] Limits = new double[0];
         string pw = "";
         string lasthash = "";
         string[] CurrencyMap = new string[] { };
         string seed = "";
-        
+
         public Bitvest()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
@@ -47,14 +47,14 @@ namespace DoormatCore.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
-            this.Currencies = new string[] { "btc", "tok", "ltc", "eth", "doge","bch" };
+            this.Currencies = new string[] { "btc", "tok", "ltc", "eth", "doge", "bch" };
             CurrencyMap = new string[] { "bitcoins", "tokens", "litecoins", "ethers", "dogecoins", "bcash" };
             SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
         }
-        
+
 
         public override void SetProxy(ProxyDetails ProxyInfo)
         {
@@ -89,7 +89,7 @@ namespace DoormatCore.Sites
                 if (x.Param.Name.ToLower() == "2fa code")
                     otp = x.Value;
             }
-            
+
             try
             {
                 string resp = "";// Client.GetStringAsync("").Result;
@@ -126,16 +126,16 @@ namespace DoormatCore.Sites
                     resp = Client.PostAsync("https://bitvest.io/login.php", Content).Result.Content.ReadAsStringAsync().Result;
                     tmpresp = resp.Replace("-", "_");
                     tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(tmpresp);
-                    Weights = tmpblogin.currency_weight;
+                    //Weights = tmpblogin.currency_weight;
                     Limits = tmpblogin.rate_limits;
 
                     tmplogin = tmpblogin.data;
-                    if (Currencies[0].ToLower()=="btc")
+                   /* if (Currencies[0].ToLower() == "btc")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                         Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
                         Stats.Profit = decimal.Parse(tmplogin.self_total_won_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        
+
                     }
                     else if (Currencies[0].ToLower() == "eth")
                     {
@@ -179,7 +179,7 @@ namespace DoormatCore.Sites
                     lasthash = tmpblogin.server_hash;
                     this.CanTip = tmpblogin.tip.enabled;
                     callLoginFinished(true);
-                    return;
+                    return;*/
                 }
                 else
                 {
@@ -203,7 +203,7 @@ namespace DoormatCore.Sites
             callLoginFinished(false);
         }
 
-       
+
         string RandomSeed()
         {
             string s = "";
@@ -228,12 +228,12 @@ namespace DoormatCore.Sites
 
                 decimal tmpchance = High ? MaxRoll - chance + 0.0001m : chance - 0.0001m;
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
-               
+
                 pairs.Add(new KeyValuePair<string, string>("bet", (amount).ToString(System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("target", tmpchance.ToString("0.0000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("side", High ? "high" : "low"));
                 pairs.Add(new KeyValuePair<string, string>("act", "play_dice"));
-                pairs.Add(new KeyValuePair<string, string>("currency",  CurrencyMap[Currency]));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrencyMap[Currency]));
                 pairs.Add(new KeyValuePair<string, string>("secret", secret));
                 pairs.Add(new KeyValuePair<string, string>("token", accesstoken));
                 pairs.Add(new KeyValuePair<string, string>("user_seed", seed));
@@ -296,7 +296,7 @@ namespace DoormatCore.Sites
                     }
                     else
                     {
-                        if (tmp.msg== "Insufficient Funds")
+                        if (tmp.msg == "Insufficient Funds")
                         {
                             callError(tmp.msg, false, ErrorType.BalanceTooLow);
                         }
@@ -359,7 +359,7 @@ namespace DoormatCore.Sites
         {
             try
             {
-                
+
                 {
                     lastupdate = DateTime.Now;
                     ForceUpdateStats = false;
@@ -384,8 +384,8 @@ namespace DoormatCore.Sites
                         if (resp1.StatusCode == HttpStatusCode.ServiceUnavailable)
                         {
                             s1 = resp1.Content.ReadAsStringAsync().Result;
-                            
-                            
+
+
                             //do cloudflare stuff here
 
 
@@ -424,8 +424,8 @@ namespace DoormatCore.Sites
                                 default:
                                     Stats.Balance = (decimal)tmpbase.data.token_balance; break;
                             }
-                            
-                            
+
+
                         }
                     }
 
@@ -441,20 +441,20 @@ namespace DoormatCore.Sites
         {
             if (BetDetails is PlaceDiceBet)
             {
-                
+
                 decimal weight = 1;
                 if (Currency == 0)
                 {
                     switch (CurrencyMap[Currency].ToLower())
                     {
-                        case "bitcoins": weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        /*case "bitcoins": weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
                         case "tokens": weight = decimal.Parse(Weights.TOK, System.Globalization.NumberFormatInfo.InvariantInfo); break;
                         case "litecoins": weight = decimal.Parse(Weights.LTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
                         case "ethers": weight = decimal.Parse(Weights.ETH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
                         case "dogecoins": weight = decimal.Parse(Weights.DOGE, System.Globalization.NumberFormatInfo.InvariantInfo); break;
                         case "bcash": weight = decimal.Parse(Weights.BCH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
 
-                        default: weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
+                        default: weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;*/
                     }
                 }
 
@@ -562,101 +562,308 @@ namespace DoormatCore.Sites
 
         protected override void _ResetSeed()
         {
-            
+
         }
 
         public class bitvestLoginBase
         {
-            public bool success { get; set; }
-            public string msg { get; set; }
+            public int update_interval { get; set; }
             public bitvestLogin data { get; set; }
+            public Chat chat { get; set; }
+            public Game game { get; set; }
             public bitvestAccount account { get; set; }
-            public string server_hash { get; set; }
-            public bitvesttip tip { get; set; }
-            public bitvestCurWeight currency_weight { get; set; }
             public double[] rate_limits { get; set; }
-            public string last_user_seed { get; set; }
         }
-        public class bitvestCurWeight
-        {
-            public string BTC { get; set; }
-            public string ETH { get; set; }
-            public string LTC { get; set; }
-            public string TOK { get; set; }
-            public string DOGE { get; set; }
-            public string BCH { get; set; }
-        }
-        /*{"data":{"self-user-id":46534,"self-username":"Seuntjie",
-          "balance":0.00586720655,
-          "token_balance":39775.605,
-          "ether_balance":0.0001,
-          "litecoin_balance":0.0001,"pending":0,"ether_pending":0,"litecoin_pending":0,"address":"12Nfe1Dp9VAFRqKLKE9vgrP28qJH3Aaad4",
-          "ether_address":"0x3e10685213a68b3321d6b65352ac9cc94da559f1",
-          "litecoin_address":"LQe1t6YCiteYfVJ9n1BXHdXopzmp94CMWd",
-          "total_bet":0.01493638,
-          "total_won":0.0082235001,
-          "total_profit":-0.0067128799,
-          "token_total_bet":811453,
-          "token_total_won":761301.63,
-          "token_total_profit":-50151.37,
-          "ether_total_bet":0,
-          "ether_total_won":0,
-          "ether_total_profit":0,
-          "litecoin_total_bet":0,
-          "litecoin_total_won":0,
-          "litecoin_total_profit":0,
-          "bets":2272,
-          "server_hash":"30e01c8a1385bd3bd7cf8a2856e73bf639807eccced705159538b074582839a9"}}
-          */
+
         public class bitvestLogin
         {
-
             public string balance { get; set; }
-            public string token_balance { get; set; }
-            public string balance_litecoin { get; set; }
-            public string balance_dogecoin { get; set; }
-            public string balance_bcash { get; set; }
-            public string self_username { get; set; }
-            public string self_user_id { get; set; }
-            public string self_ref_count { get; set; }
-            public string self_ref_total_profit { get; set; }
-            public string self_total_bet_dice { get; set; }
-            public string self_total_won_dice { get; set; }
-            public string self_total_bets_dice { get; set; }
-            public string session_token { get; set; }
-
             public string balance_ether { get; set; }
-            public decimal pending { get; set; }
-            public decimal ether_pending { get; set; }
-            public decimal pending_litecoin { get; set; }
-            public string address { get; set; }
-            public string ether_address { get; set; }
-            public string litecoin_address { get; set; }
-            public decimal total_bet { get; set; }
-            public decimal total_won { get; set; }
-            public decimal total_profit { get; set; }
-            public decimal token_total_bet { get; set; }
-            public decimal token_total_won { get; set; }
-            public decimal token_total_profit { get; set; }
-            public decimal ether_total_bet { get; set; }
-            public decimal ether_total_won { get; set; }
-            public decimal ether_total_profit { get; set; }
-            public decimal litecoin_total_bet { get; set; }
-            public decimal litecoin_total_won { get; set; }
-            public decimal litecoin_total_profit { get; set; }
-            public decimal dogecoin_total_bet { get; set; }
-            public decimal dogecoin_total_won { get; set; }
-            public decimal dogecoin_total_profit { get; set; }
-            public decimal bcash_total_bet { get; set; }
-            public decimal bcash_total_won { get; set; }
-            public decimal bcash_total_profit { get; set; }
-            public int bets { get; set; }
-            public string server_hash { get; set; }
-
-
-
-
+            public string balance_litecoin { get; set; }
+            public string balance_bcash { get; set; }
+            public string balance_dogecoin { get; set; }
+            public string pending_bitcoin { get; set; }
+            public string pending_ether { get; set; }
+            public string pending_litecoin { get; set; }
+            public string pending_bcash { get; set; }
+            public string pending_dogecoin { get; set; }
+            public string token_balance { get; set; }
+            public string self_username { get; set; }
+            public object self_user_id { get; set; }
+            public string self_type { get; set; }
+            public object self_rank { get; set; }
+            public object self_bet_rank { get; set; }
+            public string recovery_address { get; set; }
+            public Exchange_Rates exchange_rates { get; set; }
+            public string context_content { get; set; }
+            public string chat_announcement { get; set; }
+            public string chat_event_announcement { get; set; }
+            public int chatrooms { get; set; }
+            public string session_token { get; set; }
+            public bool api_enabled { get; set; }
+            public bool mystats_private { get; set; }
+            public Divest_Lock divest_lock { get; set; }
+            
+            public string self_total_bet { get; set; }
+            public string self_total_bet_ether { get; set; }
+            public string self_total_bet_litecoin { get; set; }
+            public string self_total_bet_bcash { get; set; }
+            public string self_total_bet_dogecoin { get; set; }
+            public string self_total_won { get; set; }
+            public string self_total_won_ether { get; set; }
+            public string self_total_won_litecoin { get; set; }
+            public string self_total_won_bcash { get; set; }
+            public string self_total_won_dogecoin { get; set; }
+            public string self_profit_percent { get; set; }
+            public string self_profit_percent_ether { get; set; }
+            public string self_profit_percent_litecoin { get; set; }
+            public string self_profit_percent_bcash { get; set; }
+            public string self_profit_percent_dogecoin { get; set; }
+            public string self_total_bets { get; set; }
+            public string self_total_bet_roulette { get; set; }
+            public string self_total_bet_roulette_ether { get; set; }
+            public string self_total_bet_roulette_litecoin { get; set; }
+            public string self_total_bet_roulette_bcash { get; set; }
+            public string self_total_bet_roulette_dogecoin { get; set; }
+            public string self_total_won_roulette { get; set; }
+            public string self_total_won_roulette_ether { get; set; }
+            public string self_total_won_roulette_litecoin { get; set; }
+            public string self_total_won_roulette_bcash { get; set; }
+            public string self_total_won_roulette_dogecoin { get; set; }
+            public string self_profit_percent_roulette { get; set; }
+            public string self_profit_percent_roulette_ether { get; set; }
+            public string self_profit_percent_roulette_litecoin { get; set; }
+            public string self_profit_percent_roulette_bcash { get; set; }
+            public string self_profit_percent_roulette_dogecoin { get; set; }
+            public string self_total_bets_roulette { get; set; }
+            public string self_total_bet_slot { get; set; }
+            public string self_total_bet_slot_ether { get; set; }
+            public string self_total_bet_slot_litecoin { get; set; }
+            public string self_total_bet_slot_bcash { get; set; }
+            public string self_total_bet_slot_dogecoin { get; set; }
+            public string self_total_won_slot { get; set; }
+            public string self_total_won_slot_ether { get; set; }
+            public string self_total_won_slot_litecoin { get; set; }
+            public string self_total_won_slot_bcash { get; set; }
+            public string self_total_won_slot_dogecoin { get; set; }
+            public string self_profit_percent_slot { get; set; }
+            public string self_profit_percent_slot_ether { get; set; }
+            public string self_profit_percent_slot_litecoin { get; set; }
+            public string self_profit_percent_slot_bcash { get; set; }
+            public string self_profit_percent_slot_dogecoin { get; set; }
+            public string self_total_bets_slot { get; set; }
+            public string self_total_bet_bitspin { get; set; }
+            public string self_total_bet_bitspin_ether { get; set; }
+            public string self_total_bet_bitspin_litecoin { get; set; }
+            public string self_total_bet_bitspin_bcash { get; set; }
+            public string self_total_bet_bitspin_dogecoin { get; set; }
+            public string self_total_won_bitspin { get; set; }
+            public string self_total_won_bitspin_ether { get; set; }
+            public string self_total_won_bitspin_litecoin { get; set; }
+            public string self_total_won_bitspin_bcash { get; set; }
+            public string self_total_won_bitspin_dogecoin { get; set; }
+            public string self_profit_percent_bitspin { get; set; }
+            public string self_profit_percent_bitspin_ether { get; set; }
+            public string self_profit_percent_bitspin_litecoin { get; set; }
+            public string self_profit_percent_bitspin_bcash { get; set; }
+            public string self_profit_percent_bitspin_dogecoin { get; set; }
+            public string self_total_bets_bitspin { get; set; }
+            public string self_total_bet_dice { get; set; }
+            public string self_total_bet_dice_ether { get; set; }
+            public string self_total_bet_dice_litecoin { get; set; }
+            public string self_total_bet_dice_bcash { get; set; }
+            public string self_total_bet_dice_dogecoin { get; set; }
+            public string self_total_won_dice { get; set; }
+            public string self_total_won_dice_ether { get; set; }
+            public string self_total_won_dice_litecoin { get; set; }
+            public string self_total_won_dice_bcash { get; set; }
+            public string self_total_won_dice_dogecoin { get; set; }
+            public string self_profit_percent_dice { get; set; }
+            public string self_profit_percent_dice_ether { get; set; }
+            public string self_profit_percent_dice_litecoin { get; set; }
+            public string self_profit_percent_dice_bcash { get; set; }
+            public string self_profit_percent_dice_dogecoin { get; set; }
+            public string self_total_bets_dice { get; set; }
+            public string self_total_bet_keno { get; set; }
+            public string self_total_bet_keno_ether { get; set; }
+            public string self_total_bet_keno_litecoin { get; set; }
+            public string self_total_bet_keno_bcash { get; set; }
+            public string self_total_bet_keno_dogecoin { get; set; }
+            public string self_total_won_keno { get; set; }
+            public string self_total_won_keno_ether { get; set; }
+            public string self_total_won_keno_litecoin { get; set; }
+            public string self_total_won_keno_bcash { get; set; }
+            public string self_total_won_keno_dogecoin { get; set; }
+            public string self_profit_percent_keno { get; set; }
+            public string self_profit_percent_keno_ether { get; set; }
+            public string self_profit_percent_keno_litecoin { get; set; }
+            public string self_profit_percent_keno_bcash { get; set; }
+            public string self_profit_percent_keno_dogecoin { get; set; }
+            public string self_total_bets_keno { get; set; }
+            public string self_total_bet_plinko { get; set; }
+            public string self_total_bet_plinko_ether { get; set; }
+            public string self_total_bet_plinko_litecoin { get; set; }
+            public string self_total_bet_plinko_bcash { get; set; }
+            public string self_total_bet_plinko_dogecoin { get; set; }
+            public string self_total_won_plinko { get; set; }
+            public string self_total_won_plinko_ether { get; set; }
+            public string self_total_won_plinko_litecoin { get; set; }
+            public string self_total_won_plinko_bcash { get; set; }
+            public string self_total_won_plinko_dogecoin { get; set; }
+            public string self_profit_percent_plinko { get; set; }
+            public string self_profit_percent_plinko_ether { get; set; }
+            public string self_profit_percent_plinko_litecoin { get; set; }
+            public string self_profit_percent_plinko_bcash { get; set; }
+            public string self_profit_percent_plinko_dogecoin { get; set; }
+            public string self_total_bets_plinko { get; set; }
+            public string self_bits_dropped { get; set; }
+            public string self_btc_tickets { get; set; }
+            public string self_tok_tickets { get; set; }
+            public string level_exp { get; set; }
+            public object mod_active_list { get; set; }
+            public bool fee_warning { get; set; }
+            public string self_ref_count { get; set; }
+            public string self_2ref_count { get; set; }
+            public string self_3ref_count { get; set; }
+            public string self_ref_total_profit { get; set; }
+            public string self_ref_total_profit_eth { get; set; }
+            public string self_ref_total_profit_ltc { get; set; }
+            public string self_ref_total_profit_bch { get; set; }
+            public string self_ref_total_profit_doge { get; set; }
+            
         }
+
+        public class Exchange_Rates
+        {
+            public float BCH { get; set; }
+            public float BTC { get; set; }
+            public float DOGE { get; set; }
+            public float ETH { get; set; }
+            public float LTC { get; set; }
+        }
+
+        public class Divest_Lock
+        {
+            public bool locked { get; set; }
+            public string lock_str { get; set; }
+        }
+
+        public class Global_Invest_Margin
+        {
+            public Bitcoins bitcoins { get; set; }
+            public Ethers ethers { get; set; }
+            public Litecoins litecoins { get; set; }
+            public Bcash bcash { get; set; }
+            public Dogecoins dogecoins { get; set; }
+        }
+
+        public class Bitcoins
+        {
+            public string plinko { get; set; }
+            public string dice { get; set; }
+            public string roulette { get; set; }
+            public string bitspin { get; set; }
+            public string slot { get; set; }
+            public string keno { get; set; }
+        }
+
+        public class Ethers
+        {
+            public string plinko { get; set; }
+            public string dice { get; set; }
+            public string roulette { get; set; }
+            public string bitspin { get; set; }
+            public string slot { get; set; }
+            public string keno { get; set; }
+        }
+
+        public class Litecoins
+        {
+            public string plinko { get; set; }
+            public string dice { get; set; }
+            public string roulette { get; set; }
+            public string bitspin { get; set; }
+            public string slot { get; set; }
+            public string keno { get; set; }
+        }
+
+        public class Bcash
+        {
+            public string plinko { get; set; }
+            public string dice { get; set; }
+            public string roulette { get; set; }
+            public string bitspin { get; set; }
+            public string slot { get; set; }
+            public string keno { get; set; }
+        }
+
+        public class Dogecoins
+        {
+            public string plinko { get; set; }
+            public string dice { get; set; }
+            public string roulette { get; set; }
+            public string bitspin { get; set; }
+            public string slot { get; set; }
+            public string keno { get; set; }
+        }
+
+        public class Chat
+        {
+            public string max_id { get; set; }
+            public object msg { get; set; }
+            public object delete { get; set; }
+        }
+
+        public class Game
+        {
+            public long[] max_id { get; set; }
+            public object data { get; set; }
+        }
+
+
+        public class DivestLock
+        {
+            public bool locked { get; set; }
+            public string lock_str { get; set; }
+        }
+
+        public class GlobalInvestMargin
+        {
+            public Bitcoins bitcoins { get; set; }
+            public Ethers ethers { get; set; }
+            public Litecoins litecoins { get; set; }
+            public Bcash bcash { get; set; }
+            public Dogecoins dogecoins { get; set; }
+        }
+
+        public class Tfa
+        {
+            public bool enabled { get; set; }
+            public object tfakey { get; set; }
+        }
+
+        public class Tip
+        {
+            public bool enabled { get; set; }
+        }
+
+        public class Account
+        {
+            public object type { get; set; }
+            public object address { get; set; }
+            public object address_eth { get; set; }
+            public object address_ltc { get; set; }
+            public object address_bch { get; set; }
+            public object address_doge { get; set; }
+            public string secret { get; set; }
+        }
+
+        public class Invest
+        {
+            public object[] active { get; set; }
+            public object[] complete { get; set; }
+        }
+
 
         public class BitVestGetBalance
         {
