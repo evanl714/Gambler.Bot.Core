@@ -63,7 +63,11 @@ stages:
 
     - script: |
         mkdir $(Build.ArtifactStagingDirectory)\Artifacts
-        xcopy /I /E "Doormat\*\bin\Release\net*\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+        xcopy /I /E /Y "Doormat\Doormat\bin\Release\net*\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+      displayName: 'Copy Artifacts to a Common Directory'
+    
+    - script: |
+        xcopy /I /E /Y "Doormat\DoormatCore.Tests\bin\Release\net*\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
       displayName: 'Copy Artifacts to a Common Directory'
 
     - task: PublishBuildArtifacts@1
