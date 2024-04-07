@@ -130,7 +130,7 @@ namespace DoormatCore.Sites
                     Limits = tmpblogin.rate_limits;
 
                     tmplogin = tmpblogin.data;
-                   /* if (Currencies[0].ToLower() == "btc")
+                    if (Currencies[0].ToLower() == "btc")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                         Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
@@ -140,26 +140,26 @@ namespace DoormatCore.Sites
                     else if (Currencies[0].ToLower() == "eth")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = tmplogin.ether_total_bet;
-                        Stats.Profit = tmplogin.ether_total_won;
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else if (Currencies[0].ToLower() == "ltc")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = tmplogin.litecoin_total_bet;
-                        Stats.Profit = tmplogin.litecoin_total_won;
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else if (Currencies[0].ToLower() == "bch")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = tmplogin.bcash_total_bet;
-                        Stats.Profit = tmplogin.bcash_total_won;
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_won_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else if (Currencies[0].ToLower() == "doge")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = tmplogin.token_total_bet;
-                        Stats.Profit = tmplogin.token_total_won;
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_won_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else
                     {
@@ -179,7 +179,7 @@ namespace DoormatCore.Sites
                     lasthash = tmpblogin.server_hash;
                     this.CanTip = tmpblogin.tip.enabled;
                     callLoginFinished(true);
-                    return;*/
+                    return;
                 }
                 else
                 {
@@ -573,6 +573,9 @@ namespace DoormatCore.Sites
             public Game game { get; set; }
             public bitvestAccount account { get; set; }
             public double[] rate_limits { get; set; }
+            public  string last_user_seed { get; set; }
+            public string server_hash { get; set; }
+            public bitvesttip tip { get; set; }
         }
 
         public class bitvestLogin
@@ -842,10 +845,6 @@ namespace DoormatCore.Sites
             public object tfakey { get; set; }
         }
 
-        public class Tip
-        {
-            public bool enabled { get; set; }
-        }
 
         public class Account
         {
