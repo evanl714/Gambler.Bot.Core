@@ -36,14 +36,13 @@ stages:
         script: |
           $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.csproj" -Recurse | Select-Object -First 1 -ExpandProperty FullName
           [xml]$csproj = Get-Content -Path $csprojPath
-          $ns = @{ "msbuild" = "http://schemas.microsoft.com/developer/msbuild/2003" }
-          $versionNode = $csproj.SelectSingleNode("//msbuild:Project/msbuild:PropertyGroup/msbuild:Version", $ns)
+          $versionNode = $csproj.SelectNodes("//Project/PropertyGroup/Version") | Select-Object -First 1
           if ($versionNode -eq $null) {
-            $propertyGroup = $csproj.CreateElement("PropertyGroup", $csproj.DocumentElement.NamespaceURI)
-            $versionNode = $csproj.CreateElement("Version", $csproj.DocumentElement.NamespaceURI)
+            $propertyGroup = $csproj.CreateElement("PropertyGroup")
+            $versionNode = $csproj.CreateElement("Version")
             $versionNode.InnerText = "$(Build.BuildNumber)"
             $propertyGroup.AppendChild($versionNode)
-            $csproj.DocumentElement.InsertAfter($propertyGroup, $csproj.DocumentElement.LastChild)
+            $csproj.DocumentElement.AppendChild($propertyGroup)
           } else {
             $versionNode.InnerText = "$(Build.BuildNumber)"
           }
