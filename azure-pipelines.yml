@@ -70,7 +70,7 @@ stages:
     steps:
     - task: VSTest@2
       inputs:
-        testAssemblyVer2: 'Doormat\**\bin\Release\net*\**\*.Tests.dll'
+        testAssemblyVer2: 'Doormat\**\bin\Release\net*\*.Tests.dll'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
