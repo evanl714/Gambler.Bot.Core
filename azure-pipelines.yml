@@ -16,7 +16,23 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
+
+
+
 steps:
+- task: DownloadSecureFile@1
+  name: diceAccountsFile
+  inputs:
+    secureFile: 'diceaccounts.json'
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      $env:DICETESTACCOUNTS = "$(Agent.TempDirectory)\$(diceAccountsFile.secureFilePath)"
+      Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
+  env:
+    diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
@@ -29,18 +45,6 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
     
-- task: DownloadSecureFile@1
-  inputs:
-    secureFile: 'diceaccounts.json'
-
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: |
-      $env:DICETESTACCOUNTS = "$(Agent.TempDirectory)\$(diceAccountsFile.secureFilePath)"
-      Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
-  env:
-    diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
     
 
 - task: VSTest@2
