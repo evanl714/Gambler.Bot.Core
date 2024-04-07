@@ -35,15 +35,15 @@ steps:
   inputs:
     secureFile: 'diceaccounts.json'
 
-- powershell: |      
-      $env:DICETESTACCOUNTS -eq (pwd).path + "\diceaccounts.json"
+    task: PowerShell@2
+- script: $env:DICETESTACCOUNTS -eq (pwd).path + "\diceaccounts.json"
 
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-- task: DotNetCoreCLI@2
 
+- task: DotNetCoreCLI@2
   inputs:
     command: publish
     publishWebProjects: True
