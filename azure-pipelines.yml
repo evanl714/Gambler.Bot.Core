@@ -16,19 +16,7 @@ stages:
   jobs:
   - job: BuildJob
     steps:
-    - task: DownloadSecureFile@1
-      name: diceAccountsFile
-      inputs:
-        secureFile: 'diceaccounts.json'
-
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: |
-          $env:DICETESTACCOUNTS = "$(diceAccountsFile.secureFilePath)"
-          Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
-      env:
-        diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
+    
         
     - task: PowerShell@2
       inputs:
@@ -82,6 +70,19 @@ stages:
   jobs:
   - job: TestJob
     steps:
+    - task: DownloadSecureFile@1
+      name: diceAccountsFile
+      inputs:
+        secureFile: 'diceaccounts.json'
+
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          $env:DICETESTACCOUNTS = "$(diceAccountsFile.secureFilePath)"
+          Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
+      env:
+        diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
     - task: DownloadBuildArtifacts@0
       inputs:
         buildType: 'current'
