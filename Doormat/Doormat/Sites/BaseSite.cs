@@ -116,6 +116,11 @@ namespace DoormatCore.Sites
         /// </summary>
         public SiteStats Stats { get; protected set; }
 
+        /// <summary>
+        /// Indicates whether the user is logged in to the site
+        /// </summary>
+        public bool LoggedIn { get; set; }
+
         SiteDetails siteDetails = null;
         public SiteDetails SiteDetails {
             get
@@ -184,6 +189,7 @@ namespace DoormatCore.Sites
         /// </summary>
         public void Disconnect()
         {
+            LoggedIn = false;
             _Disconnect();
         }
 
@@ -223,14 +229,14 @@ namespace DoormatCore.Sites
             
             if (BetDetails is PlaceDiceBet dicebet && this is iDice)
             {
-                if (dicebet.TotalAmount<0)
+                if (dicebet.Amount<0)
                 {
                     callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                     return;
                 }
                 else if (dicebet.Chance<=0)
                 {
-                    callError("Chance to win must be > 0", false, ErrorType.BetTooLow);
+                    callError("Chance to win must be > 0", false, ErrorType.InvalidBet);
                     return;
                 }
                 callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High?"High":"Low")}");
@@ -519,6 +525,7 @@ namespace DoormatCore.Sites
         {
             if (LoginFinished != null)
             {
+                LoggedIn = Success;
                 LoginFinished(this, new LoginFinishedEventArgs(Success, this.Stats));
             }
         }

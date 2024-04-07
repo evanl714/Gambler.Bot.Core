@@ -82,6 +82,39 @@ namespace DoormatCore.Sites
             if (resp2.IsSuccessStatusCode)
             {
                 string response = resp2.Content.ReadAsStringAsync().Result;
+                WDBaseResponse statusMessage = JsonSerializer.Deserialize<WDBaseResponse>(response);
+                if (statusMessage.status == "error")
+                {
+                    ErrorType type = ErrorType.Unknown;
+                    switch (statusMessage.message)
+                    {
+                        case "Minimal chance for non-deposit bets is 0.2%": 
+                            
+                        case "Chance min 0.010000 / max 98.000000":
+
+                            type = ErrorType.InvalidBet;
+                            break;
+                        case "No balance":
+
+                            type = ErrorType.BalanceTooLow;
+
+                            break;
+                        
+                        default:
+                            type = ErrorType.Unknown;
+                            break;
+                    }
+                    if (type == ErrorType.Unknown)
+                    {
+                        if (statusMessage.message.StartsWith("Maximum win "))
+                            type = ErrorType.InvalidBet;
+                        if (statusMessage.message.StartsWith("Minimum bet "))
+                            type = ErrorType.BetTooLow;
+                        
+                    }
+                    callError(statusMessage.message, false, type);
+                    return;
+                }
                 WDBet tmpBalance = JsonSerializer.Deserialize<WDBet>(response);
                 if (tmpBalance.status == "success")
                 {
@@ -270,6 +303,8 @@ namespace DoormatCore.Sites
         }
         public class WDBet : WDBaseResponse
         {
+            
+
             public WDBet data { get; set; }
             public string hash { get; set; }
             public string userHash { get; set; }
