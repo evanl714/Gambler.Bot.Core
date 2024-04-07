@@ -1,7 +1,7 @@
 trigger:
 - master
 
-name: $(BuildDefinitionName)_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+name: 1.0.$(Build.BuildId)
 
 pool:
   vmImage: 'windows-latest'
@@ -42,18 +42,13 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
-    - task: DotNetCoreCLI@2
+    - task: PowerShell@2
       inputs:
-        command: publish
-        publishWebProjects: True
-        arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-        zipAfterPublish: True
-        versioningScheme: byBuildNumber
-
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        artifactName: 'doormattest'
+        targetType: 'inline'
+        script: |
+          [xml]$csproj = Get-Content -Path "path/to/YourProject.csproj"
+          $csproj.Project.PropertyGroup.Version = "$(Build.BuildNumber)"
+          $csproj.Save("path/to/YourProject.csproj")
 
 - stage: Test
   dependsOn: Build
@@ -64,3 +59,26 @@ stages:
       inputs:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
+
+- stage: Publish
+  dependsOn: Test
+  condition: and(succeeded(), eq(dependencies.Test.result, 'Succeeded'))
+  jobs:
+  - job: PublishJob
+    steps:
+    - task: PowerShell@2
+      inputs:
+       targetType: 'inline'
+       script: |
+         [xml]$csproj = Get-Content -Path "**/*.csproj"
+         $csproj.Project.PropertyGroup.Version = "$(Build.BuildNumber)"
+         $csproj.Save("$(Build.SourcesDirectory)\**\*.csproj")
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'push'
+        packagesToPush: '**/bin/Release/*.nupkg' # Update this to the path of your .nupkg file
+        nuGetFeedType: 'external'
+        publishVstsFeed: 'https://api.nuget.org/v3/index.json'
+        apiKey: '$(NuGetApiKey)'
+    
