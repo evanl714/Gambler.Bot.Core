@@ -60,7 +60,11 @@ stages:
         solution: '$(solution)'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
-
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'Doormat\**\bin\Release'
+        ArtifactName: 'BuildArtifacts'
+        publishLocation: 'container'
 
 
 - stage: Test
@@ -68,6 +72,13 @@ stages:
   jobs:
   - job: TestJob
     steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'BuildArtifacts'
+        downloadPath: '$(System.ArtifactsDirectory)'
+
     - task: VSTest@2
       inputs:
         testAssemblyVer2: 'Doormat\**\bin\Release\net*\*.Tests.dll'
@@ -80,7 +91,12 @@ stages:
   jobs:
   - job: PublishJob
     steps:
-
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'BuildArtifacts'
+        downloadPath: '$(System.ArtifactsDirectory)'
     - task: DotNetCoreCLI@2
       inputs:
         command: 'push'
