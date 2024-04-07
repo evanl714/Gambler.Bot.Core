@@ -1,19 +1,16 @@
-[![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FSeuntjie900.Doormat?branchName=master)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=2&branchName=master)
+Build: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FDoormat?branchName=master&stageName=Build)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=2&branchName=master)
+
+Tests: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FDoormat?branchName=master&stageName=Test)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=2&branchName=master)
+
+[![NuGet](https://img.shields.io/nuget/v/DoormatCore.svg)](https://www.nuget.org/packages/DoormatCore/)
 
 This project contains the code I've written so far for the core library of what I envisioned to be DiceBot v4. 
 
 This project will contain only code relating to site APIs and attempt to provide a standardized API for logging in and placing bets at different crypto casinos. It will contain NO automated betting codes. The aim is to provide a springboard for people that want to develop their own bots by giving them access to several games at several sites in a standardized way.
 
-This will also eventually be a nuget package.
-
-I no longer have enough time to actively work on the project, so it's been standing still for a long time.
-I'm also tired of the almost constant abuse I get for the project. I know it's a very small portion of the people that use that bot that is this way, but it's still tiring.
-
-So, I'm uploading this project long before I intended to, to allow others to see the direction the project is going and to contribute if they want. I will review pull requests and continue to work on it when I get the time, but it will definitely not be very often.
-
 The sites have not been fully implemented yet and some of them are outdated due to API changes since the last time I worked on this.
 
-A summary of stuff that doormat should be capable of when finished:
+A summary of stuff that doormat and krygames bot should be capable of when finished (most of the below is not relevant to the doormat repository):
 
 - .net standard library to allow cross platform betting.
 - Multi game support. The strategy and site interfaces (and programmer modes) were designed to handle multiple games, not just dice anymore.
@@ -35,16 +32,8 @@ The api for the programmer modes have changed. Instead of having a single dobet 
 
 There's a programmer mode doc and a readme file in the doormat project that provides more information on how the triggers and settings work, and the new programmer mode API. There's also some sample scripts for each of the programmer mod that might or might not work.
 
-
-I've looked at UI options and haven't really decided on anything yet. There are projects like Avalonia and EtoUI, but they're still in their infancy and doesn't really have the features I require yet. They look promising but it's just not quite there yet. I also looked at usinug xamarin forms with GTKSharp, which is likely the most promising project, and it should allow me to port the program to android and ios as well. I did experience issues with depencies when using xamarin forms though, and I never really got the time to dig too deep into possible fixes. I converted the project to .netstandard for xamarin forms specifically. If another UI is used, i'd probably revert to .net core and implement the python programmer mode again.
-Alternatives I've considered and are still considering is using electron connected to an mvc backend in .net core, or using edge/electron edge. Using an MVC backend with electron front end will require some significant changes in the bot to ensure all calls to and from the UI are asynchronous. Edge/electron edge also gave issues with depencies and will also probably require some rewrite to accomodate more async requests. You can see some of the preperations and testing i've done for these in the doormatcontrollers project.
+UI is being done in avalonia at this stage.
 
 There are other options that I;ve recently learned about or researched, but have not had the time to test.
 
 On top of not finding a UI framework that I'm comfortable with and works properly, I'm really bad at UI design.
-
-
-
-
-
-Do what you want with this project, just don't steal or scam. It's uploaded with the MIT lisence, so do whatever, but I'd like some credit for the original work. (Also, I wouldn't mind if you leave my affiliate links in the application)
