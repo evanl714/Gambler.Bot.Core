@@ -35,8 +35,7 @@ steps:
   inputs:
     secureFile: 'diceaccounts.json'
 
-    task: PowerShell@2
-- script: $env:DICETESTACCOUNTS -eq (pwd).path + "\diceaccounts.json"
+
 
 - task: VSTest@2
   inputs:
