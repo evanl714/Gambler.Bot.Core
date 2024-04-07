@@ -36,6 +36,10 @@ namespace DoormatCore.Tests
                 string loginthings = File.ReadAllText(file);
                 SiteLogins[] logins = JsonSerializer.Deserialize<SiteLogins[]>(loginthings);
                 LoginParamValue[] values = logins.FirstOrDefault(x => x.site.ToLower() == Sitename.ToLower() && x.test.ToLower() == callerName.ToLower())?.loginParams;
+                if (values==null)
+                {
+                    Assert.True(false, $"No login details found for {Sitename} in {file}");
+                }
                 foreach (var x in values)
                 {
                     if (x.Param.Name.ToLower()=="2fa code")

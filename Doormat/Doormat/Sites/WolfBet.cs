@@ -58,9 +58,7 @@ namespace DoormatCore.Sites
 
         protected override void _Login(LoginParamValue[] LoginParams)
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-      | SecurityProtocolType.Tls11
-      | SecurityProtocolType.Tls12;
+            
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip};
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URL + "/api/v1/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -138,30 +136,37 @@ namespace DoormatCore.Sites
         }
         protected override void _UpdateStats()
         {
-            string sEmitResponse = Client.GetStringAsync("user/balances").Result;
-            WolfBetProfile tmpProfile = JsonSerializer.Deserialize<WolfBetProfile>(sEmitResponse);
-            if (tmpProfile.user != null)
+            try
             {
-                //set balance here
-                foreach (Balance x in tmpProfile.user.balances)
+                string sEmitResponse = Client.GetStringAsync("user/balances").Result;
+                WolfBetProfile tmpProfile = JsonSerializer.Deserialize<WolfBetProfile>(sEmitResponse);
+                if (tmpProfile.user != null)
                 {
-                    if (x.currency.ToLower() == CurrentCurrency.ToLower())
+                    //set balance here
+                    foreach (Balance x in tmpProfile.user.balances)
                     {
-                        Stats.Balance = decimal.Parse(x.amount, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        if (x.currency.ToLower() == CurrentCurrency.ToLower())
+                        {
+                            Stats.Balance = decimal.Parse(x.amount, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        }
                     }
-                }
-                //get stats
-                //set stats
-                sEmitResponse = Client.GetStringAsync("user/stats/bets").Result;
-                WolfBetStats tmpStats = JsonSerializer.Deserialize<WolfBetStats>(sEmitResponse);
-                SetStats(tmpStats);
+                    //get stats
+                    //set stats
+                    sEmitResponse = Client.GetStringAsync("user/stats/bets").Result;
+                    WolfBetStats tmpStats = JsonSerializer.Deserialize<WolfBetStats>(sEmitResponse);
+                    SetStats(tmpStats);
 
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.DumpLog(e);
             }
         }
 
         public void PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            throw new NotImplementedException();
+            
         }
         void SetStats(WolfBetStats Stats)
         {

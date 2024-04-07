@@ -300,8 +300,8 @@ namespace DoormatCore.Sites
                         {
                             callError(tmp.msg, false, ErrorType.BalanceTooLow);
                         }
-                        callNotify(tmp.msg);
-                        if (tmp.msg.ToLower() == "bet rate limit exceeded")
+                        
+                        else if (tmp.msg.ToLower() == "bet rate limit exceeded")
                         {
                             /*callNotify(tmp.msg + ". Retrying in a second;");
                             Thread.Sleep(1000);
@@ -312,6 +312,7 @@ namespace DoormatCore.Sites
                         {
                             callError(tmp.msg, false, ErrorType.InvalidBet);
                         }
+                        callNotify(tmp.msg);
                     }
                 }
                 catch (Exception e)
