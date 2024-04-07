@@ -60,9 +60,15 @@ stages:
         solution: '$(solution)'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
+
+    - script: |
+        mkdir $(Build.ArtifactStagingDirectory)\Artifacts
+        xcopy /I /E "Doormat\*\bin\Release\net*\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+      displayName: 'Copy Artifacts to a Common Directory'
+
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: 'Doormat\**\bin\Release\net*\'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)\Artifacts'
         ArtifactName: 'BuildArtifacts'
         publishLocation: 'container'
 
