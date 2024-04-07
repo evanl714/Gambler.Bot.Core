@@ -26,7 +26,11 @@ namespace DoormatCore.Tests
             var config = new ConfigurationBuilder()
             .AddUserSecrets<BaseSiteTests>()
             .Build();
-            string file = config["DICETESTACCOUNTS"]; ;
+            string file = config["DICETESTACCOUNTS"];
+            if (file==null)
+            {
+                file = Environment.GetEnvironmentVariable("DICETESTACCOUNTS");
+            }
             if (File.Exists(file))
             {
                 string loginthings = File.ReadAllText(file);

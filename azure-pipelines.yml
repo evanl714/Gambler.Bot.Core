@@ -29,6 +29,16 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+    task: DownloadSecureFile@1
+  name: diceaccounts
+  displayName: 'get testing data'
+  inputs:
+    secureFile: 'diceaccounts.json'
+
+    steps:
+- powershell: |      
+      $env:DICETESTACCOUNTS -eq (pwd).path + "\diceaccounts.json"
+
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
