@@ -35,7 +35,9 @@ steps:
 
 - task: PowerShell@2
   inputs:
-    script: $env:DICETESTACCOUNTS -eq (pwd).path + "\diceaccounts.json"
+    targetType: 'inline'
+    script: |
+      $env:DICETESTACCOUNTS = "$(Agent.TempDirectory)\$(diceAccountsFile.secureFilePath)"
     
 
 - task: VSTest@2
