@@ -35,7 +35,6 @@ steps:
   inputs:
     secureFile: 'diceaccounts.json'
 
-    steps:
 - powershell: |      
       $env:DICETESTACCOUNTS -eq (pwd).path + "\diceaccounts.json"
 
