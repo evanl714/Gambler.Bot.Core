@@ -70,6 +70,7 @@ stages:
     steps:
     - task: VSTest@2
       inputs:
+        testAssemblyVer2: 'Doormat\**\bin\Release\net*\**\*.Tests.dll'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
@@ -83,7 +84,7 @@ stages:
     - task: DotNetCoreCLI@2
       inputs:
         command: 'push'
-        packagesToPush: '**/bin/Release/*.nupkg' # Update this to the path of your .nupkg file
+        packagesToPush: 'Doormat\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
         nuGetFeedType: 'external'
         publishVstsFeed: 'https://api.nuget.org/v3/index.json'
         apiKey: '$(NuGetApiKey)'
