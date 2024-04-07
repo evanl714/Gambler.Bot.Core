@@ -150,6 +150,10 @@ namespace DoormatCore.Sites
                     callLoginFinished(true);
                     return;
                 }
+                else
+                {
+                    callLoginFinished(false);
+                }
             }
             catch (Exception e)
             {

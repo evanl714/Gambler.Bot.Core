@@ -132,38 +132,38 @@ namespace DoormatCore.Sites
                     tmplogin = tmpblogin.data;
                     if (Currencies[0].ToLower() == "btc")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_dice, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice??"0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_dice ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
 
                     }
                     else if (Currencies[0].ToLower() == "eth")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_ether, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance_ether ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_ether ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_ether ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else if (Currencies[0].ToLower() == "ltc")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_litecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance_litecoin ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_litecoin ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_litecoin ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else if (Currencies[0].ToLower() == "bch")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = decimal.Parse(tmplogin.self_total_won_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_bcash, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance_bcash ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_won_bcash ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_bcash ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else if (Currencies[0].ToLower() == "doge")
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.balance_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = decimal.Parse(tmplogin.self_total_won_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_dogecoin, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.balance_dogecoin ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_won_dogecoin ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(tmplogin.self_total_won_dogecoin ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     else
                     {
-                        Stats.Balance = decimal.Parse(tmplogin.token_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Balance = decimal.Parse(tmplogin.token_balance ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
                     }
                     accesstoken = tmplogin.session_token;
                     secret = tmpblogin.account.secret;

@@ -31,11 +31,11 @@ namespace DoormatCore.Sites
             this.TipUsingName = true;
             this.AutoInvest = false;
             this.AutoWithdraw = false;
-            this.CanChangeSeed = false;
+            this.CanChangeSeed = true;
             this.CanChat = false;
             this.CanGetSeed = false;
             this.CanRegister = false;
-            this.CanSetClientSeed = false;
+            this.CanSetClientSeed = true;
             this.CanTip = false;
             this.CanVerify = false;
             this.Currencies = new string[] { "btc", "eth", "ltc", "trx", "bch", "doge" };
