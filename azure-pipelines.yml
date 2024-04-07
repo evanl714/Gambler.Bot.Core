@@ -29,7 +29,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      $env:DICETESTACCOUNTS = "$(Agent.TempDirectory)\$(diceAccountsFile.secureFilePath)"
+      $env:DICETESTACCOUNTS = "$(diceAccountsFile.secureFilePath)"
       Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
   env:
     diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
