@@ -29,11 +29,7 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-    task: DownloadSecureFile@1
-  name: diceaccounts
-  displayName: 'get testing data'
-  inputs:
-    secureFile: 'diceaccounts.json'
+
 
 
 
