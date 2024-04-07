@@ -61,6 +61,20 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
+    - script: |
+        mkdir $(Build.ArtifactStagingDirectory)\Artifacts
+        xcopy /I /E /Y "Doormat\Doormat\bin\Release\net8.0\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+      displayName: 'Copy Artifacts to a Common Directory'
+    
+    - script: |
+        xcopy /I /E /Y "Doormat\DoormatCore.Tests\bin\Release\net8.0\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+      displayName: 'Copy Artifacts to a Common Directory'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)\Artifacts'
+        ArtifactName: 'BuildArtifacts'
+        publishLocation: 'container'
 
 
 - stage: Test
@@ -68,9 +82,16 @@ stages:
   jobs:
   - job: TestJob
     steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'BuildArtifacts'
+        downloadPath: '$(System.ArtifactsDirectory)'
+
     - task: VSTest@2
       inputs:
-        testAssemblyVer2: 'Doormat\**\bin\Release\net*\*.Tests.dll'
+        testAssemblyVer2: '$(System.ArtifactsDirectory)\**\*Tests.dll'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
@@ -80,7 +101,12 @@ stages:
   jobs:
   - job: PublishJob
     steps:
-
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'BuildArtifacts'
+        downloadPath: '$(System.ArtifactsDirectory)'
     - task: DotNetCoreCLI@2
       inputs:
         command: 'push'
