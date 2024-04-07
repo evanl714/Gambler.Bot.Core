@@ -29,6 +29,26 @@ stages:
           Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
       env:
         diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
+        
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.csproj" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          [xml]$csproj = Get-Content -Path $csprojPath
+          $ns = @{ "msbuild" = "http://schemas.microsoft.com/developer/msbuild/2003" }
+          $versionNode = $csproj.SelectSingleNode("//msbuild:Project/msbuild:PropertyGroup/msbuild:Version", $ns)
+          if ($versionNode -eq $null) {
+            $propertyGroup = $csproj.CreateElement("PropertyGroup", $csproj.DocumentElement.NamespaceURI)
+            $versionNode = $csproj.CreateElement("Version", $csproj.DocumentElement.NamespaceURI)
+            $versionNode.InnerText = "$(Build.BuildNumber)"
+            $propertyGroup.AppendChild($versionNode)
+            $csproj.DocumentElement.InsertAfter($propertyGroup, $csproj.DocumentElement.LastChild)
+          } else {
+            $versionNode.InnerText = "$(Build.BuildNumber)"
+          }
+          $csproj.Save($csprojPath)
+
 
     - task: NuGetToolInstaller@1
 
@@ -42,13 +62,7 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: |
-          [xml]$csproj = Get-Content -Path "Doormat/Doormat/DoormatCore.csproj"
-          $csproj.Project.PropertyGroup.Version = "$(Build.BuildNumber)"
-          $csproj.Save("Doormat/Doormat/DoormatCore.csproj")
+
 
 - stage: Test
   dependsOn: Build
