@@ -46,9 +46,9 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          [xml]$csproj = Get-Content -Path "**/*.csproj"
+          [xml]$csproj = Get-Content -Path "Doormat/Doormat/Doormat/DoormatCore.csproj"
           $csproj.Project.PropertyGroup.Version = "$(Build.BuildNumber)"
-          $csproj.Save("$(Build.SourcesDirectory)\**\*.csproj")
+          $csproj.Save("Doormat/Doormat/Doormat/DoormatCore.csproj")
 
 - stage: Test
   dependsOn: Build
