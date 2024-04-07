@@ -62,7 +62,7 @@ stages:
         configuration: '$(buildConfiguration)'
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: 'Doormat\**\bin\Release'
+        PathtoPublish: 'Doormat\**\bin\Release\net*\'
         ArtifactName: 'BuildArtifacts'
         publishLocation: 'container'
 
