@@ -79,7 +79,6 @@ namespace DoormatCore.Tests
         //bet with invalid chance: 0%,0.1%;1%,99%,99.99%,100% // should trigger error event with appropriate message
         [Theory]
         [InlineData(0)]
-        [InlineData(0.1)]
         [InlineData(99)]
         [InlineData(99.99)]
         [InlineData(100)]

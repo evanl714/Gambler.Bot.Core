@@ -100,10 +100,18 @@ namespace DoormatCore.Tests
 
         GetLucky x 5 for each game
          */
-
+        [STAThread]
         private void _site_OnBrowserBypassRequired(object? sender, BypassRequiredArgs e)
         {
-            //yo how tf am I going to do this?
+            BrowserBypass tmp = new BrowserBypass(e.URL);
+            tmp.Show();
+            while (!tmp.loaded)
+            {
+                Thread.Sleep(100);
+            }
+            tmp.nav(e.URL);
+            tmp.GetBypass(e);
+            tmp.Close();
         }
 
 
@@ -126,7 +134,7 @@ namespace DoormatCore.Tests
 
             _site.LogIn(GetParams(_site.SiteName));
 
-            while (!finished && (DateTime.Now-start).TotalSeconds<30)
+            while (!finished && (DateTime.Now-start).TotalSeconds<90)
             {
                 Thread.Sleep(100);
             }
@@ -287,7 +295,7 @@ namespace DoormatCore.Tests
         [Fact]
         public void b2_ResetSeedIfPossible()
         {
-            if (_site.NonceBased && _site.CanChangeSeed)
+            if (_site.CanChangeSeed)
             {
                 _site.OnResetSeedFinished += (s, e) =>
                 {

@@ -87,27 +87,37 @@ namespace DoormatCore.Sites
 
                 accesstoken = LoginParams[0].Value;
 
-
-                string sEmitResponse = Client.GetStringAsync("bot/user-info/?api_key=" + accesstoken).Result;
-                Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
-                sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
-                QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
-                sEmitResponse = Client.GetStringAsync("randomize" + "?api_key=" + accesstoken).Result;
-                currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
-                if (balance != null && _Stats != null)
+                HttpResponseMessage EmitResponse = Client.GetAsync("https://dickdice.io").Result;
+                EmitResponse = Client.GetAsync("bot/user-info/?api_key=" + accesstoken).Result;
+                if (EmitResponse.IsSuccessStatusCode)
                 {
-                    Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
-                    Stats.Bets = _Stats.bets;
-                    Stats.Wins = _Stats.wins;
-                    Stats.Losses = _Stats.bets - _Stats.wins;
+                    string sEmitResponse = EmitResponse.Content.ReadAsStringAsync().Result;
+                    Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
+                    sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
+                    QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
+                    sEmitResponse = Client.GetStringAsync("randomize" + "?api_key=" + accesstoken).Result;
+                    currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
+                    if (balance != null && _Stats != null)
+                    {
+                        Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Bets = _Stats.bets;
+                        Stats.Wins = _Stats.wins;
+                        Stats.Losses = _Stats.bets - _Stats.wins;
 
 
-                    ispd = true;
-                    lastupdate = DateTime.Now;
-                    new Thread(new ThreadStart(GetBalanceThread)).Start();
-                    callLoginFinished(true);
+                        ispd = true;
+                        lastupdate = DateTime.Now;
+                        new Thread(new ThreadStart(GetBalanceThread)).Start();
+                        callLoginFinished(true);
+                        return;
+                    }
+                }
+                else
+                {
+                    string response = EmitResponse.Content.ReadAsStringAsync().Result;
+                    callLoginFinished(false);
                     return;
                 }
             }
