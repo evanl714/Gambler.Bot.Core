@@ -55,7 +55,7 @@ stages:
       displayName: 'Copy Artifacts to a Common Directory'
     
     - script: |
-        xcopy /I /E /Y "Doormat\DoormatCore.Tests\bin\Release\net8.0\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+        xcopy /I /E /Y "Doormat\DoormatCore.Tests\bin\Release\net8.0-windows\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
       displayName: 'Copy Artifacts to a Common Directory'
 
     - task: PublishBuildArtifacts@1
