@@ -153,7 +153,19 @@ namespace DoormatCore.Sites
                 cgGetBet Response = JsonSerializer.Deserialize<cgGetBet>(sEmitResponse);
                 if (Response.Message != "" && Response.Message != null)
                 {
-                    callError(Response.Message,true, ErrorType.Unknown );
+                    ErrorType ertype = ErrorType.Unknown;
+                    switch (Response.Message)
+                    {
+                        case "Invalid payout. Should be larger than 1.02": ertype = ErrorType.InvalidBet; break;
+                        case "Bet was larger than your balance.": ertype = ErrorType.BalanceTooLow; break;
+                        case "Invalid bet amount": ertype = ErrorType.BetTooLow; break;
+                    }
+                    if (ertype == ErrorType.Unknown)
+                    {
+                        if (Response.Message.StartsWith("Your bet amount was to large. Max win amount is set to"))
+                            ertype = ErrorType.InvalidBet;
+                    }
+                    callError(Response.Message,true, ertype);
                     return;
                 }
                 DiceBet bet = new DiceBet()

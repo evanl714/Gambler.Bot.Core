@@ -227,7 +227,30 @@ namespace DoormatCore.Sites
                     };
                     var response = Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json")).Result;
                     var responsestring = response.Content.ReadAsStringAsync().Result;
-                    RollDice tmp = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring).data.diceRoll;
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    string error = ResponsePayload.errors[0].message;
+                    ErrorType errorType = ErrorType.Unknown;
+
+                    if (error == ("Number too small."))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("Maximum bet exceeded"))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("You do not have enough balance to do that."))
+                    {
+                        errorType = ErrorType.BalanceTooLow;
+                    }
+
+                    callError(error, false, errorType);
+                    return;
+                }
+                RollDice tmp = ResponsePayload.data.diceRoll;
+                
 
                     Lastbet = DateTime.Now;
                     try
@@ -479,9 +502,18 @@ namespace DoormatCore.Sites
             public class Payload
             {
                 public Data data { get; set; }
+        
+                public PDError[] errors { get; set; }
             }
 
-            public class RootObject
+
+            public class PDError
+            {
+                public string[] path { get; set; }
+                public string message { get; set; }
+                public string errorType { get; set; }
+            }
+    public class RootObject
             {
                 public string type { get; set; }
                 public string id { get; set; }

@@ -2,18 +2,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.DuckDiceT
+namespace DoormatCore.Tests.BitslerT
 {
-    public class DuckDiceTests : BaseSiteTests, IClassFixture<DuckDice>
+    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    public class BitslerTests : BaseSiteTests, IClassFixture<Bitsler>
     {
-        public DuckDiceTests(DuckDice fixure) : base(fixure)
+        public BitslerTests(Bitsler fixure) : base(fixure)
         {
 
         }
-
         [Fact]
         public override void a2_LogInWithout2faWhenRequiredShouldNotLogIn()
         {

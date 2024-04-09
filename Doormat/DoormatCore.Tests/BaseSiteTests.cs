@@ -11,13 +11,14 @@ using System.Web;
 namespace DoormatCore.Tests
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public abstract class BaseSiteTests
+    public abstract class BaseSiteTests: IDisposable
     {
         BaseSite _site;
 
         public BaseSiteTests(BaseSite site)
         {
             _site = site;
+            
             _site.OnBrowserBypassRequired += _site_OnBrowserBypassRequired;
         }
 
@@ -100,10 +101,36 @@ namespace DoormatCore.Tests
 
         GetLucky x 5 for each game
          */
+        
+        public class bypassthingy
+        {
+            public BypassRequiredArgs args { get; set; }
+            public BrowserBypass form { get; set; }
+        }
 
         private void _site_OnBrowserBypassRequired(object? sender, BypassRequiredArgs e)
         {
-            //yo how tf am I going to do this?
+            bypassthingy tmpthingy = new bypassthingy { args = e };
+            Thread tttttt = new Thread(new ParameterizedThreadStart(CreateBypassThread));
+            tttttt.SetApartmentState(ApartmentState.STA);
+            tttttt.Start(tmpthingy);
+           while (tmpthingy.form==null)
+            {
+                Thread.Sleep(100);
+            }
+           
+            e.Config = tmpthingy.form.GetBypass(e);
+            
+            tmpthingy.form.CloseForm();
+            
+        }
+
+        [STAThread]
+        private void CreateBypassThread(object config)
+        {
+            bypassthingy e = (bypassthingy)config;
+            e.form = new BrowserBypass(e.args.URL);
+            e.form.ShowDialog();
         }
 
 
@@ -126,7 +153,7 @@ namespace DoormatCore.Tests
 
             _site.LogIn(GetParams(_site.SiteName));
 
-            while (!finished && (DateTime.Now-start).TotalSeconds<30)
+            while (!finished && (DateTime.Now-start).TotalSeconds<90)
             {
                 Thread.Sleep(100);
             }
@@ -287,7 +314,7 @@ namespace DoormatCore.Tests
         [Fact]
         public void b2_ResetSeedIfPossible()
         {
-            if (_site.NonceBased && _site.CanChangeSeed)
+            if (_site.CanChangeSeed)
             {
                 _site.OnResetSeedFinished += (s, e) =>
                 {
@@ -430,14 +457,19 @@ namespace DoormatCore.Tests
                 decimal balance = _site.Stats.Balance;
                 
 
-                string serverseed = _site.GetSeed(/*get bet id from test config*/1);
-                Assert.True(false);
+                string serverseed = _site.GetSeed("69d69634668");
+                Assert.True(serverseed!=null);
             }
             else
             {
                 //Test is not applicable
                 Assert.True(true);
             }
+        }
+
+        public void Dispose()
+        {
+            _site.OnBrowserBypassRequired-= _site_OnBrowserBypassRequired;
         }
     }
 }
