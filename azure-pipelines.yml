@@ -75,6 +75,7 @@ stages:
       inputs:
         secureFile: 'diceaccounts.json'
 
+    
     - task: PowerShell@2
       inputs:
         targetType: 'inline'
@@ -90,12 +91,14 @@ stages:
         artifactName: 'BuildArtifacts'
         downloadPath: '$(System.ArtifactsDirectory)'
 
-    - task: VSTest@2
+    - task: VSTest@2      
       inputs:
         testAssemblyVer2: '$(System.ArtifactsDirectory)\**\*Tests.dll'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
-
+      env:
+        DICETESTACCOUNTS: $(diceAccountsFile.secureFilePath)
+      
 - stage: Publish
   dependsOn: Test
   condition: and(succeeded(), eq(dependencies.Test.result, 'Succeeded'))
