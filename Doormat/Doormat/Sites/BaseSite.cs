@@ -415,7 +415,7 @@ namespace DoormatCore.Sites
             return ClientSeed;
         }
 
-        public string GetSeed(long BetID)
+        public string GetSeed(string BetID)
         {
             if (CanGetSeed)
             {
@@ -428,7 +428,7 @@ namespace DoormatCore.Sites
                 return "-1";
             }
         }
-        protected virtual string _GetSeed(long BetID) { return "-1"; }
+        protected virtual string _GetSeed(string BetID) { return "-1"; }
 
         public void SendTip(string Username, decimal Amount)
         {

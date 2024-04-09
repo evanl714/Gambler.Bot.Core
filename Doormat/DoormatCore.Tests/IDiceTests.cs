@@ -1,5 +1,6 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Sites;
+using DoormatCore.Tests.Code;
 using Newtonsoft.Json.Bson;
 using OtpNet;
 using System;
@@ -50,7 +51,27 @@ namespace DoormatCore.Tests
 
         private void _site_OnBrowserBypassRequired(object? sender, BypassRequiredArgs e)
         {
-            //yo how tf am I going to do this?
+            BaseSiteTests.bypassthingy tmpthingy = new BaseSiteTests.bypassthingy { args = e };
+            Thread tttttt = new Thread(new ParameterizedThreadStart(CreateBypassThread));
+            tttttt.SetApartmentState(ApartmentState.STA);
+            tttttt.Start(tmpthingy);
+            while (tmpthingy.form == null)
+            {
+                Thread.Sleep(100);
+            }
+
+            e.Config = tmpthingy.form.GetBypass(e);
+
+            tmpthingy.form.CloseForm();
+
+        }
+
+        [STAThread]
+        private void CreateBypassThread(object config)
+        {
+            BaseSiteTests.bypassthingy e = (BaseSiteTests.bypassthingy)config;
+            e.form = new BrowserBypass(e.args.URL);
+            e.form.ShowDialog();
         }
 
 
@@ -79,8 +100,6 @@ namespace DoormatCore.Tests
         //bet with invalid chance: 0%,0.1%;1%,99%,99.99%,100% // should trigger error event with appropriate message
         [Theory]
         [InlineData(0)]
-        [InlineData(99)]
-        [InlineData(99.99)]
         [InlineData(100)]
         public void BetInvalidChance(decimal chance)
         {

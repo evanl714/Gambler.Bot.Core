@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,7 +15,7 @@ namespace DoormatCore.Tests.Code
 {
     public class BrowserBypass:Form
     {
-        WebView2 view2;
+        public WebView2 view2;
         
         public BrowserBypass(string site)
         {
@@ -49,15 +50,18 @@ namespace DoormatCore.Tests.Code
 
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
-            InitializeAsync();
+            await InitializeAsync();
+            //InitializeAsync();
         }
-        private void InitializeAsync()
+        private async Task InitializeAsync()
         {
+            
             Debug.WriteLine("InitializeAsync");
-            view2.EnsureCoreWebView2Async(null).Wait();
-            Debug.WriteLine("WebView2 Runtime version: " + view2.CoreWebView2.Environment.BrowserVersionString);
+            //view2.Source = new Uri("https://www.google.com", UriKind.Absolute);
+            //await view2.EnsureCoreWebView2Async();
+            //Debug.WriteLine("WebView2 Runtime version: " + view2.CoreWebView2.Environment.BrowserVersionString);
             loaded = true;
         }
         public bool loaded = false;
@@ -88,7 +92,7 @@ namespace DoormatCore.Tests.Code
         internal async Task internalGetBypass(BypassRequiredArgs e)
         {
 
-           
+
             if (InvokeRequired)
             {
                 Invoke(new Action(async () => await internalGetBypass(e)));
@@ -100,25 +104,25 @@ namespace DoormatCore.Tests.Code
                 try
                 {
 
-                   
+
                     await Task.Delay(5000);
-                    
+
 
                     await GetAgent();
                     string result = agent;
 
                     var tmp = await view2.ExecuteScriptAsync("document.cookie");
-                    
-                   
-                    object CookieMan = view2.GetType().GetProperty("CookieManager").GetValue(view2);
+
+
+                    object CookieMan = view2.CoreWebView2.GetType().GetProperty("CookieManager").GetValue(view2.CoreWebView2);
                     var method = CookieMan.GetType().GetMethod("GetCookiesAsync");//.Invoke(CookieMan, null);
-                    var cookies = await (method.Invoke(CookieMan, new object[] { e.URL }) as Task<IList>);
+                    var cookies = await (method.InvokeAsync(CookieMan, new object[] { e.URL }));
                     foreach (object c in cookies as IList)
                     {
                         System.Net.Cookie svalue = (System.Net.Cookie)c.GetType().GetMethod("ToSystemNetCookie").Invoke(c, null);
                         cs.Add(svalue);
                     }
-                    
+
                     bc.UserAgent = agent;
                     bc.Cookies = cs;
                     _conf = bc;
@@ -139,6 +143,18 @@ namespace DoormatCore.Tests.Code
             /* wvBypass.ZIndex = -1;
 
              return new BrowserConfig { Cookies = wvBypass.Cookies, UserAgent = agent };*/
+
+        }
+        public void CloseForm()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => CloseForm()));
+            }
+            else
+            {
+                Close();
+            }
         }
 
         internal BrowserConfig GetBypass(BypassRequiredArgs e)
@@ -147,6 +163,16 @@ namespace DoormatCore.Tests.Code
             internalGetBypass(e);
             while (_conf == null) { Thread.Sleep(100); }
             return _conf;
+        }
+    }
+    public static class ExtensionMethods
+    {
+        public static async Task<object> InvokeAsync(this MethodInfo @this, object obj, params object[] parameters)
+        {
+            var task = (Task)@this.Invoke(obj, parameters);
+            await task.ConfigureAwait(false);
+            var resultProperty = task.GetType().GetProperty("Result");
+            return resultProperty.GetValue(task);
         }
     }
 }

@@ -17,28 +17,28 @@ namespace DoormatCore.Sites
         protected string GameName = "CasinoGamePrimedice";
         protected string StatGameName = "primedice";
         HttpClient Client;
-       
+
         string accesstoken = "";
         DateTime LastSeedReset = new DateTime();
         public bool ispd = false;
         string username = "";
         long uid = 0;
         DateTime lastupdate = new DateTime();
-        
+
         public PrimeDice()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
             this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "PD";
             this.SiteName = "PrimeDice";
-            this.SiteURL = "https://primedice.com?c=Seuntjie";            
+            this.SiteURL = "https://primedice.com?c=Seuntjie";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
             this.AutoWithdraw = true;
             this.CanChangeSeed = true;
             this.CanChat = false;
-            this.CanGetSeed = true;
+            this.CanGetSeed = false;
             this.CanRegister = false;
             this.CanSetClientSeed = false;
             this.CanTip = true;
@@ -63,10 +63,10 @@ namespace DoormatCore.Sites
         string userid = "";
         async Task OnWSConnected(GraphQL.Client.Http.GraphQLHttpClient client)
         {
-            
+
         }
-        
-       
+
+
         public class PersonAndFilmsResponse
         {
         }
@@ -75,18 +75,18 @@ namespace DoormatCore.Sites
         protected override void _Login(LoginParamValue[] LoginParams)
         {
             try
-            {   
+            {
                 string APIKey = "";
-               
+
                 foreach (LoginParamValue x in LoginParams)
                 {
                     if (x.Param.Name.ToLower() == "api key")
                         APIKey = x.Value;
-                    
+
                 }
                 //CookieContainer cookies = new CookieContainer();
-                var cookies = CallBypassRequired(SiteURL );
-                
+                var cookies = CallBypassRequired(SiteURL);
+
                 HttpClientHandler handler = new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -107,10 +107,10 @@ namespace DoormatCore.Sites
                 Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
 
                 GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
-                    {
-                        query = "query DiceBotLogin{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
+                {
+                    query = "query DiceBotLogin{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
                         ,
-                        operationName = "DiceBotLogin"
+                    operationName = "DiceBotLogin"
                 };
 
                 StringContent content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json");
@@ -118,7 +118,7 @@ namespace DoormatCore.Sites
                 var resp = Client.PostAsync(URL, content).Result;
                 string respostring = resp.Content.ReadAsStringAsync().Result;
                 var Resp = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring);
-                pdUser user = Resp.data.user;                
+                pdUser user = Resp.data.user;
                 userid = user.id;
                 if (string.IsNullOrWhiteSpace(userid))
                     callLoginFinished(false);
@@ -131,9 +131,9 @@ namespace DoormatCore.Sites
                             this.Stats.Bets = (int)x.bets;
                             this.Stats.Wins = (int)x.wins;
                             this.Stats.Losses = (int)x.losses;
-                            this.Stats.Profit = x.profit??0;
-                            this.Stats.Wagered = x.amount??0;
-                            
+                            this.Stats.Profit = x.profit ?? 0;
+                            this.Stats.Wagered = x.amount ?? 0;
+
                             break;
                         }
                     }
@@ -141,11 +141,11 @@ namespace DoormatCore.Sites
                     {
                         if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
                         {
-                            this.Stats.Balance  = x.available.amount??0;
+                            this.Stats.Balance = x.available.amount ?? 0;
                             break;
                         }
                     }
-                    
+
                     callLoginFinished(true);
                     return;
                 }
@@ -156,7 +156,7 @@ namespace DoormatCore.Sites
                 Logger.DumpLog(e);
                 if (e.Response != null)
                 {
-                    
+
                 }
                 callLoginFinished(false);
             }
@@ -175,7 +175,7 @@ namespace DoormatCore.Sites
                     if (userid != null && ((DateTime.Now - lastupdate).TotalSeconds >= 30 || ForceUpdateStats))
                     {
                         UpdateStats();
-                        
+
                     }
                     Thread.Sleep(1000);
                 }
@@ -215,12 +215,35 @@ namespace DoormatCore.Sites
                         currency = Currencies[base.Currency].ToLower(),
                         identifier = R.Next().ToString()
                     }
-                    , operationName = "DiceBotDiceBet"
+                    ,
+                    operationName = "DiceBotDiceBet"
                 };
                 var response = Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json")).Result;
                 var responsestring = response.Content.ReadAsStringAsync().Result;
-                RollDice tmp = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring).data.primediceRoll;
-                
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors!=null && ResponsePayload.errors.Length > 0)
+                {
+                    string error = ResponsePayload.errors[0].message;
+                    ErrorType errorType = ErrorType.Unknown;
+
+                    if (error == ("Number too small."))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("Maximum bet exceeded"))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("You do not have enough balance to do that."))
+                    {
+                        errorType = ErrorType.BalanceTooLow;
+                    }
+
+                    callError(error,false, errorType);
+                    return;
+                }
+                RollDice tmp = ResponsePayload.data.primediceRoll;
+
                 Lastbet = DateTime.Now;
                 try
                 {
@@ -237,19 +260,19 @@ namespace DoormatCore.Sites
                     this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;
                     this.Stats.Profit += tmpbet.Profit;
                     this.Stats.Wagered += tmpbet.TotalAmount;
-                            
-                        /*}
-                    }*/
+
+                    /*}
+                }*/
                     /*foreach (Balance x in tmp.user.balances)
                     {
                         if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
                         {*/
-                            this.Stats.Balance += tmpbet.Profit;
-                            /*break;
-                        }
-                    }*/
-                    
-                    
+                    this.Stats.Balance += tmpbet.Profit;
+                    /*break;
+                }
+            }*/
+
+
                     tmpbet.Guid = BetDetails.GUID;
                     callBetFinished(tmpbet);
                     retrycount = 0;
@@ -276,14 +299,14 @@ namespace DoormatCore.Sites
 
                 GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
                 {
-                    operationName= "DiceBotGetBalance",
+                    operationName = "DiceBotGetBalance",
                     query = "query DiceBotGetBalance{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
                 };
                 var Resp = Client.PostAsync("", new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json")).Result;
                 string respostring = Resp.Content.ReadAsStringAsync().Result;
                 pdUser user = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring)?.data.user;
                 //GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
-                 
+
                 foreach (Statistic x in user.statistic)
                 {
                     if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
@@ -313,7 +336,7 @@ namespace DoormatCore.Sites
 
         public override int _TimeToBet(PlaceBet BetDetails)
         {
-            return 100-(int)(DateTime.Now - Lastbet).TotalMilliseconds;
+            return 100 - (int)(DateTime.Now - Lastbet).TotalMilliseconds;
 
         }
 
@@ -403,7 +426,7 @@ namespace DoormatCore.Sites
             public decimal amount { get; set; }
             public decimal payout { get; set; }
             public string createdAt { get; set; }
-             public string currency { get; set; }
+            public string currency { get; set; }
             public pdUser user { get; set; }
             public string __typename { get; set; }
             public pdSeed serverSeed { get; set; }
@@ -424,9 +447,9 @@ namespace DoormatCore.Sites
                     Roll = (decimal)state.result,
                     ClientSeed = clientSeed.seed,
                     ServerHash = serverSeed.seedHash,
-                    Nonce = nonce                    
+                    Nonce = nonce
                 };
-                
+
                 //User tmpu = User.FindUser(bet.UserName);
                 /*if (tmpu == null)
                     bet.uid = 0;
@@ -472,6 +495,15 @@ namespace DoormatCore.Sites
         public class Payload
         {
             public Data data { get; set; }
+            public PDError[] errors { get; set; }
+        }
+
+
+        public class PDError
+        {
+            public string[] path { get; set; }
+            public string message { get; set; }
+            public string errorType { get; set; }
         }
 
         public class RootObject
@@ -497,5 +529,5 @@ namespace DoormatCore.Sites
             public string __typename { get; set; }
         }
     }
-    
+
 }

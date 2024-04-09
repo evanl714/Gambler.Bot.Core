@@ -76,7 +76,11 @@ namespace DoormatCore.Sites
         {
             try
             {
-
+                if (BetObj.Chance>99.99m)
+                {
+                    callError("Chance must be less than 99.99", false, ErrorType.InvalidBet);
+                    return;
+                }
 
 
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
@@ -139,19 +143,27 @@ devise:btc*/
                     {
                         if (bsbase.error != null)
                         {
-                            if (bsbase.error.StartsWith("Maximum bet") || bsbase.error == "Bet amount not valid")
+                             ErrorType type = ErrorType.Unknown;
+                            
+                            if (bsbase.error.StartsWith("Maximum bet") )
                             {
-                                callError(bsbase.error, false, ErrorType.InvalidBet);
+                                type = ErrorType.InvalidBet;
                             }
-
-                            if (bsbase.error.Contains("Bet in progress, please wait few seconds and retry."))
+                            else if (bsbase.error== "Bet amount not valid")
                             {
-                                callNotify("Bet in progress. You need to log in with your browser and place a bet manually to fix this.");
+                                type = ErrorType.BetTooLow;
                             }
+                            else if (bsbase.error.Contains("Bet in progress, please wait few seconds and retry."))
+                            {
+                                
+                            }
+                            else if (bsbase.error == "Insufficient fund")
+                                type = ErrorType.BalanceTooLow;
                             else
                             {
-                                callNotify(bsbase.error);
+                                
                             }
+                            callError(bsbase.error, false, type);
                         }
                     }
                 //
@@ -742,7 +754,7 @@ devise:btc*/
             public int timestamp { get; set; }
             public string amount { get; set; }
             public float result { get; set; }
-            public int payout { get; set; }
+            public decimal payout { get; set; }
             public string profit { get; set; }
             public string new_balance { get; set; }
             public float xp { get; set; }

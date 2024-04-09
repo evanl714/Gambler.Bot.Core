@@ -2,14 +2,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.DuckDiceT
+namespace DoormatCore.Tests.StakeT
 {
-    public class DuckDiceTests : BaseSiteTests, IClassFixture<DuckDice>
+    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    public class StakeTests : BaseSiteTests, IClassFixture<Stake>
     {
-        public DuckDiceTests(DuckDice fixure) : base(fixure)
+        public StakeTests(Stake fixure) : base(fixure)
         {
 
         }

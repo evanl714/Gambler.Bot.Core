@@ -11,13 +11,14 @@ using System.Web;
 namespace DoormatCore.Tests
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public abstract class BaseSiteTests
+    public abstract class BaseSiteTests: IDisposable
     {
         BaseSite _site;
 
         public BaseSiteTests(BaseSite site)
         {
             _site = site;
+            
             _site.OnBrowserBypassRequired += _site_OnBrowserBypassRequired;
         }
 
@@ -100,18 +101,36 @@ namespace DoormatCore.Tests
 
         GetLucky x 5 for each game
          */
-        [STAThread]
+        
+        public class bypassthingy
+        {
+            public BypassRequiredArgs args { get; set; }
+            public BrowserBypass form { get; set; }
+        }
+
         private void _site_OnBrowserBypassRequired(object? sender, BypassRequiredArgs e)
         {
-            BrowserBypass tmp = new BrowserBypass(e.URL);
-            tmp.Show();
-            while (!tmp.loaded)
+            bypassthingy tmpthingy = new bypassthingy { args = e };
+            Thread tttttt = new Thread(new ParameterizedThreadStart(CreateBypassThread));
+            tttttt.SetApartmentState(ApartmentState.STA);
+            tttttt.Start(tmpthingy);
+           while (tmpthingy.form==null)
             {
                 Thread.Sleep(100);
             }
-            tmp.nav(e.URL);
-            tmp.GetBypass(e);
-            tmp.Close();
+           
+            e.Config = tmpthingy.form.GetBypass(e);
+            
+            tmpthingy.form.CloseForm();
+            
+        }
+
+        [STAThread]
+        private void CreateBypassThread(object config)
+        {
+            bypassthingy e = (bypassthingy)config;
+            e.form = new BrowserBypass(e.args.URL);
+            e.form.ShowDialog();
         }
 
 
@@ -438,14 +457,19 @@ namespace DoormatCore.Tests
                 decimal balance = _site.Stats.Balance;
                 
 
-                string serverseed = _site.GetSeed(/*get bet id from test config*/1);
-                Assert.True(false);
+                string serverseed = _site.GetSeed("69d69634668");
+                Assert.True(serverseed!=null);
             }
             else
             {
                 //Test is not applicable
                 Assert.True(true);
             }
+        }
+
+        public void Dispose()
+        {
+            _site.OnBrowserBypassRequired-= _site_OnBrowserBypassRequired;
         }
     }
 }
