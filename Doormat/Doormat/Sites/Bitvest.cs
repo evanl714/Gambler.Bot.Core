@@ -296,9 +296,14 @@ namespace DoormatCore.Sites
                     }
                     else
                     {
-                        if (tmp.msg == "Insufficient Funds")
+                        ErrorType type = ErrorType.Unknown;
+                        if (tmp.msg == "Invalid target")
                         {
-                            callError(tmp.msg, false, ErrorType.BalanceTooLow);
+                            type = ErrorType.InvalidBet;
+                        }
+                        else if (tmp.msg == "Insufficient Funds")
+                        {
+                            type= ErrorType.BalanceTooLow;
                         }
                         
                         else if (tmp.msg.ToLower() == "bet rate limit exceeded")
@@ -310,8 +315,9 @@ namespace DoormatCore.Sites
                         }
                         else
                         {
-                            callError(tmp.msg, false, ErrorType.InvalidBet);
+                            
                         }
+                        callError(tmp.msg, false, type);
                         callNotify(tmp.msg);
                     }
                 }
