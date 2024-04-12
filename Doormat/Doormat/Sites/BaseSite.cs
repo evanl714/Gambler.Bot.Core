@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DoormatCore.Sites
 {
@@ -160,23 +161,29 @@ namespace DoormatCore.Sites
         /// Interface with site to handle login.
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
-        protected abstract void _Login(LoginParamValue[] LoginParams);
+        protected abstract bool _Login(LoginParamValue[] LoginParams);
 
         /// <summary>
         /// Logs the user into the site if correct details were provided
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
-        public void LogIn(LoginParamValue[] LoginParams)
+        public async Task<bool> LogIn(LoginParamValue[] LoginParams)
         {
-            /*bool Success =*/
-            new Thread(new ParameterizedThreadStart(LoginThread)).Start(LoginParams);
-            //LoginFinished?.Invoke(this, new LoginFinishedEventArgs(Success, this.Stats));
+            bool success = false;
+            await Task.Run(()=> { success = LoginThread(LoginParams); });
+            return success;
+            
         }
 
-        private void LoginThread(object LoginParams)
+        private bool LoginThread(object LoginParams)
         {
-            _Login(LoginParams as LoginParamValue[]);
-            UpdateStats();
+            bool success = _Login(LoginParams as LoginParamValue[]);
+            if (success)
+            {
+                UpdateStats();
+            }
+            return success;
+            
         }
 
         /// <summary>
