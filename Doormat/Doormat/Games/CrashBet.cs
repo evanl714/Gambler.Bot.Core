@@ -29,6 +29,6 @@ namespace DoormatCore.Games
     }
     public interface iCrash
     {
-        void PlaceCrashBet(PlaceCrashBet BetDetails);
+        Task<CrashBet> PlaceCrashBet(PlaceCrashBet BetDetails);
     }
 }

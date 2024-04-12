@@ -72,14 +72,14 @@ namespace DoormatCore.Sites
         }
 
 
-        public void PlaceDiceBet(PlaceDiceBet BetObj)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetObj)
         {
             try
             {
                 if (BetObj.Chance>99.99m)
                 {
                     callError("Chance must be less than 99.99", false, ErrorType.InvalidBet);
-                    return;
+                    return null;
                 }
 
 
@@ -98,8 +98,8 @@ devise:btc*/
                 pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
                 pairs.Add(new KeyValuePair<string, string>("api_key", "0b2edbfe44e98df79665e52896c22987445683e78"));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                HttpResponseMessage tmpmsg = Client.PostAsync("api/bet-dice", Content).Result;
-                string sEmitResponse = tmpmsg.Content.ReadAsStringAsync().Result;
+                HttpResponseMessage tmpmsg = await Client.PostAsync("api/bet-dice", Content);
+                string sEmitResponse =await tmpmsg.Content.ReadAsStringAsync();
                 bsBet bsbase = null;
                 try
                 {
@@ -137,7 +137,7 @@ devise:btc*/
                         LastBetAmount = (double)BetObj.Amount;
                         LastBet = DateTime.Now;
                         callBetFinished(tmp);
-                        return;
+                        return tmp;
                     }
                     else
                     {
@@ -164,6 +164,7 @@ devise:btc*/
                                 
                             }
                             callError(bsbase.error, false, type);
+                            return null;
                         }
                     }
                 //
@@ -171,12 +172,15 @@ devise:btc*/
             }
             catch (AggregateException e)
             {
+                callError("An Unknown error has ocurred.", false, ErrorType.Unknown);
                 callNotify("An Unknown error has ocurred.");
             }
             catch (Exception e)
             {
+                callError("An Unknown error has ocurred.", false, ErrorType.Unknown);
                 callNotify("An Unknown error has ocurred.");
             }
+            return null;
         }
 
 
@@ -233,7 +237,7 @@ devise:btc*/
         }
 
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             string Username = "";
             string Password = "";
@@ -259,7 +263,7 @@ devise:btc*/
             try
             {
 
-                HttpResponseMessage resp = Client.GetAsync("https://www.bitsler.com").Result;
+                HttpResponseMessage resp = await Client.GetAsync("https://www.bitsler.com");
                 string s1 = "";
 
 
@@ -273,10 +277,10 @@ devise:btc*/
                 }
                 pairs.Add(new KeyValuePair<string, string>("api_key", APIKey));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                HttpResponseMessage tmpresp = Client.PostAsync("api/login", Content).Result;
+                HttpResponseMessage tmpresp = await Client.PostAsync("api/login", Content);
 
-                byte[] bytes = tmpresp.Content.ReadAsByteArrayAsync().Result;
-                string sEmitResponse = tmpresp.Content.ReadAsStringAsync().Result;
+                byte[] bytes = await tmpresp.Content.ReadAsByteArrayAsync();
+                string sEmitResponse = await tmpresp.Content.ReadAsStringAsync();
 
                 //getuserstats 
                 bsLogin bsbase = JsonSerializer.Deserialize<bsLogin>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
@@ -292,7 +296,8 @@ devise:btc*/
                     pairs = new List<KeyValuePair<string, string>>();
                     pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
                     Content = new FormUrlEncodedContent(pairs);
-                    sEmitResponse = Client.PostAsync("api/getuserstats", Content).Result.Content.ReadAsStringAsync().Result;
+                    resp = await Client.PostAsync("api/getuserstats", Content);
+                    sEmitResponse = await resp.Content.ReadAsStringAsync();
                     bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                     if (bsstatsbase != null)
 
@@ -313,7 +318,7 @@ devise:btc*/
                     Thread t = new Thread(GetBalanceThread);
                     t.Start();
                     callLoginFinished(true);
-                    return;
+                    return true;
                 }
                 else
                 {
@@ -327,6 +332,7 @@ devise:btc*/
                 Logger.DumpLog(e);
             }
             callLoginFinished(false);
+            return false;
         }
 
         DateTime LastBet = DateTime.Now;
@@ -575,7 +581,7 @@ devise:btc*/
 
         }
 
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             try
             {
@@ -589,14 +595,14 @@ devise:btc*/
 
                 if (resp.IsSuccessStatusCode)
                 {
-                    sEmitResponse = resp.Content.ReadAsStringAsync().Result;
+                    sEmitResponse = await resp.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     sEmitResponse = "";
                     if (resp.StatusCode == HttpStatusCode.ServiceUnavailable)
                     {
-                        s1 = resp.Content.ReadAsStringAsync().Result;
+                        s1 = await resp.Content.ReadAsStringAsync();
                     }
                     else
                     {
@@ -620,8 +626,14 @@ devise:btc*/
                             }
                         }
                 }
+                return Stats;
             }
-            catch { }
+            catch (Exception e) 
+            {
+                Logger.DumpLog(e.ToString(),3);
+                callError("Failed to update stats", false, ErrorType.Other);
+                return null; 
+            }
         }
 
 

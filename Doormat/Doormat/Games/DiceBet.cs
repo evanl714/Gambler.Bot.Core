@@ -93,6 +93,6 @@ namespace DoormatCore.Games
 
     public interface iDice
     {
-        void PlaceDiceBet(PlaceDiceBet BetDetails);
+        Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails);
     }
 }

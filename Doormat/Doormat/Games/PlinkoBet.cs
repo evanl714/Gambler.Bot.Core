@@ -27,6 +27,6 @@ namespace DoormatCore.Games
 
     public interface iPlinko
     {
-        Task PlacePlinkoBet(PlacePlinkoBet BetDetails);
+        Task<PlinkoBet> PlacePlinkoBet(PlacePlinkoBet BetDetails);
     }
 }

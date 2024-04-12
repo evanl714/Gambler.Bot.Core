@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -239,16 +240,25 @@ namespace DoormatCore.Tests
             }
             Assert.True(finished);
             Assert.Null(error);
-            
+            Assert.Equal(Amount, resultingbet.Amount);
+            Assert.Equal(chance, resultingbet.Chance);
+            Assert.Equal(high, resultingbet.High);
+            bool ShouldBeWin = (((bool)High ? (decimal)Roll > (decimal)Site.MaxRoll - (decimal)(Chance) : (decimal)Roll < (decimal)(Chance)));
+            Assert.Equal(ShouldBeWin, resultingbet.IsWin);
+            Assert.Equal(ShouldBeWin, resultingbet.GetWin());
             if (resultingbet.IsWin)
             {
                 Assert.Equal(balance+resultingbet.Profit, _site.Stats.Balance);
+                decimal AssumedProfit = amount - (((100 - _site.Edge) / chance) * amount);
+                Assert.Equal(AssumedProfit.ToString("0.00000000"), resultingbet.Profit.ToString("0.00000000"))
             }
             else
             {
                 Assert.Equal(balance -resultingbet.TotalAmount, _site.Stats.Balance);
             }
             
+            
+
             //assert the rest of the bet as far as possible
             //double check the chance, payout,profit, amount, high/low
 

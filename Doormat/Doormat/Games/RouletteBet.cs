@@ -28,6 +28,6 @@ namespace DoormatCore.Games
 
     public interface iRoulette
     {
-        Task PlaceRouletteBet(PlaceRouletteBet BetDetails);
+        Task<RouletteBet> PlaceRouletteBet(PlaceRouletteBet BetDetails);
     }
 }

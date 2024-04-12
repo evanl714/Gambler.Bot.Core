@@ -161,7 +161,7 @@ namespace DoormatCore.Sites
         /// Interface with site to handle login.
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
-        protected abstract bool _Login(LoginParamValue[] LoginParams);
+        protected abstract Task<bool> _Login(LoginParamValue[] LoginParams);
 
         /// <summary>
         /// Logs the user into the site if correct details were provided
@@ -170,22 +170,16 @@ namespace DoormatCore.Sites
         public async Task<bool> LogIn(LoginParamValue[] LoginParams)
         {
             bool success = false;
-            await Task.Run(()=> { success = LoginThread(LoginParams); });
-            return success;
-            
-        }
-
-        private bool LoginThread(object LoginParams)
-        {
-            bool success = _Login(LoginParams as LoginParamValue[]);
+            await Task.Run(async ()=> { success = await _Login(LoginParams); });
             if (success)
             {
-                UpdateStats();
+                await UpdateStats();
             }
             return success;
             
         }
 
+       
         /// <summary>
         /// Interface with site to disconnect and dispose of applicable objects
         /// </summary>
@@ -209,74 +203,75 @@ namespace DoormatCore.Sites
         /// <summary>
         /// Update the site statistics for whatever reason.
         /// </summary>
-        public void UpdateStats()
+        public async Task<SiteStats> UpdateStats()
         {
             ForceUpdateStats = false;
-            _UpdateStats();
+            SiteStats stats = null;
+            await Task.Run(async () => stats= await _UpdateStats());
 
             StatsUpdated?.Invoke(this, new StatsUpdatedEventArgs(this.Stats));
+            return stats;
         }
 
         /// <summary>
         /// Interface with the site to get the latest user stats
         /// </summary>
-        protected abstract void _UpdateStats();
+        protected abstract Task<SiteStats> _UpdateStats();
         #endregion
 
         #region Betting methods
-        public void PlaceBet(PlaceBet BetDetails)
+        public async Task <Bet> PlaceBet(PlaceBet BetDetails)
         {
-            new Thread(new ParameterizedThreadStart(PlaceBetThread)).Start(BetDetails);
-           
+            Bet result = null;
+            await Task.Run(async () =>
+            {
+                if (BetDetails is PlaceDiceBet dicebet && this is iDice DiceSite)
+                {
+                    if (dicebet.Amount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    else if (dicebet.Chance <= 0)
+                    {
+                        callError("Chance to win must be > 0", false, ErrorType.InvalidBet);
+                        return;
+                    }
+                    callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High ? "High" : "Low")}");
+                    result = await DiceSite.PlaceDiceBet(dicebet);
+                }
+                if (BetDetails is PlaceCrashBet crashBet && this is iCrash crashsite)
+                {
+                    if (crashBet.TotalAmount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    result = await crashsite.PlaceCrashBet(BetDetails as PlaceCrashBet);
+                }
+                if (BetDetails is PlacePlinkoBet plinkoBet && this is iPlinko PlinkoSite)
+                {
+                    if (plinkoBet.TotalAmount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    result = await PlinkoSite.PlacePlinkoBet(BetDetails as PlacePlinkoBet);
+                }
+                if (BetDetails is PlaceRouletteBet rouletteBet && this is iRoulette RouletteSite)
+                {
+                    if (rouletteBet.TotalAmount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    result = await RouletteSite.PlaceRouletteBet(BetDetails as PlaceRouletteBet);
+                }
+            });
+            return result;
         } 
         
-        private void PlaceBetThread(object BetDetails)
-        {
-            
-            
-            if (BetDetails is PlaceDiceBet dicebet && this is iDice)
-            {
-                if (dicebet.Amount<0)
-                {
-                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
-                    return;
-                }
-                else if (dicebet.Chance<=0)
-                {
-                    callError("Chance to win must be > 0", false, ErrorType.InvalidBet);
-                    return;
-                }
-                callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High?"High":"Low")}");
-                (this as iDice).PlaceDiceBet(dicebet);                
-            }
-            if (BetDetails is PlaceCrashBet crashBet&& this is iCrash)
-            {
-                if (crashBet.TotalAmount < 0)
-                {
-                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
-                    return;
-                }
-                (this as iCrash).PlaceCrashBet(BetDetails as PlaceCrashBet);
-            }
-            if (BetDetails is PlacePlinkoBet plinkoBet && this is iPlinko)
-            {
-                if (plinkoBet.TotalAmount < 0)
-                {
-                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
-                    return;
-                }
-                (this as iPlinko).PlacePlinkoBet(BetDetails as PlacePlinkoBet);
-            }
-            if (BetDetails is PlaceRouletteBet rouletteBet && this is iRoulette)
-            {
-                if (rouletteBet.TotalAmount < 0)
-                {
-                    callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
-                    return;
-                }
-                (this as iRoulette).PlaceRouletteBet(BetDetails as PlaceRouletteBet);
-            }
-        }
+      
         #endregion
 
         #region Extention Methods
