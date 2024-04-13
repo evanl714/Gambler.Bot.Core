@@ -10,6 +10,119 @@ This project will contain only code relating to site APIs and attempt to provide
 
 The sites have not been fully implemented yet and some of them are outdated due to API changes since the last time I worked on this.
 
+# How to use
+
+### Logging in
+```
+//Initialize the site you want to test
+BaseSite currentSite = new Bitsler();
+
+//Create a list of login parameter values
+List<LoginParamValue> param = new List<LoginParamValue>();
+
+//Iterate through the required login parameters and get the values from the user
+foreach (var x in currentSite.LoginParams)
+{
+    Console.Write(x.Name + ": ");
+    string value = Console.ReadLine();
+    param.Add(new LoginParamValue
+    {
+        Param = x,
+        Value = value
+    });
+}
+
+//Log in to the site
+if (await currentSite.LogIn(param.ToArray()))
+{
+    Console.WriteLine($"Logged in to {currentSite.SiteName}");
+}
+else
+{
+    Console.WriteLine($"Could not log in to {currentSite.SiteName}");
+}
+```
+
+### Logging out
+The site will have a background thread that polls for balance or stats changes occationally. To kill the thread, the user must be logged out/disconnected:
+```
+currentSite.Disconnect();
+```
+
+### Placing a bet
+```
+//Check that you are logged in and that the site supports the game you want to play:
+if (currentSite.LoggedIn && currentSite is iDice diceSite) //While currentSite.SupportedGames exists, it's for display use only. The actual games are in the games interfaces
+{
+    DiceBet resultingBet = await diceSite.PlaceDiceBet(new PlaceDiceBet(0.00000100m, true, 49.5m));
+    if (resultingBet != null)
+    {
+        Console.WriteLine($"Bet {resultingBet.BetID} placed. Result: {resultingBet.Profit}");
+    }
+    else
+    {
+        Console.WriteLine("Bet failed");
+    }
+}
+```
+
+### The site has a list of events that can be used to facilitate asynchronous functions and provide more information about pending/failed actions:
+```
+currentSite.BetFinished += Site_BetFinished;
+currentSite.Error += Site_Error;
+currentSite.LoginFinished += Site_LoginFinished;
+currentSite.Notify += Site_Notify;
+currentSite.OnResetSeedFinished += Site_OnResetSeedFinished;
+currentSite.OnTipFinished += Site_OnTipFinished;
+currentSite.OnWithdrawalFinished += Site_OnWithdrawalFinished;
+currentSite.StatsUpdated += Site_StatsUpdated;
+
+private void Site_StatsUpdated(object sender, StatsUpdatedEventArgs e)
+{
+    Console.WriteLine("Stats updated: "+e.NewStats.Balance);
+}
+
+private void Site_OnWithdrawalFinished(object sender, GenericEventArgs e)
+{
+    Console.WriteLine("Withdrawal Finished: " + e.Success);
+}
+
+private void Site_OnTipFinished(object sender, GenericEventArgs e)
+{
+    Console.WriteLine("Tip Finished: " + e.Success);
+}
+
+private void Site_OnResetSeedFinished(object sender, GenericEventArgs e)
+{
+    Console.WriteLine("ResetSeed Finished: " + e.Success);
+}
+
+private void Site_Notify(object sender, GenericEventArgs e)
+{
+    Console.WriteLine("Notify Received: "+e.Message);
+}
+
+private void Site_LoginFinished(object sender, LoginFinishedEventArgs e)
+{
+    Console.WriteLine($"Login Finished: {e.Success}. Balance: {e.Stats?.Balance}");
+}
+
+private void Site_Error(object sender, ErrorEventArgs e)
+{
+    Console.WriteLine($"Error: {e.Type.ToString()} - {e.Message}");
+}
+
+private void Site_BetFinished(object sender, BetFinisedEventArgs e)
+{
+    Console.WriteLine("Bet Finished: " + e.NewBet.BetID);
+}
+
+```
+
+
+
+
+
 A summary of stuff that doormat and krygames bot should be capable of when finished (most of the below is not relevant to the doormat repository):
 
 - .net standard library to allow cross platform betting.
