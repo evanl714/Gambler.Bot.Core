@@ -240,17 +240,17 @@ namespace DoormatCore.Tests
             }
             Assert.True(finished);
             Assert.Null(error);
-            Assert.Equal(Amount, resultingbet.Amount);
+            Assert.Equal(amount, resultingbet.TotalAmount);
             Assert.Equal(chance, resultingbet.Chance);
             Assert.Equal(high, resultingbet.High);
-            bool ShouldBeWin = (((bool)High ? (decimal)Roll > (decimal)Site.MaxRoll - (decimal)(Chance) : (decimal)Roll < (decimal)(Chance)));
+            bool ShouldBeWin = (((bool)high ? (decimal)resultingbet.Roll > (decimal)_site.MaxRoll - (decimal)(chance) : (decimal)resultingbet.Roll < (decimal)(chance)));
             Assert.Equal(ShouldBeWin, resultingbet.IsWin);
-            Assert.Equal(ShouldBeWin, resultingbet.GetWin());
+            Assert.Equal(ShouldBeWin, resultingbet.GetWin(_site));
             if (resultingbet.IsWin)
             {
                 Assert.Equal(balance+resultingbet.Profit, _site.Stats.Balance);
                 decimal AssumedProfit = amount - (((100 - _site.Edge) / chance) * amount);
-                Assert.Equal(AssumedProfit.ToString("0.00000000"), resultingbet.Profit.ToString("0.00000000"))
+                Assert.Equal(AssumedProfit.ToString("0.00000000"), resultingbet.Profit.ToString("0.00000000"));
             }
             else
             {

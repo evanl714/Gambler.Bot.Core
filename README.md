@@ -15,7 +15,10 @@ The sites have not been fully implemented yet and some of them are outdated due 
 ### Logging in
 ```
 //Initialize the site you want to test
-BaseSite currentSite = new Bitsler();
+//Doormat uses Microsoft.Extensions.Logging for logging. You can use any logger that implements ILogger or pass null if you do not want logging.
+//Breaking change coming at some time: I will be adding open telemetry support for tracing and metrics. This change might cause changes to the constructor 
+BaseSite currentSite = new Bitsler(null);//Bitsler is just an example, you can use any site from the list of supported sites
+
 
 //Create a list of login parameter values
 List<LoginParamValue> param = new List<LoginParamValue>();

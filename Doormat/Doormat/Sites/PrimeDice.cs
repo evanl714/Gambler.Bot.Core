@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace DoormatCore.Sites
 {
@@ -25,7 +26,7 @@ namespace DoormatCore.Sites
         long uid = 0;
         DateTime lastupdate = new DateTime();
 
-        public PrimeDice()
+        public PrimeDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
             this.MaxRoll = 99.99m;
@@ -153,7 +154,7 @@ namespace DoormatCore.Sites
             }
             catch (WebException e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
                 if (e.Response != null)
                 {
 
@@ -162,7 +163,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
                 callLoginFinished(false);
             }
             return false;
@@ -183,7 +184,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
         }
 
@@ -281,14 +282,14 @@ namespace DoormatCore.Sites
                 }
                 catch (Exception e)
                 {
-                    Logger.DumpLog(e);
+                    _logger?.LogError(e.ToString());
                     callNotify("Some kind of error happened. I don't really know graphql, so your guess as to what went wrong is as good as mine.");
                 }
             }
             catch (Exception e2)
             {
                 callNotify("Error occured while trying to bet, retrying in 30 seconds. Probably.");
-                Logger.DumpLog(e2);
+                _logger?.LogError(e2.ToString());
             }
             return null;
         }
@@ -334,7 +335,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             return null;
         }

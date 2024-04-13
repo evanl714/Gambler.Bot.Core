@@ -1,5 +1,6 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace DoormatCore.Sites
         Random R = new Random();
         WDGetSeed currentseed;
 
-        public WinDice()
+        public WinDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
             this.MaxRoll = 99.99m;
@@ -194,7 +195,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
                 callLoginFinished(false);
                 return false;
             }
@@ -215,7 +216,7 @@ namespace DoormatCore.Sites
                 }
                 catch (Exception e)
                 {
-                    Logger.DumpLog(e);
+                    _logger?.LogError(e.ToString());
                 }
                 Thread.Sleep(1000);
             }

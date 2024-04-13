@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 using WebSocket4Net;
 
 namespace DoormatCore.Sites
@@ -26,7 +27,7 @@ namespace DoormatCore.Sites
         string io = "";
         string cfuid = "";
 
-        public EtherCrash()
+        public EtherCrash(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
             this.MaxRoll = 99.99999m;
@@ -223,7 +224,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception ex)
             {
-                Logger.DumpLog(ex.ToString(), -1);
+                _logger?.LogError(ex.ToString());
                 callLoginFinished(false);
                 return false;
             }
@@ -275,7 +276,7 @@ namespace DoormatCore.Sites
             }
             else
             {
-                Logger.DumpLog(e.Message, -1);
+                _logger?.LogInformation(e.Message, -1);
                 if (e.Message.StartsWith("42[\"game_starting\","))
                 {
                     //42["game_starting",{"game_id":214035,"max_win":3782817516,"time_till_start":5000}]
@@ -392,7 +393,7 @@ namespace DoormatCore.Sites
         string guid = "";
         private void Sock_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
-            Logger.DumpLog(e.Exception.ToString(), -1);
+            _logger?.LogError(e.Exception.ToString());
             callError("Websocket error - disconnected.",true, ErrorType.Unknown );
         }
 

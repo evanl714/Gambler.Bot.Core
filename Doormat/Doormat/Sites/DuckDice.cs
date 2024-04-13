@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace DoormatCore.Sites
 {
@@ -25,7 +26,7 @@ namespace DoormatCore.Sites
         public static string[] cCurrencies = new string[] { "BTC", "ETH", "LTC", "DOGE", "DASH", "BCH", "XMR", "XRP", "ETC", "BTG", "XLM", "ZEC" };
         QuackSeed currentseed = null;
 
-        public DuckDice()
+        public DuckDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
             this.MaxRoll = 99.99m;
@@ -172,7 +173,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             return null;
         }
@@ -242,7 +243,7 @@ namespace DoormatCore.Sites
             catch (Exception e)
             {
                 callError("There was an error placing your bet.", false, ErrorType.Unknown);
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             return null;
         }

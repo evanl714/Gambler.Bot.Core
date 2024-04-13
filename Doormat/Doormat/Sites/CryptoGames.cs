@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace DoormatCore.Sites
 {
@@ -23,7 +24,7 @@ namespace DoormatCore.Sites
         HttpClientHandler ClientHandlr;
         public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "DASH", "GAS", "Bch", "STRAT", "PPC", "PLAY", "LTC", "XMR", "ETC" };
         string CurrenyHash = "";
-        public CryptoGames()
+        public CryptoGames(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
             this.MaxRoll = 99.999m;
@@ -90,12 +91,12 @@ namespace DoormatCore.Sites
             }
             catch (AggregateException e)
             {
-                Logger.DumpLog(e.ToString(), -1);
+                _logger?.LogError(e.ToString());
                 callLoginFinished(false);
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e.ToString(), -1);
+                _logger?.LogError(e.ToString());
                 callLoginFinished(false);
             }
             return false;
@@ -205,7 +206,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             { 
-                Logger.DumpLog(e.ToString(), -1);
+                _logger?.LogError(e.ToString());
             }
             return null;
         }

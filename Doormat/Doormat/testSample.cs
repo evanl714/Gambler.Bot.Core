@@ -1,7 +1,9 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Sites;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace DoormatCore
@@ -9,13 +11,15 @@ namespace DoormatCore
     public static class testSample
     {
         static BaseSite Site;
-        public static void Main(string[] args)
+        public static async void Main(string[] args)
         {
-            //Initialize the site you want to test
-             Site = new Bitsler();
-            //Create a list of param values
-            List<LoginParamValue> param = new List<LoginParamValue>();
+            ILoggerFactory loggerFactory = new LoggerFactory();
             
+            //Initialize the site you want to test
+            BaseSite currentSite = new Bitsler(null);
+            //Create a list of login parameter values
+            List<LoginParamValue> param = new List<LoginParamValue>();
+            //Iterate through the required login parameters and get the values from the user
             foreach (var x in Site.LoginParams)
             {
                 Console.Write(x.Name + ": ");
@@ -26,16 +30,27 @@ namespace DoormatCore
                     Value = value
                 });
             }
+            //Log in to the site
+            if (await Site.LogIn(param.ToArray()))
+            {
+                Console.WriteLine($"Logged in to {currentSite.SiteName}");
+            }
+            else
+            {
+                Console.WriteLine($"Could not log in to {currentSite.SiteName}");
+            }
+
+            
 
             //subscribe to site events
-            Site.BetFinished += Site_BetFinished;
-            Site.Error += Site_Error;
-            Site.LoginFinished += Site_LoginFinished;
-            Site.Notify += Site_Notify;
-            Site.OnResetSeedFinished += Site_OnResetSeedFinished;
-            Site.OnTipFinished += Site_OnTipFinished;
-            Site.OnWithdrawalFinished += Site_OnWithdrawalFinished;
-            Site.StatsUpdated += Site_StatsUpdated;
+            currentSite.BetFinished += Site_BetFinished;
+            currentSite.Error += Site_Error;
+            currentSite.LoginFinished += Site_LoginFinished;
+            currentSite.Notify += Site_Notify;
+            currentSite.OnResetSeedFinished += Site_OnResetSeedFinished;
+            currentSite.OnTipFinished += Site_OnTipFinished;
+            currentSite.OnWithdrawalFinished += Site_OnWithdrawalFinished;
+            currentSite.StatsUpdated += Site_StatsUpdated;
             
             //Log in using the params
             Site.LogIn(param.ToArray());
@@ -48,6 +63,7 @@ namespace DoormatCore
             Console.WriteLine("Press enter to reset seed");
             Console.ReadLine();            
             Site.ResetSeed();
+            
         }
         /*
          * Test Definitions:

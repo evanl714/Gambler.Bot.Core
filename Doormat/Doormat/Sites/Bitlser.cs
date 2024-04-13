@@ -1,5 +1,6 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -29,7 +30,7 @@ namespace DoormatCore.Sites
         public static string[] sCurrencies = new string[] { "BTC", "ETH", "LTC", "BCH", "XRP", "DOGE", "DASH", "ZEC", "ETC", "NEO", "KMD", "BTG", "LSK", "DGB", "QTUM", "STRAT", "WAVES", "BURST", "BTSLR" };
         HttpClientHandler ClientHandlr;
 
-        public Bitsler()
+        public Bitsler(ILogger logger):base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("API Key", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
             Currencies = sCurrencies;
@@ -337,7 +338,7 @@ devise:btc*/
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             callLoginFinished(false);
             return false;
@@ -638,7 +639,7 @@ devise:btc*/
             }
             catch (Exception e) 
             {
-                Logger.DumpLog(e.ToString(),3);
+                _logger?.LogError(e.ToString());
                 callError("Failed to update stats", false, ErrorType.Other);
                 return null; 
             }

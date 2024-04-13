@@ -1,5 +1,6 @@
 ﻿using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +14,7 @@ namespace DoormatCore.Sites
 {
     public abstract class BaseSite
     {
+        protected readonly ILogger _logger;
 
         public List<SiteAction> ActiveActions { get; set; } = new List<SiteAction>();
 
@@ -178,6 +180,15 @@ namespace DoormatCore.Sites
         /// List of supported games for the site
         /// </summary>
         public Games.Games[] SupportedGames { get; set; } = new Games.Games[] { Games.Games.Dice };
+
+        
+
+        protected BaseSite(ILogger logger)
+        {
+            _logger = logger;
+        }
+
+
 
         #region Required Methods
 

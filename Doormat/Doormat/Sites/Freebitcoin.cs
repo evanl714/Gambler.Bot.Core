@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace DoormatCore.Sites
 {
@@ -23,7 +24,7 @@ namespace DoormatCore.Sites
         HttpClientHandler ClientHandlr;
 
 
-        public Freebitcoin()
+        public Freebitcoin(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
             this.MaxRoll = 100m;
@@ -159,7 +160,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e.ToString(), 1);
+                _logger?.LogError(e.ToString());
             }
             callLoginFinished(false);
             return false;
@@ -185,7 +186,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             return null;
         }
@@ -307,7 +308,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
                 callError("An internal error occured. Retrying in 30 seconds.",true, ErrorType.Unknown);
             }
             return null;

@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace DoormatCore.Sites
 {
@@ -30,7 +31,7 @@ namespace DoormatCore.Sites
         string[] CurrencyMap = new string[] { };
         string seed = "";
 
-        public Bitvest()
+        public Bitvest(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
             this.MaxRoll = 99.99m;
@@ -193,13 +194,13 @@ namespace DoormatCore.Sites
             }
             catch (AggregateException e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
                 callLoginFinished(false);
                 return false;
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
                 callLoginFinished(false);
                 return false;
             }
@@ -317,12 +318,12 @@ namespace DoormatCore.Sites
                 catch (Exception e)
                 {
                     callError("An unknown error has occurred", false, ErrorType.Unknown);
-                    Logger.DumpLog(e);
+                    _logger?.LogError(e.ToString());
                 }
             }
             catch (Exception e2)
             {
-                Logger.DumpLog(e2);
+                _logger?.LogError(e2.ToString());
                 callError("An unknown error has occurred", false, ErrorType.Unknown);
             }
             return null;
@@ -402,7 +403,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             return null;
         }
@@ -473,7 +474,7 @@ namespace DoormatCore.Sites
             }
             catch (Exception e)
             {
-                Logger.DumpLog(e);
+                _logger?.LogError(e.ToString());
             }
             return false;
         }

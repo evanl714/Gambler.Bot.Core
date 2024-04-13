@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
+using Microsoft.Extensions.Logging;
 using WebSocket4Net;
 
 namespace DoormatCore.Sites
@@ -29,7 +30,7 @@ namespace DoormatCore.Sites
         string link = "";
         WebSocket NSSocket = null;
 
-        public NitrogenSports()
+        public NitrogenSports(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
             this.MaxRoll = 99.99m;
@@ -313,7 +314,7 @@ Sec-WebSocket-Version:13*/
             }
             catch (Exception ex)
             {
-                Logger.DumpLog(ex);
+                _logger?.LogError(ex.ToString());
             }
             //throw new NotImplementedException();
         }
@@ -358,7 +359,7 @@ Sec-WebSocket-Version:13*/
         }
         void NSSocket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
-            Logger.DumpLog(e.Exception);
+            _logger?.LogError(e.Exception.ToString());
             //throw new NotImplementedException();
         }
 
