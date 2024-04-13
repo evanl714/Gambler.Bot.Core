@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Tests.BitslerT
 {
-    public class BitslerDiceTests:DiceTests, IClassFixture<Bitsler>
+    public class BitslerDiceTests:DiceTests, IClassFixture<BitslerFixture>
     {
-        public BitslerDiceTests(Bitsler site):base(site)
+        public BitslerDiceTests(BitslerFixture site):base(site.site)
         {
             
         }

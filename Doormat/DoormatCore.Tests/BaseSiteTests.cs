@@ -450,14 +450,14 @@ namespace DoormatCore.Tests
             }
         }*/
         [Fact]
-        public void b9_GetSeed()
+        public async Task b9_GetSeed()
         {
             if (_site.CanGetSeed)
             {
                 decimal balance = _site.Stats.Balance;
                 
 
-                string serverseed = _site.GetSeed("69d69634668");
+                string serverseed = await _site.GetSeed("69d69634668");
                 Assert.True(serverseed!=null);
             }
             else

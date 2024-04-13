@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Tests.WinDiceT
 {
-    public class WindiceTests : BaseSiteTests, IClassFixture<WinDice>
+    public class WindiceTests : BaseSiteTests, IClassFixture<WindiceFixture>
     {
-        public WindiceTests(WinDice fixure) : base(fixure)
+        public WindiceTests(WindiceFixture fixure) : base(fixure.site)
         {
 
         }

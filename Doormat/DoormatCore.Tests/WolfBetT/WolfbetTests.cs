@@ -1,4 +1,6 @@
 ﻿using DoormatCore.Sites;
+using DoormatCore.Tests.Code;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +11,9 @@ using System.Threading.Tasks;
 namespace DoormatCore.Tests.WolfBetT
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public class WolfbetTests : BaseSiteTests, IClassFixture<WolfBet>
+    public class WolfbetTests : BaseSiteTests, IClassFixture<wbFixture>
     {
-        public WolfbetTests(WolfBet fixure) : base(fixure)
+        public WolfbetTests(wbFixture fixure) : base(fixure.site)
         {
 
         }

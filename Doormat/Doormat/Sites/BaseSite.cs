@@ -181,7 +181,11 @@ namespace DoormatCore.Sites
         /// </summary>
         public Games.Games[] SupportedGames { get; set; } = new Games.Games[] { Games.Games.Dice };
 
-        
+        protected BaseSite()
+        {
+            _logger = null; 
+        }
+
 
         protected BaseSite(ILogger logger)
         {

@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace DoormatCore.Tests.PrimeDiceT
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public class PrimeDiceTests : BaseSiteTests, IClassFixture<PrimeDice>
+    public class PrimeDiceTests : BaseSiteTests, IClassFixture<PrimeDiceFixture>
     {
-        public PrimeDiceTests(PrimeDice fixure) : base(fixure)
+        public PrimeDiceTests(PrimeDiceFixture fixure) : base(fixure.site)
         {
 
         }

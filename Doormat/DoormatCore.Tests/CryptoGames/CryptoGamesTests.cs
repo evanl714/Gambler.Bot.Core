@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace DoormatCore.Tests.CryptoGamesT
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public class CryptoGamesTests : BaseSiteTests, IClassFixture<CryptoGames>
+    public class CryptoGamesTests : BaseSiteTests, IClassFixture<CryptoGamesFixture>
     {
-        public CryptoGamesTests(CryptoGames fixure) : base(fixure)
+        public CryptoGamesTests(CryptoGamesFixture fixure) : base(fixure.site)
         {
 
         }

@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace DoormatCore.Tests.StakeT
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public class StakeTests : BaseSiteTests, IClassFixture<Stake>
+    public class StakeTests : BaseSiteTests, IClassFixture<StakeFixture>
     {
-        public StakeTests(Stake fixure) : base(fixure)
+        public StakeTests(StakeFixture fixure) : base(fixure.site)
         {
 
         }

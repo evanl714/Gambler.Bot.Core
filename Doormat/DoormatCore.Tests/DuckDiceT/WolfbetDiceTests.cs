@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Tests.DuckDiceT
 {
-    public class DuckDiceDiceTests:DiceTests, IClassFixture<DuckDice>
+    public class DuckDiceDiceTests:DiceTests, IClassFixture<DuckDiceFixture>
     {
-        public DuckDiceDiceTests(DuckDice site):base(site)
+        public DuckDiceDiceTests(DuckDiceFixture site):base(site.site)
         {
             
         }

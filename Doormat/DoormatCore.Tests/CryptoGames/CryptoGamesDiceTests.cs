@@ -9,7 +9,7 @@ namespace DoormatCore.Tests.CryptoGamesT
 {
     public class CryptoGamesDiceTests:DiceTests, IClassFixture<CryptoGames>
     {
-        public CryptoGamesDiceTests(CryptoGames site):base(site)
+        public CryptoGamesDiceTests(CryptoGamesFixture site):base(site.site)
         {
             
         }

@@ -22,7 +22,14 @@ namespace DoormatCore.Sites
         HttpClient Client;
         HttpClientHandler ClientHandlr;        
         string URL = "https://wolf.bet";
+
         public WolfBet(ILogger logger) : base(logger)
+        {
+
+            configure();
+        }
+
+        void configure()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
             this.MaxRoll = 99.99m;
@@ -45,6 +52,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://bit-exo.com/{0}";
             this.Edge = 1;
+
         }
 
 

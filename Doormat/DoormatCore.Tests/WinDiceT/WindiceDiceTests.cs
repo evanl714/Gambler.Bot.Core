@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Tests.WinDiceT
 {
-    public class WolfbetDiceTests:DiceTests, IClassFixture<WinDice>
+    public class WolfbetDiceTests:DiceTests, IClassFixture<WindiceFixture>
     {
-        public WolfbetDiceTests(WinDice site):base(site)
+        public WolfbetDiceTests(WindiceFixture site):base(site.site)
         {
             
         }

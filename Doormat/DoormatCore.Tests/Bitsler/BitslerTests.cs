@@ -1,4 +1,5 @@
 ﻿using DoormatCore.Sites;
+using DoormatCore.Tests.Code;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +10,9 @@ using System.Threading.Tasks;
 namespace DoormatCore.Tests.BitslerT
 {
     [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
-    public class BitslerTests : BaseSiteTests, IClassFixture<Bitsler>
+    public class BitslerTests : BaseSiteTests, IClassFixture<BitslerFixture>
     {
-        public BitslerTests(Bitsler fixure) : base(fixure)
+        public BitslerTests(BitslerFixture fixure) : base(fixure.site)
         {
 
         }

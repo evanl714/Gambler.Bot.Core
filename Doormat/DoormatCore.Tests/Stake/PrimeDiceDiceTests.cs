@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Tests.StakeT
 {
-    public class StakeDiceTests:DiceTests, IClassFixture<Stake>
+    public class StakeDiceTests:DiceTests, IClassFixture<StakeFixture>
     {
-        public StakeDiceTests(Stake site):base(site)
+        public StakeDiceTests(StakeFixture site):base(site.site)
         {
             
         }

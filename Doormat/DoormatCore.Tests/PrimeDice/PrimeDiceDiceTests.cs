@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace DoormatCore.Tests.PrimeDiceT
 {
-    public class PrimeDiceDiceTests:DiceTests, IClassFixture<PrimeDice>
+    public class PrimeDiceDiceTests:DiceTests, IClassFixture<PrimeDiceFixture>
     {
-        public PrimeDiceDiceTests(PrimeDice site):base(site)
+        public PrimeDiceDiceTests(PrimeDiceFixture site):base(site.site)
         {
             
         }
