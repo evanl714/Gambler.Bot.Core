@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 using WebSocket4Net;
@@ -92,7 +93,7 @@ namespace DoormatCore.Sites
             throw new NotImplementedException();
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             string Username = "";
             string Password = "";
@@ -106,9 +107,7 @@ namespace DoormatCore.Sites
                 if (x.Param.Name.ToLower() == "2fa code")
                     otp = x.Value;
             }
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-     | SecurityProtocolType.Tls11
-     | SecurityProtocolType.Tls12;
+            
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://nitrogensports.eu/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -119,16 +118,16 @@ namespace DoormatCore.Sites
             try
             {
                 string s1 = "";
-                HttpResponseMessage resp = Client.GetAsync("").Result;
+                HttpResponseMessage resp = await Client.GetAsync("");
                 if (resp.IsSuccessStatusCode)
                 {
-                    s1 = resp.Content.ReadAsStringAsync().Result;
+                    s1 = await resp.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     if (resp.StatusCode == HttpStatusCode.ServiceUnavailable)
                     {
-                        s1 = resp.Content.ReadAsStringAsync().Result;
+                        s1 = await resp.Content.ReadAsStringAsync();
                         //cflevel = 0;
                         /*
                         if (!Cloudflare.doCFThing(s1, Client, ClientHandlr, 0, "nitrogensports.eu"))
@@ -147,12 +146,13 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("captcha_code", ""));
                 pairs.Add(new KeyValuePair<string, string>("otp", otp/*==""?"undefined":twofa*/));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                string sEmitResponse = Client.PostAsync("php/login/login.php", Content).Result.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("php/login/login.php", Content);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
                 NSLogin tmpLogin = JsonSerializer.Deserialize<NSLogin>(sEmitResponse);
                 if (tmpLogin.errno != 0)
                 {
                     callLoginFinished(false);
-                    return;
+                    return false;
 
                 }
                 else
@@ -162,9 +162,9 @@ namespace DoormatCore.Sites
                     ConnectSocket();
                     Stats.Balance = decimal.Parse(tmpLogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
 
-                    UpdateStats();
+                    await UpdateStats();
                     this.password = Password;
-                    return;
+                    return NSSocket.State == WebSocketState.Open;
                 }
 
             }
@@ -177,6 +177,7 @@ namespace DoormatCore.Sites
 
             }
             callLoginFinished(false);
+            return false;
         }
         void ConnectSocket()
         {
@@ -372,14 +373,14 @@ Sec-WebSocket-Version:13*/
             //throw new NotImplementedException();
         }
 
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             if (NSSocket != null && NSSocket.State == WebSocketState.Open && iskd)
             {
                 string s = CreateRandomString();
                 //Requests.Add(s,1);
                 NSSocket.Send("[2,\"0." + s + "\",\"ping\",{}]");
-                string result = Client.GetStringAsync("php/login/load_login.php").Result;
+                string result = await Client.GetStringAsync("php/login/load_login.php");
                 NSLogin tmplogin = JsonSerializer.Deserialize<NSLogin>(result);
                 Stats.Balance = decimal.Parse(tmplogin.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Thread.Sleep(1);
@@ -387,7 +388,11 @@ Sec-WebSocket-Version:13*/
                 s = "[2,\"0." + t + "\",\"game\",{}]";
                 Requests.Add(t, 1);
                 NSSocket.Send(s);
+
+                //wait for the response for the site then return the site stats
+                throw new NotImplementedException();
             }
+            return null;
             //GetStats();
         }
 

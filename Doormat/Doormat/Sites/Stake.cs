@@ -79,7 +79,7 @@ namespace DoormatCore.Sites
             }
 
 
-            protected override void _Login(LoginParamValue[] LoginParams)
+            protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
             {
                 try
                 {
@@ -122,8 +122,8 @@ namespace DoormatCore.Sites
 
                     StringContent content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json");
 
-                    var resp = Client.PostAsync(URL, content).Result;
-                    string respostring = resp.Content.ReadAsStringAsync().Result;
+                    var resp = await Client.PostAsync(URL, content);
+                    string respostring = await resp.Content.ReadAsStringAsync();
                     var Resp = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring);
                     pdUser user = Resp.data.user;
                     userid = user.id;
@@ -154,7 +154,7 @@ namespace DoormatCore.Sites
                         }
 
                         callLoginFinished(true);
-                        return;
+                        return true;
                     }
 
                 }
@@ -172,6 +172,7 @@ namespace DoormatCore.Sites
                     Logger.DumpLog(e);
                     callLoginFinished(false);
                 }
+            return false;
             }
             void GetBalanceThread()
             {
@@ -196,7 +197,7 @@ namespace DoormatCore.Sites
             int retrycount = 0;
             DateTime Lastbet = DateTime.Now;
 
-            public void PlaceDiceBet(PlaceDiceBet BetDetails)
+            public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
             {
                 try
                 {
@@ -225,8 +226,8 @@ namespace DoormatCore.Sites
                         ,
                         operationName = "DiceRoll"
                     };
-                    var response = Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json")).Result;
-                    var responsestring = response.Content.ReadAsStringAsync().Result;
+                    var response = await Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json"));
+                    var responsestring = await response.Content.ReadAsStringAsync();
                 Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
                 if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
                 {
@@ -247,7 +248,7 @@ namespace DoormatCore.Sites
                     }
 
                     callError(error, false, errorType);
-                    return;
+                    return null;
                 }
                 RollDice tmp = ResponsePayload.data.diceRoll;
                 
@@ -284,6 +285,7 @@ namespace DoormatCore.Sites
                         tmpbet.Guid = BetDetails.GUID;
                         callBetFinished(tmpbet);
                         retrycount = 0;
+                        return tmpbet;
                     }
                     catch (Exception e)
                     {
@@ -296,9 +298,10 @@ namespace DoormatCore.Sites
                     callNotify("Error occured while trying to bet, retrying in 30 seconds. Probably.");
                     Logger.DumpLog(e2);
                 }
+            return null;
             }
 
-            protected override void _UpdateStats()
+            protected override async Task<SiteStats> _UpdateStats()
             {
                 try
                 {
@@ -310,8 +313,8 @@ namespace DoormatCore.Sites
                         operationName = "DiceBotGetBalance",    
                         query = "query DiceBotGetBalance{user { activeServerSeed { seedHash seed nonce } activeClientSeed { seed } id balances { available { currency amount } } } }"
                     };
-                    var Resp = Client.PostAsync("", new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json")).Result;
-                    string respostring = Resp.Content.ReadAsStringAsync().Result;
+                    var Resp = await Client.PostAsync("", new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json"));
+                    string respostring = await Resp.Content.ReadAsStringAsync();
                     pdUser user = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring)?.data.user;
                     //GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
 
@@ -335,11 +338,13 @@ namespace DoormatCore.Sites
                             break;
                         }
                     }
+                return Stats;
                 }
                 catch (Exception e)
                 {
                     Logger.DumpLog(e);
                 }
+            return null;
             }
 
             public override int _TimeToBet(PlaceBet BetDetails)

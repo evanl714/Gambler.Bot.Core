@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 
@@ -74,7 +75,7 @@ namespace DoormatCore.Sites
             ispd = false;
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             ClientHandlr.CookieContainer = new CookieContainer();
@@ -87,7 +88,7 @@ namespace DoormatCore.Sites
 
                 accesstoken = LoginParams[0].Value;
 
-                HttpResponseMessage EmitResponse = Client.GetAsync("https://dickdice.io").Result;
+                HttpResponseMessage EmitResponse = await Client.GetAsync("https://dickdice.io");
                 //if (!EmitResponse.IsSuccessStatusCode)
                 {
                     var cookies = CallBypassRequired(SiteURL);
@@ -110,14 +111,14 @@ namespace DoormatCore.Sites
                 }
                
 
-                EmitResponse = Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
+                EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
                 if (EmitResponse.IsSuccessStatusCode)
                 {
-                    string sEmitResponse = EmitResponse.Content.ReadAsStringAsync().Result;
+                    string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                     Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
-                    sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
+                    sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
                     QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
-                    sEmitResponse = Client.GetStringAsync("randomize" + "?api_key=" + accesstoken).Result;
+                    sEmitResponse = await Client.GetStringAsync("randomize" + "?api_key=" + accesstoken);
                     currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
                     if (balance != null && _Stats != null)
                     {
@@ -133,49 +134,50 @@ namespace DoormatCore.Sites
                         lastupdate = DateTime.Now;
                         new Thread(new ThreadStart(GetBalanceThread)).Start();
                         callLoginFinished(true);
-                        return;
+                        return true;
                     }
                 }
                 else
                 {
-                    string response = EmitResponse.Content.ReadAsStringAsync().Result;
+                    string response =await EmitResponse.Content.ReadAsStringAsync();
                     callLoginFinished(false);
-                    return;
+                    return false;
                 }
             }
             catch (Exception e)
             {
                 callLoginFinished(false);
-                return;
+                return false;
             }
             callLoginFinished(false);
-            return;
+            return false;
         }
 
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             try
             {
 
-                string sEmitResponse = Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
+                string sEmitResponse = await Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
                 Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
                 Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
-                sEmitResponse = Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken).Result;
+                sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
                 QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
                 Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Stats.Bets = _Stats.bets;
                 Stats.Wins = _Stats.wins;
                 Stats.Losses = _Stats.bets - _Stats.wins;
-
+                return Stats;
             }
-            catch
+            catch (Exception e)
             {
-
+                Logger.DumpLog(e);
             }
+            return null;
         }
 
-        public void PlaceDiceBet(PlaceDiceBet BetDetails)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
 
             decimal amount = BetDetails.Amount;
@@ -184,7 +186,8 @@ namespace DoormatCore.Sites
             StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"amount\":\"{0:0.00000000}\",\"symbol\":\"{1}\",\"chance\":{2:0.00},\"isHigh\":{3}}}", amount, CurrentCurrency, chance, High ? "true" : "false"), Encoding.UTF8, "application/json");
             try
             {
-                string sEmitResponse = Client.PostAsync("play" + "?api_key=" + accesstoken, Content).Result.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("play" + "?api_key=" + accesstoken, Content);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
                 QuackBet newbet = JsonSerializer.Deserialize<QuackBet>(sEmitResponse);
                 if (newbet.error != null || newbet.errors!=null)
                 {
@@ -209,7 +212,7 @@ namespace DoormatCore.Sites
                     }
                     
                     callError(msg, false, type);
-                    return;
+                    return null;
                 }
                 DiceBet tmp = new DiceBet
                 {
@@ -234,12 +237,14 @@ namespace DoormatCore.Sites
                 Stats.Bets = newbet.user.bets;
                 Stats.Losses = newbet.user.bets - newbet.user.wins;
                 callBetFinished(tmp);
+                return tmp;
             }
             catch (Exception e)
             {
                 callError("There was an error placing your bet.", false, ErrorType.Unknown);
                 Logger.DumpLog(e);
             }
+            return null;
         }
 
         public class QuackLogin

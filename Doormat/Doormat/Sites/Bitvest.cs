@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 
@@ -66,11 +67,8 @@ namespace DoormatCore.Sites
             isbv = false;
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-         | SecurityProtocolType.Tls11
-         | SecurityProtocolType.Tls12;
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
+        {            
             //ServicePointManager.SecurityProtocol &= SecurityProtocolType.Ssl3;
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip/*, Proxy = this.Prox, UseProxy = Prox != null*/ };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://bitvest.io/") };
@@ -96,7 +94,8 @@ namespace DoormatCore.Sites
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
                 pairs.Add(new KeyValuePair<string, string>("type", "secret"));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                resp = Client.PostAsync("https://bitvest.io/login.php", Content).Result.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("https://bitvest.io/login.php", Content);
+                resp = await response.Content.ReadAsStringAsync();
                 bitvestLoginBase tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(resp.Replace("-", "_"));
                 bitvestLogin tmplogin = tmpblogin.data;
                 secret = tmpblogin.account.secret;
@@ -108,22 +107,26 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("u", "0"));
                 //pairs.Add(new KeyValuePair<string, string>("self_only", "1"));
                 Content = new FormUrlEncodedContent(pairs);
-                resp = Client.PostAsync("https://bitvest.io/update.php", Content).Result.Content.ReadAsStringAsync().Result;
+                response = await Client.PostAsync("https://bitvest.io/update.php", Content);
+                resp = await response.Content.ReadAsStringAsync();
 
                 string tmpresp = resp.Replace("-", "_");
                 tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(tmpresp);
                 tmplogin = tmpblogin.data;
                 if (tmplogin.session_token != null)
                 {
-                    pairs = new List<KeyValuePair<string, string>>();
-                    pairs.Add(new KeyValuePair<string, string>("username", Username));
-                    pairs.Add(new KeyValuePair<string, string>("password", Password));
-                    pairs.Add(new KeyValuePair<string, string>("tfa", otp));
-                    pairs.Add(new KeyValuePair<string, string>("token", tmplogin.session_token));
-                    //pairs.Add(new KeyValuePair<string, string>("c", "secret"));
-                    pairs.Add(new KeyValuePair<string, string>("secret", secret));
+                    pairs =
+                    [
+                        new KeyValuePair<string, string>("username", Username),
+                        new KeyValuePair<string, string>("password", Password),
+                        new KeyValuePair<string, string>("tfa", otp),
+                        new KeyValuePair<string, string>("token", tmplogin.session_token),
+                        //pairs.Add(new KeyValuePair<string, string>("c", "secret"));
+                        new KeyValuePair<string, string>("secret", secret),
+                    ];
                     Content = new FormUrlEncodedContent(pairs);
-                    resp = Client.PostAsync("https://bitvest.io/login.php", Content).Result.Content.ReadAsStringAsync().Result;
+                    response = await Client.PostAsync("https://bitvest.io/login.php", Content);
+                    resp = await response.Content.ReadAsStringAsync();
                     tmpresp = resp.Replace("-", "_");
                     tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(tmpresp);
                     //Weights = tmpblogin.currency_weight;
@@ -179,12 +182,12 @@ namespace DoormatCore.Sites
                     lasthash = tmpblogin.server_hash;
                     this.CanTip = tmpblogin.tip.enabled;
                     callLoginFinished(true);
-                    return;
+                    return true;
                 }
                 else
                 {
                     callLoginFinished(false);
-                    return;
+                    return false;
                 }
 
             }
@@ -192,19 +195,19 @@ namespace DoormatCore.Sites
             {
                 Logger.DumpLog(e);
                 callLoginFinished(false);
-                return;
+                return false;
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e);
                 callLoginFinished(false);
-                return;
+                return false;
             }
             callLoginFinished(false);
         }
 
 
-        string RandomSeed()
+        public override string GenerateNewClientSeed()
         {
             string s = "";
             string chars = "0123456789abcdef";
@@ -216,12 +219,12 @@ namespace DoormatCore.Sites
 
             return s;
         }
-        public void PlaceDiceBet(PlaceDiceBet BetDetails)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(seed))
-                    seed = RandomSeed();
+                    seed = GenerateNewClientSeed();
                 decimal amount = BetDetails.Amount;
                 decimal chance = BetDetails.Chance;
                 bool High = BetDetails.High;
@@ -241,7 +244,8 @@ namespace DoormatCore.Sites
 
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                string sEmitResponse = Client.PostAsync("action.php", Content).Result.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("action.php", Content);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
                 Lastbet = DateTime.Now;
                 try
                 {
@@ -281,18 +285,10 @@ namespace DoormatCore.Sites
                                 CurrencyMap[Currency].ToLower() == "dogecoins" ? tmp.data.balance_dogecoin :
                                 CurrencyMap[Currency].ToLower() == "bcash" ? tmp.data.balance_bcash : tmp.data.token_balance,
                             System.Globalization.NumberFormatInfo.InvariantInfo);
-                        /*tmp.bet.client = tmp.user.client;
-                        tmp.bet.serverhash = tmp.user.server;
-                        lastupdate = DateTime.Now;
-                        balance = tmp.user.balance / 100000000.0m; //i assume
-                        bets = tmp.user.bets;
-                        wins = tmp.user.wins;
-                        losses = tmp.user.losses;
-                        wagered = (decimal)(tmp.user.wagered / 100000000m);
-                        profit = (decimal)(tmp.user.profit / 100000000m);
-                        */
+                        
                         callBetFinished(resbet);
                         retrycount = 0;
+                        return resbet;
                     }
                     else
                     {
@@ -308,10 +304,7 @@ namespace DoormatCore.Sites
                         
                         else if (tmp.msg.ToLower() == "bet rate limit exceeded")
                         {
-                            /*callNotify(tmp.msg + ". Retrying in a second;");
-                            Thread.Sleep(1000);
-                            placebetthread(bet);
-                            return;*/
+                           
                         }
                         else
                         {
@@ -323,30 +316,16 @@ namespace DoormatCore.Sites
                 }
                 catch (Exception e)
                 {
-                    callNotify("An unknown error has occurred");
+                    callError("An unknown error has occurred", false, ErrorType.Unknown);
                     Logger.DumpLog(e);
                 }
             }
-            catch (AggregateException e)
-            {
-                if (retrycount++ < 3)
-                {
-                    Thread.Sleep(500);
-                    PlaceDiceBet(BetDetails);
-                    return;
-                }
-                if (e.InnerException.Message.Contains("429") || e.InnerException.Message.Contains("502"))
-                {
-                    Thread.Sleep(500);
-                    PlaceDiceBet(BetDetails);
-                }
-
-
-            }
             catch (Exception e2)
             {
-
+                Logger.DumpLog(e2);
+                callError("An unknown error has occurred", false, ErrorType.Unknown);
             }
+            return null;
         }
 
         void GetBalanceThread()
@@ -362,86 +341,70 @@ namespace DoormatCore.Sites
             }
         }
 
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             try
             {
+                lastupdate = DateTime.Now;
+                ForceUpdateStats = false;
+                List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+                pairs.Add(new KeyValuePair<string, string>("c", "99999999"));
+                pairs.Add(new KeyValuePair<string, string>("g[]", "999999999"));
+                pairs.Add(new KeyValuePair<string, string>("k", "0"));
+                pairs.Add(new KeyValuePair<string, string>("m", "99999899"));
+                pairs.Add(new KeyValuePair<string, string>("u", "0"));
+                pairs.Add(new KeyValuePair<string, string>("self_only", "1"));
 
+                HttpResponseMessage resp1 = await Client.GetAsync("");
+                string s1 = "";
+                if (resp1.IsSuccessStatusCode)
                 {
-                    lastupdate = DateTime.Now;
-                    ForceUpdateStats = false;
-                    List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
-                    pairs.Add(new KeyValuePair<string, string>("c", "99999999"));
-                    pairs.Add(new KeyValuePair<string, string>("g[]", "999999999"));
-                    pairs.Add(new KeyValuePair<string, string>("k", "0"));
-                    pairs.Add(new KeyValuePair<string, string>("m", "99999899"));
-                    pairs.Add(new KeyValuePair<string, string>("u", "0"));
-                    pairs.Add(new KeyValuePair<string, string>("self_only", "1"));
-
-                    HttpResponseMessage resp1 = Client.GetAsync("").Result;
-                    string s1 = "";
-                    if (resp1.IsSuccessStatusCode)
-                    {
-                        s1 = resp1.Content.ReadAsStringAsync().Result;
-                        //Parent.DumpLog("BE login 2.1", 7);
-                    }
-                    else
-                    {
-                        //Parent.DumpLog("BE login 2.2", 7);
-                        if (resp1.StatusCode == HttpStatusCode.ServiceUnavailable)
-                        {
-                            s1 = resp1.Content.ReadAsStringAsync().Result;
-
-
-                            //do cloudflare stuff here
-
-
-                            /*if (!Cloudflare.doCFThing(s1, Client, ClientHandlr, 0, "bitvest.io"))
-                            {
-
-                                //finishedlogin(false);
-                                return;
-                            }*/
-
-                        }
-                        //Parent.DumpLog("BE login 2.3", 7);
-                    }
-
-                    FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                    string sEmitResponse = Client.PostAsync("https://bitvest.io/update.php", Content).Result.Content.ReadAsStringAsync().Result;
-                    sEmitResponse = sEmitResponse.Replace("r-", "r_").Replace("n-", "n_");
-
-                    BivestGetBalanceRoot tmpbase = JsonSerializer.Deserialize<BivestGetBalanceRoot>(sEmitResponse);
-                    if (tmpbase != null)
-                    {
-                        if (tmpbase.data != null)
-                        {
-                            switch (Currency)
-                            {
-                                //"btc", "tok", "ltc", "eth", "doge","bch" 
-                                case 0:
-                                    Stats.Balance = (decimal)tmpbase.data.balance; break;
-                                case 1:
-                                    Stats.Balance = (decimal)tmpbase.data.token_balance; break;
-                                case 2:
-                                    Stats.Balance = (decimal)tmpbase.data.litecoin_balance; break;
-                                case 3: Stats.Balance = (decimal)tmpbase.data.ether_balance; break;
-                                case 4: Stats.Balance = (decimal)tmpbase.data.balance_dogecoin; break;
-                                case 5: Stats.Balance = (decimal)tmpbase.data.balance_bcash; break;
-                                default:
-                                    Stats.Balance = (decimal)tmpbase.data.token_balance; break;
-                            }
-
-
-                        }
-                    }
-
+                    s1 =await resp1.Content.ReadAsStringAsync();
+                    //Parent.DumpLog("BE login 2.1", 7);
                 }
+                else
+                {                        
+                    if (resp1.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    {
+                        s1 = await resp1.Content.ReadAsStringAsync();
+                    }                        
+                }
+
+                FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+                resp1 = await Client.PostAsync("https://bitvest.io/update.php", Content);
+                string sEmitResponse = await resp1.Content.ReadAsStringAsync();
+                sEmitResponse = sEmitResponse.Replace("r-", "r_").Replace("n-", "n_");
+
+                BivestGetBalanceRoot tmpbase = JsonSerializer.Deserialize<BivestGetBalanceRoot>(sEmitResponse);
+                if (tmpbase != null)
+                {
+                    if (tmpbase.data != null)
+                    {
+                        switch (Currency)
+                        {
+                            //"btc", "tok", "ltc", "eth", "doge","bch" 
+                            case 0:
+                                Stats.Balance = (decimal)tmpbase.data.balance; break;
+                            case 1:
+                                Stats.Balance = (decimal)tmpbase.data.token_balance; break;
+                            case 2:
+                                Stats.Balance = (decimal)tmpbase.data.litecoin_balance; break;
+                            case 3: Stats.Balance = (decimal)tmpbase.data.ether_balance; break;
+                            case 4: Stats.Balance = (decimal)tmpbase.data.balance_dogecoin; break;
+                            case 5: Stats.Balance = (decimal)tmpbase.data.balance_bcash; break;
+                            default:
+                                Stats.Balance = (decimal)tmpbase.data.token_balance; break;
+                        }
+
+                        return Stats;
+                    }
+                }                
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e);
             }
+            return null;
         }
 
         public override int _TimeToBet(PlaceBet BetDetails)
@@ -485,7 +448,7 @@ namespace DoormatCore.Sites
             return 0;
         }
 
-        protected override void _Withdraw(string Address, decimal Amount)
+        protected override async Task<bool> _Withdraw(string Address, decimal Amount)
         {
             try
             {
@@ -503,15 +466,16 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("currency", Currencies[Currency]));
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                string sEmitResponse = Client.PostAsync("action.php", Content).Result.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("action.php", Content);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
                 callWithdrawalFinished(false, "This needs to be fixed. The withdrawal might have succeeded");
-                //return true;
+                return true;
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e);
-                //return false;
             }
+            return false;
         }
         protected override decimal _GetLucky(string Hash, string ServerSeed, string ClientSeed, int Nonce)
         {
@@ -537,7 +501,7 @@ namespace DoormatCore.Sites
             return 0;
         }
 
-        protected override void _SendTip(string Username, decimal Amount)
+        protected override async Task<bool> _SendTip(string Username, decimal Amount)
         {
             try
             {
@@ -550,9 +514,10 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("c", "99999999"));
                 pairs.Add(new KeyValuePair<string, string>("secret", secret));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                string sEmitResponse = Client.PostAsync("action.php", Content).Result.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("action.php", Content);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
                 callTipFinished(false, "This needs to be fixed. The withdrawal might have succeeded");
-                // return (sEmitResponse.Contains("true"));
+                return true;
             }
             catch (WebException e)
             {
@@ -561,15 +526,9 @@ namespace DoormatCore.Sites
 
                     string sEmitResponse = new StreamReader(e.Response.GetResponseStream()).ReadToEnd();
                     callNotify(sEmitResponse);
-
                 }
             }
-            //return false;
-        }
-
-        protected override void _ResetSeed()
-        {
-
+            return false;
         }
 
         public class bitvestLoginBase

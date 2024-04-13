@@ -71,7 +71,7 @@ namespace DoormatCore.Sites
             throw new NotImplementedException();
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             string APIKey = "";
             foreach (LoginParamValue x in LoginParams)
@@ -91,12 +91,12 @@ namespace DoormatCore.Sites
                 Cookies.Add(new Cookie("id", APIKey, "/", "ethercrash.io"));
 
 
-                string Response = Client.GetStringAsync("https://www.ethercrash.io/play").Result;
+                string Response = await Client.GetStringAsync("https://www.ethercrash.io/play");
 
 
-                Response = Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate()).Result;
+                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate());
 
-                Response = Client.GetStringAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate()).Result;
+                Response =await Client.GetStringAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate());
 
                 string iochat = "";
                 foreach (Cookie c3 in Cookies.GetCookies(new Uri("http://www.ethercrash.io")))
@@ -106,7 +106,7 @@ namespace DoormatCore.Sites
                     if (c3.Name == "__cfduid")
                         cfuid = c3.Value;
                 }
-                Response = Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate()).Result;
+                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate());
 
 
                 foreach (Cookie c3 in Cookies.GetCookies(new Uri("http://gs.ethercrash.io")))
@@ -118,34 +118,31 @@ namespace DoormatCore.Sites
                 }
 
                 StringContent ottcontent = new StringContent("");
-                HttpResponseMessage RespMsg = Client.PostAsync("https://www.ethercrash.io/ott", ottcontent).Result;
+                HttpResponseMessage RespMsg =await Client.PostAsync("https://www.ethercrash.io/ott", ottcontent);
 
-                Response = RespMsg.Content.ReadAsStringAsync().Result;
+                Response = await RespMsg.Content.ReadAsStringAsync();
                 if (RespMsg.IsSuccessStatusCode)
                     ott = Response;
                 else
                 {
                     callLoginFinished(false);
-                    return;
+                    return false;
                 }
 
 
                 string body = "420[\"join\",{\"ott\":\"" + ott + "\",\"api_version\":1}]";
                 body = body.Length + ":" + body;
                 StringContent stringContent = new StringContent(body, UnicodeEncoding.UTF8, "text/plain");
-
-                Response = Client.PostAsync("https://gs.ethercrash.io/socket.io/?EIO=3&sid=" + io + "&transport=polling&t=" + json.CurrentDate(), stringContent).Result.Content.ReadAsStringAsync().Result;
-
-
-
+                RespMsg = await Client.PostAsync("https://gs.ethercrash.io/socket.io/?EIO=3&sid=" + io + "&transport=polling&t=" + json.CurrentDate(), stringContent);
+                Response = await RespMsg.Content.ReadAsStringAsync();
 
                 body = "420[\"join\",[\"english\"]]";
                 body = body.Length + ":" + body;
                 StringContent stringContent2 = new StringContent(body, UnicodeEncoding.UTF8, "text/plain");
+                RespMsg = await Client.PostAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate(), stringContent2);
+                Response = await RespMsg.Content.ReadAsStringAsync();
 
-                Response = Client.PostAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate(), stringContent2).Result.Content.ReadAsStringAsync().Result;
-
-                Response = Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate()).Result;
+                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate());
 
                 List<KeyValuePair<string, string>> cookies = new List<KeyValuePair<string, string>>();
                 cookies.Add(new KeyValuePair<string, string>("__cfduid", cfuid));
@@ -176,7 +173,7 @@ namespace DoormatCore.Sites
                 else
                 {
                     callLoginFinished(false);
-                    return;
+                    return false;
                 }
 
 
@@ -219,19 +216,21 @@ namespace DoormatCore.Sites
                     isec = true;
                     Thread t = new Thread(pingthread);
                     t.Start();
-                    return;
+                    return true;
                 }
                 callLoginFinished(false);
+                return false;
             }
             catch (Exception ex)
             {
                 Logger.DumpLog(ex.ToString(), -1);
                 callLoginFinished(false);
+                return false;
             }
 
         }
 
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             throw new NotImplementedException();
         }
@@ -402,7 +401,7 @@ namespace DoormatCore.Sites
             (sender as WebSocket).Send("2probe");
         }
 
-        public void PlaceCrashBet(PlaceCrashBet BetDetails)
+        public async Task<CrashBet> PlaceCrashBet(PlaceCrashBet BetDetails)
         {
             if (betsOpen && Sock.State == WebSocketState.Open)
             {
@@ -413,7 +412,13 @@ namespace DoormatCore.Sites
                 Sock.Send("42" + (reqid++).ToString() + "[\"place_bet\"," + (amount * 100000000).ToString("0") + "," + returna.ToString("0") + "]");
                 this.guid = BetDetails.GUID;
                 callNotify(string.Format("Game Starting - Betting {0:0.00000000} at {1:0.00}x", amount, payout));
+
+                //we need some kind of cancellation token that expires after 90 seconds or whenthe bet is finished, then this method
+                //needs to get the result of the method and then return it.
+
+                throw new NotImplementedException();
             }
+            return null;
         }
 
         public class ECLogin

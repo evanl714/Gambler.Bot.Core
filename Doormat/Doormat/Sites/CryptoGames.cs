@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 
@@ -58,7 +59,7 @@ namespace DoormatCore.Sites
             iscg = false;
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://api.crypto.games/v1/") };
@@ -68,9 +69,9 @@ namespace DoormatCore.Sites
             {
                 accesstoken = LoginParams[0].Value;
 
-                string sEmitResponse = Client.GetStringAsync("user/" + CurrentCurrency + "/" + accesstoken).Result;
+                string sEmitResponse = await Client.GetStringAsync("user/" + CurrentCurrency + "/" + accesstoken);
                 cgUser tmpBal = JsonSerializer.Deserialize<cgUser>(sEmitResponse);
-                sEmitResponse = Client.GetStringAsync("nextseed/" + CurrentCurrency + "/" + accesstoken).Result;
+                sEmitResponse = await Client.GetStringAsync("nextseed/" + CurrentCurrency + "/" + accesstoken);
                 cgNextSeed tmpSeed = JsonSerializer.Deserialize<cgNextSeed>(sEmitResponse);
                 CurrenyHash = tmpSeed.NextServerSeedHash;
                 Stats.Balance = tmpBal.Balance;
@@ -85,6 +86,7 @@ namespace DoormatCore.Sites
                 t.Start();
 
                 callLoginFinished(true);
+                return true;
             }
             catch (AggregateException e)
             {
@@ -96,6 +98,7 @@ namespace DoormatCore.Sites
                 Logger.DumpLog(e.ToString(), -1);
                 callLoginFinished(false);
             }
+            return false;
         }
         void GetBalanceThread()
         {
@@ -113,26 +116,27 @@ namespace DoormatCore.Sites
             }
             catch { }
         }
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             try
             {
 
-                string sEmitResponse = Client.GetStringAsync("user/" + CurrentCurrency + "/" + accesstoken).Result;
+                string sEmitResponse = await Client.GetStringAsync("user/" + CurrentCurrency + "/" + accesstoken);
                 cgUser tmpBal = JsonSerializer.Deserialize<cgUser>(sEmitResponse);
                 Stats.Balance = tmpBal.Balance;
                 Stats.Wagered = tmpBal.Wagered;
                 Stats.Profit = tmpBal.Profit;
                 Stats.Bets = tmpBal.TotalBets;
-                
+                return Stats;
             }
             catch { }
+            return null;
         }
 
-        public void PlaceDiceBet(PlaceDiceBet BetDetails)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            
-            string Clients = R.Next(0, int.MaxValue).ToString();
+
+            string Clients = GenerateNewClientSeed();
             decimal payout = decimal.Parse(((100m - Edge) / (decimal)BetDetails.Chance).ToString("0.0000"));
             cgPlaceBet tmpPlaceBet = new cgPlaceBet() { Bet = BetDetails.Amount, ClientSeed = Clients, UnderOver = BetDetails.High, Payout = (decimal)payout };
 
@@ -148,8 +152,8 @@ namespace DoormatCore.Sites
             try
             {
 
-                var response = Client.PostAsync("placebet/" + CurrentCurrency + "/" + accesstoken, cont).Result;
-                string sEmitResponse = response.Content.ReadAsStringAsync().Result;
+                var response = await Client.PostAsync("placebet/" + CurrentCurrency + "/" + accesstoken, cont);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
                 cgGetBet Response = JsonSerializer.Deserialize<cgGetBet>(sEmitResponse);
                 if (Response.Message != "" && Response.Message != null)
                 {
@@ -166,7 +170,7 @@ namespace DoormatCore.Sites
                             ertype = ErrorType.InvalidBet;
                     }
                     callError(Response.Message,true, ertype);
-                    return;
+                    return null;
                 }
                 DiceBet bet = new DiceBet()
                 {
@@ -197,10 +201,13 @@ namespace DoormatCore.Sites
                 Stats.Balance += Response.Profit;
                 Stats.Profit += Response.Profit;
                 callBetFinished(bet);
-
+                return bet;
             }
-            catch
-            { }
+            catch (Exception e)
+            { 
+                Logger.DumpLog(e.ToString(), -1);
+            }
+            return null;
         }
 
 

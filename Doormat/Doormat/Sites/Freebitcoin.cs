@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using DoormatCore.Games;
 using DoormatCore.Helpers;
 
@@ -61,7 +62,7 @@ namespace DoormatCore.Sites
         CookieContainer Cookies = new CookieContainer();
         string csrf = "";
         string address = "";
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             string Username = "";
             string Password = "";
@@ -83,27 +84,23 @@ namespace DoormatCore.Sites
             try
             {
                 string s1 = "";
-                HttpResponseMessage resp = Client.GetAsync("").Result;
+                HttpResponseMessage resp = await Client.GetAsync("");
                 if (resp.IsSuccessStatusCode)
                 {
-                    s1 = resp.Content.ReadAsStringAsync().Result;
+                    s1 = await resp.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     if (resp.StatusCode == HttpStatusCode.ServiceUnavailable)
                     {
-                        s1 = resp.Content.ReadAsStringAsync().Result;
+                        s1 = await resp.Content.ReadAsStringAsync();
                         //cflevel = 0;
                         System.Threading.Tasks.Task.Factory.StartNew(() =>
                         {
                             callNotify("freebitcoin has their cloudflare protection on HIGH\n\nThis will cause a slight delay in logging in. Please allow up to a minute.");
                         });
-                        /*if (!Cloudflare.doCFThing(s1, Client, ClientHandlr, 0, "freebitco.in"))
-                        {
+                        var thing = CallBypassRequired(this.SiteURL);
 
-                            finishedlogin(false);
-                            return;
-                        }*/
 
                     }
                 }
@@ -121,11 +118,11 @@ namespace DoormatCore.Sites
                 pairs.Add(new KeyValuePair<string, string>("password", Password));
                 pairs.Add(new KeyValuePair<string, string>("tfa_code", otp));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                var EmitResponse = Client.PostAsync("" + accesstoken, Content).Result;
+                var EmitResponse = await Client.PostAsync("" + accesstoken, Content);
 
                 if (EmitResponse.IsSuccessStatusCode)
                 {
-                    string s = EmitResponse.Content.ReadAsStringAsync().Result;
+                    string s = await EmitResponse.Content.ReadAsStringAsync();
                     string[] messages = s.Split(':');
                     if (messages.Length > 2)
                     {
@@ -135,7 +132,7 @@ namespace DoormatCore.Sites
                         Cookies.Add(new Cookie("password", accesstoken, "/", "freebitco.in"));
                         Cookies.Add(new Cookie("have_account", "1", "/", "freebitco.in"));
 
-                        s = Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats").Result;
+                        s =await Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats");
                         FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(s);
                         if (stats != null)
                         {
@@ -150,34 +147,30 @@ namespace DoormatCore.Sites
                             Thread t = new Thread(GetBalanceThread);
                             t.Start();
                             callLoginFinished(true);
-                            return;
+                            return true;
                         }
                         callLoginFinished(false);
-                        return;
+                        return false;
 
                     }
                     callLoginFinished(false);
-                    return;
+                    return false;
                 }
-
-
-                //Lastbet = DateTime.Now;
-
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e.ToString(), 1);
             }
             callLoginFinished(false);
-            return;
+            return false;
         }
 
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             try
             {
                 lastupdate = DateTime.Now;
-                string s = Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats").Result;
+                string s = await Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats");
                 FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(s);
                 if (stats != null)
                 {
@@ -186,14 +179,15 @@ namespace DoormatCore.Sites
                     //wins = losses = 0;
                     Stats.Profit = stats.dice_profit / 100000000m;
                     Stats.Wagered = stats.wagered / 100000000m;
-                    
-
+                    return Stats;
                 }
+
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e);
             }
+            return null;
         }
 
 
@@ -211,7 +205,7 @@ namespace DoormatCore.Sites
         }
         string clientseed = "";
 
-        public void PlaceDiceBet(PlaceDiceBet BetDetails)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
             {
@@ -227,11 +221,11 @@ namespace DoormatCore.Sites
                 string Params = string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "m={0}&client_seed={1}&jackpot=0&stake={2}&multiplier={3}&rand={5}&csrf_token={4}",
                     High ? "hi" : "lo", clientseed, amount, (100m - Edge) / chance, csrf, R.Next(0, 9999999) / 10000000);
 
-                var betresult = Client.GetAsync("https://freebitco.in/cgi-bin/bet.pl?" + Params).Result;
+                var betresult =await Client.GetAsync("https://freebitco.in/cgi-bin/bet.pl?" + Params);
                 if (betresult.IsSuccessStatusCode)
                 {
 
-                    string Result = betresult.Content.ReadAsStringAsync().Result;
+                    string Result = await betresult.Content.ReadAsStringAsync();
                     string[] msgs = Result.Split(':');
                     if (msgs.Length > 2)
                     {
@@ -287,7 +281,7 @@ namespace DoormatCore.Sites
                         Stats.Wagered += amount;
                         Stats.Profit += tmp.Profit;
                         callBetFinished(tmp);
-
+                        return tmp;
                     }
                     else if (msgs.Length > 0)
                     {
@@ -316,7 +310,7 @@ namespace DoormatCore.Sites
                 Logger.DumpLog(e);
                 callError("An internal error occured. Retrying in 30 seconds.",true, ErrorType.Unknown);
             }
-
+            return null;
         }
 
         public class FreebtcStats

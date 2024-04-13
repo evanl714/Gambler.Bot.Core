@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DoormatCore.Sites
 {
@@ -56,7 +57,7 @@ namespace DoormatCore.Sites
             this.ispd = false;
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip};
@@ -73,7 +74,7 @@ namespace DoormatCore.Sites
                 {
                     Client.DefaultRequestHeaders.Add("authorization", "Bearer " + Password);
                 }
-                string sEmitResponse = Client.GetStringAsync("user/balances").Result;
+                string sEmitResponse = await Client.GetStringAsync("user/balances");
                 try
                 {
                     WolfBetProfile tmpProfile = JsonSerializer.Deserialize<WolfBetProfile>(sEmitResponse);
@@ -89,14 +90,14 @@ namespace DoormatCore.Sites
                         }
                         //get stats
                         //set stats
-                        sEmitResponse = Client.GetStringAsync("user/stats/bets").Result;
+                        sEmitResponse = await Client.GetStringAsync("user/stats/bets");
                         WolfBetStats tmpStats = JsonSerializer.Deserialize<WolfBetStats>(sEmitResponse);
                         SetStats(tmpStats);
                         ispd = true;
                         lastupdate = DateTime.Now;
                         new Thread(new ThreadStart(GetBalanceThread)).Start();
                         this.callLoginFinished(true);
-                        return;
+                        return true;
                     }
                 }
                 catch (Exception e)
@@ -105,13 +106,16 @@ namespace DoormatCore.Sites
                     Logger.DumpLog(sEmitResponse, 2);
                     callError(sEmitResponse, false, ErrorType.Unknown);
                     callNotify("Error: " + sEmitResponse);
+                    
                 }
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e.ToString(), -1);
+                
             }
             this.callLoginFinished(false);
+            return false;
         }
 
         void GetBalanceThread()
@@ -134,11 +138,11 @@ namespace DoormatCore.Sites
                 Thread.Sleep(100);
             }
         }
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
             try
             {
-                string sEmitResponse = Client.GetStringAsync("user/balances").Result;
+                string sEmitResponse = await Client.GetStringAsync("user/balances");
                 WolfBetProfile tmpProfile = JsonSerializer.Deserialize<WolfBetProfile>(sEmitResponse);
                 if (tmpProfile.user != null)
                 {
@@ -152,23 +156,23 @@ namespace DoormatCore.Sites
                     }
                     //get stats
                     //set stats
-                    sEmitResponse = Client.GetStringAsync("user/stats/bets").Result;
+                    sEmitResponse = await Client.GetStringAsync("user/stats/bets");
                     WolfBetStats tmpStats = JsonSerializer.Deserialize<WolfBetStats>(sEmitResponse);
-                    SetStats(tmpStats);
-
+                    return SetStats(tmpStats);
                 }
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e);
             }
+            return null;
         }
 
-        public void PlaceDiceBet(PlaceDiceBet BetDetails)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            
+            throw new NotImplementedException();
         }
-        void SetStats(WolfBetStats Stats)
+        SiteStats SetStats(WolfBetStats Stats)
         {
             try
             {
@@ -197,7 +201,7 @@ namespace DoormatCore.Sites
                 this.Stats.Profit = 0;
                 
             }
-
+            return this.Stats;
         }
 
         public class WolfBetLogin

@@ -186,7 +186,7 @@ devise:btc*/
 
 
         DateTime LastReset = new DateTime();
-        protected override void _ResetSeed()
+        protected override async Task<SeedDetails> _ResetSeed()
         {
             Thread.Sleep(100);
             try
@@ -196,12 +196,22 @@ devise:btc*/
                     List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
                     pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
                     pairs.Add(new KeyValuePair<string, string>("username", username));
-                    pairs.Add(new KeyValuePair<string, string>("seed_client", R.Next(0, int.MaxValue).ToString()));
+                    string clientseed = GenerateNewClientSeed();
+                    pairs.Add(new KeyValuePair<string, string>("seed_client", clientseed));
                     FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                     string sEmitResponse = Client.PostAsync("api/change-seeds", Content).Result.Content.ReadAsStringAsync().Result;
                     bsResetSeedBase bsbase = JsonSerializer.Deserialize<bsResetSeedBase>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
                     callResetSeedFinished(true, "");
-                    return;
+                    return new SeedDetails
+                    {
+                        ClientSeed = clientseed,
+                        Nonce = 0,
+                        PreviousClient = bsbase._return.previous_client,
+                        PreviousHash = bsbase._return.previous_hash,
+                        ServerHash = bsbase._return.current_hash,
+                        PreviousServer = bsbase._return.previous_seed,
+                        ServerSeed = bsbase._return.next_hash
+                    };
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server_hashed, bsbase._return.last_seeds_revealed.seed_server_revealed);
 
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server, bsbase._return.last_seeds_revealed.seed_server_revealed);
@@ -221,9 +231,7 @@ devise:btc*/
                     if (e.Message.Contains("429"))
                     {
                         Thread.Sleep(2000);
-                        _ResetSeed();
-
-                        return;
+                        return await _ResetSeed();
                     }
                 }
             }
@@ -233,7 +241,7 @@ devise:btc*/
             }
             Thread.Sleep(51);
             callResetSeedFinished(false, "");
-            return;
+            return null;
         }
 
 

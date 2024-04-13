@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using Random = DoormatCore.Helpers.Random;
 
 namespace DoormatCore.Sites
@@ -51,7 +52,7 @@ namespace DoormatCore.Sites
             this.Edge = 1;
         }
 
-        public void PlaceDiceBet(PlaceDiceBet BetDetails)
+        public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             
             decimal low = 0;
@@ -77,11 +78,11 @@ namespace DoormatCore.Sites
 
             HttpContent cont = new StringContent(loginjson);
             cont.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            HttpResponseMessage resp2 = Client.PostAsync("roll", cont).Result;
+            HttpResponseMessage resp2 = await Client.PostAsync("roll", cont);
 
             if (resp2.IsSuccessStatusCode)
             {
-                string response = resp2.Content.ReadAsStringAsync().Result;
+                string response = await resp2.Content.ReadAsStringAsync();
                 WDBaseResponse statusMessage = JsonSerializer.Deserialize<WDBaseResponse>(response);
                 if (statusMessage.status == "error")
                 {
@@ -113,7 +114,7 @@ namespace DoormatCore.Sites
                         
                     }
                     callError(statusMessage.message, false, type);
-                    return;
+                    return null;
                 }
                 WDBet tmpBalance = JsonSerializer.Deserialize<WDBet>(response);
                 if (tmpBalance.status == "success")
@@ -142,6 +143,7 @@ namespace DoormatCore.Sites
                     Stats.Profit += Result.Profit;
                     Stats.Balance += Result.Profit;
                     callBetFinished(Result);
+                    return Result;
                 }
                 else
                 {
@@ -149,6 +151,7 @@ namespace DoormatCore.Sites
                     callError(tmpBalance.message, false, ErrorType.Unknown);
                 }
             }
+            return null;
         }
 
         public override void SetProxy(ProxyDetails ProxyInfo)
@@ -161,7 +164,7 @@ namespace DoormatCore.Sites
             ispd = false;
         }
 
-        protected override void _Login(LoginParamValue[] LoginParams)
+        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://windice.io/api/v1/api/") };
@@ -171,27 +174,29 @@ namespace DoormatCore.Sites
             Client.DefaultRequestHeaders.Add("Authorization", LoginParams.First(m=>m.Param?.Name?.ToLower()=="api key")?.Value);
             try
             {
-                if (getbalance())
+                if (await getbalance())
                 {
-                    getstats();
-                    getseed();
+                    await getstats();
+                    await getseed();
                     ispd = true;
                     lastupdate = DateTime.Now;
 
                     new Thread(new ThreadStart(GetBalanceThread)).Start();
                     //lasthash = tmpblogin.server_hash;
                     callLoginFinished(true);
-                    return;
+                    return true;
                 }
                 else
                 {
                     callLoginFinished(false);
+                    return false;
                 }
             }
             catch (Exception e)
             {
                 Logger.DumpLog(e);
                 callLoginFinished(false);
+                return false;
             }
         }
         void GetBalanceThread()
@@ -215,9 +220,9 @@ namespace DoormatCore.Sites
                 Thread.Sleep(1000);
             }
         }
-        bool getbalance()
+        async Task<bool> getbalance()
         {
-            string response = Client.GetStringAsync("user").Result;
+            string response = await Client.GetStringAsync("user");
             WDUserResponse tmpBalance = JsonSerializer.Deserialize<WDUserResponse>(response);
             if (tmpBalance.data != null)
             {
@@ -230,9 +235,9 @@ namespace DoormatCore.Sites
             }
             return tmpBalance.status == "success";
         }
-        bool getstats()
+        async Task<bool> getstats()
         {
-            string response = Client.GetStringAsync("stats").Result;
+            string response = await Client.GetStringAsync("stats");
             WDStatsResponse tmpBalance = JsonSerializer.Deserialize<WDStatsResponse>(response);
             if (tmpBalance.data != null)
             {
@@ -252,9 +257,9 @@ namespace DoormatCore.Sites
             }
             return tmpBalance.status == "success";
         }
-        bool getseed()
+        async Task<bool> getseed()
         {
-            string response = Client.GetStringAsync("seed").Result;
+            string response = await Client.GetStringAsync("seed");
             WDGetSeed tmpBalance = JsonSerializer.Deserialize<WDGetSeed>(response);
             if (tmpBalance.data != null)
             {
@@ -262,9 +267,16 @@ namespace DoormatCore.Sites
             }
             return tmpBalance.status == "success";
         }
-        protected override void _UpdateStats()
+        protected override async Task<SiteStats> _UpdateStats()
         {
-            getstats();
+            if (await getstats())
+            {
+                return Stats;
+            }
+            else
+            {
+                return null;
+            }
         }
 
 

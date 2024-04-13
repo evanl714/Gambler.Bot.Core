@@ -2,6 +2,7 @@
 using DoormatCore.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,7 +15,10 @@ namespace DoormatCore.Sites
     {
 
         public List<SiteAction> ActiveActions { get; set; } = new List<SiteAction>();
+
+
         public LoginParameter[] StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("Two Factor Code", false, false, true, true,true) };
+        
         public LoginParameter[] LoginParams { get { return StaticLoginParams; } }
         #region Properties
         /// <summary>
@@ -123,6 +127,10 @@ namespace DoormatCore.Sites
         public bool LoggedIn { get; set; }
 
         SiteDetails siteDetails = null;
+
+        /// <summary>
+        /// Provides information to the user/implementer about the site, such as features available, edge, max roll etc.
+        /// </summary>
         public SiteDetails SiteDetails {
             get
             {
@@ -145,14 +153,30 @@ namespace DoormatCore.Sites
             }
         }
 
+        /// <summary>
+        /// Abbreviation for the site to be used for display purposes
+        /// </summary>
         public string SiteAbbreviation { get; set; }
 
+        /// <summary>
+        /// Cryptographically secure random number generator with extension functions for random strings and numbers
+        /// </summary>
         public Helpers.Random R { get; internal set; } = new Helpers.Random();
         #endregion
 
+        /// <summary>
+        /// Forces the bot to update stats on the next timed updated
+        /// </summary>
         public bool ForceUpdateStats { get; protected set; }
+
+        /// <summary>
+        /// The last time the site statistics were updated
+        /// </summary>
         public DateTime LastStats { get; set; } = DateTime.Now;
 
+        /// <summary>
+        /// List of supported games for the site
+        /// </summary>
         public Games.Games[] SupportedGames { get; set; } = new Games.Games[] { Games.Games.Dice };
 
         #region Required Methods
@@ -275,93 +299,136 @@ namespace DoormatCore.Sites
         #endregion
 
         #region Extention Methods
-        public void ResetSeed(string ClientSeed = null)
+        public async Task<SeedDetails> ResetSeed(string ClientSeed = null)
         {
-            
+            SeedDetails seedDetails = null;
             if (CanChangeSeed)
             {
                 ActiveActions.Add(SiteAction.ResetSeed);
                 callNotify("Resetting seed.");
-                _ResetSeed();
+                await Task.Run(async () => 
+                {
+                    seedDetails = await _ResetSeed();                    
+                });
                 if (CanSetClientSeed)
                 {
-                    SetClientSeed(ClientSeed);
+                    string client = await SetClientSeed(ClientSeed);
+                    if (!string.IsNullOrWhiteSpace(client))
+                        seedDetails.ClientSeed = client;
                 }
             }
             else
                 callError("Reset Seed not allowed!", false, ErrorType.NotImplemented);
+            return seedDetails;
         }
-        protected virtual void _ResetSeed() { callError("Reset Seed not implemented", false, ErrorType.NotImplemented); }
-
-        public void SetClientSeed(string ClientSeed)
+        protected virtual async Task<SeedDetails> _ResetSeed() 
         {
+            callError("Reset Seed not implemented", false, ErrorType.NotImplemented); 
+            return null; 
+        }
+
+        public async Task<string> SetClientSeed(string ClientSeed)
+        {
+            string result = null;
             if (CanSetClientSeed)
             {
-                _SetClientSeed(ClientSeed);
+                await Task.Run(async () =>
+                {
+                    result = await _SetClientSeed(ClientSeed);
+                });
             }
             else
                 callError("Setting Client Seed not allowed!", false, ErrorType.NotImplemented);
+            return null;
         }
-        protected virtual void _SetClientSeed(string ClientSeed) { }
+        protected virtual async Task<string> _SetClientSeed(string ClientSeed) { return null; }
 
-        public void Invest(decimal Amount)
+        public async Task<bool> Invest(decimal Amount)
         {
-            
+            bool success = false;
             if (AutoInvest)
             {
                 ActiveActions.Add(SiteAction.Invest);
                 callNotify($"Investing {Amount} {CurrentCurrency}");
-                _Invest(Amount);
-                UpdateStats();
+                await Task.Run(async () =>
+                {                    
+                    success = await _Invest(Amount);
+                });
+                
+                await UpdateStats();
             }
             else
                 callError("Investing not allowed!", false, ErrorType.NotImplemented);
+            return success;
         }
-        protected virtual void _Invest(decimal Amount) { }
+        protected virtual async Task<bool> _Invest(decimal Amount) { return false; }
 
-        public void Donate(decimal Amount)
+        public async Task<bool> Donate(decimal Amount)
         {
+            bool success = false;
             //ActiveActions.Add(TriggerAction.Donate);
             if (AutoWithdraw || CanTip)
             {
+                await Task.Run(async () =>
+                {
+                    success = await _Donate(Amount);
+                });
+
                 callNotify($"Donating {Amount} {CurrentCurrency}");
-                _Donate(Amount);
-                UpdateStats();
+                
+                await UpdateStats();
             }
             else
                 callError("Donations not Implemented!", false, ErrorType.NotImplemented);
+            return success;
         }
-        protected virtual void _Donate(decimal Amount) { }
+        protected virtual async Task<bool> _Donate(decimal Amount) { return false; }
 
-        public void Withdraw(string Address, decimal Amount)
+        public async Task<bool> Withdraw(string Address, decimal Amount)
         {
-            
+            bool success  = false;
             if (AutoWithdraw)
             {
                 ActiveActions.Add(SiteAction.Withdraw);
                 callNotify($"Withdrawing {Amount} {CurrentCurrency} to {Address}");
-                _Withdraw(Address, Amount);
-                UpdateStats();
+                await Task.Run(async () =>
+                {
+                    success = await _Withdraw(Address, Amount);
+                });
+                
+                await UpdateStats();
             }
             else
                 callError("Withdrawing not allowed!", false, ErrorType.NotImplemented);
+            return success;
         }
-        protected virtual void _Withdraw(string Address, decimal Amount) { callError("Withdrawing not implemented", false, ErrorType.Withdrawal); }
+        protected virtual async Task<bool> _Withdraw(string Address, decimal Amount) 
+        { 
+            callError("Withdrawing not implemented", false, ErrorType.Withdrawal);
+            return false;
+        }
 
-        public void Register(string Username, string Password)
+        public async Task<bool> Register(string Username, string Password)
         {
+            bool Success = false;
             if (CanRegister)
             {
-                bool Success = _Register(Username, Password);
-                UpdateStats();
+
+                await Task.Run(async () =>
+                {
+                    Success = await _Register(Username, Password);
+                });
+                
+                await UpdateStats();
                 RegisterFinished?.Invoke(this, new GenericEventArgs { Success = Success });
 
             }
             else
                 callError("Registering not allowed!", false, ErrorType.NotImplemented);
+            return Success;
 
         }
-        protected virtual bool _Register(string Username, string Password) { return false; }
+        protected virtual async Task<bool> _Register(string Username, string Password) { return false; }
 
         public decimal GetLucky(string Hash, string ServerSeed, string ClientSeed, int Nonce)
         {
@@ -417,11 +484,17 @@ namespace DoormatCore.Sites
             return ClientSeed;
         }
 
-        public string GetSeed(string BetID)
+        public async Task<string> GetSeed(string BetID)
         {
+            string seed = null;
             if (CanGetSeed)
             {
-                return _GetSeed(BetID);
+               await Task.Run(async () =>
+                {
+                    seed = await _GetSeed(BetID);
+                    callNotify($"Got seed for bet {BetID}");
+                    callGameMessage(seed);
+                });
             }
             else
             {
@@ -429,22 +502,27 @@ namespace DoormatCore.Sites
                 callError("Getting server seed not allowed!", false, ErrorType.NotImplemented);
                 return "-1";
             }
+            return seed;
         }
-        protected virtual string _GetSeed(string BetID) { return "-1"; }
+        protected virtual async Task<string> _GetSeed(string BetID) { return "-1"; }
 
-        public void SendTip(string Username, decimal Amount)
+        public async Task<bool> SendTip(string Username, decimal Amount)
         {
-            
+            bool success = false;
             if (CanTip)
             {
                 ActiveActions.Add(SiteAction.Tip);
                 callNotify($"Tipping {Amount} {CurrentCurrency} to {Username}");
-                _SendTip(Username, Amount);
+                await Task.Run(async () =>
+                {
+                    success = await _SendTip(Username, Amount);
+                });
             }
             else
                 callError("Tipping not allowed!", false, ErrorType.NotImplemented);
+            return success;
         }
-        protected virtual void _SendTip(string Username, decimal Amount) { }
+        protected virtual async Task<bool> _SendTip(string Username, decimal Amount) { return false; }
 
         public void SendChat(string Message)
         {
@@ -738,4 +816,25 @@ namespace DoormatCore.Sites
 
     }
 
+    public class SeedDetails
+    {
+        public string ClientSeed { get; set; }
+        public string ServerSeed { get; set; }
+        public string ServerHash { get; set; }
+        public string PreviousServer { get; set; }
+        public string PreviousClient { get; set; }
+        public string PreviousHash { get; set; }
+        public long? Nonce { get; set; }
+
+        public SeedDetails()
+        {
+            
+        }
+
+        public SeedDetails(string Client, string Hash)
+        {
+            ClientSeed = Client;
+            ServerHash = Hash;
+        }
+    }
 }
