@@ -249,7 +249,7 @@ namespace DoormatCore.Tests
             if (resultingbet.IsWin)
             {
                 Assert.Equal(balance+resultingbet.Profit, _site.Stats.Balance);
-                decimal AssumedProfit = amount - (((100 - _site.Edge) / chance) * amount);
+                decimal AssumedProfit = Math.Floor(((((100 - _site.Edge) / chance) * amount)-amount)*100000000m)/100000000m;
                 Assert.Equal(AssumedProfit.ToString("0.00000000"), resultingbet.Profit.ToString("0.00000000"));
             }
             else
