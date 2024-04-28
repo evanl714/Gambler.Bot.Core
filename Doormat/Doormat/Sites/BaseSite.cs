@@ -726,6 +726,7 @@ namespace DoormatCore.Sites
         public bool ClearAfterEnter { get; set; }
         public bool ClearAfterLogin { get; set; }
         public bool IsMFA { get; set; }
+        public string PasswordChar { get => Masked?"*":null; }
     }
 
     public class LoginParamValue
