@@ -693,9 +693,9 @@ namespace DoormatCore.Sites
             ForceUpdateStats = true;
             OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
-        protected BrowserConfig CallBypassRequired(string URL)
+        protected BrowserConfig CallBypassRequired(string URL,string RequiredCookie)
         {
-            var args = new BypassRequiredArgs { URL = URL };
+            var args = new BypassRequiredArgs { URL = URL, RequiredCookie=RequiredCookie };
             OnBrowserBypassRequired?.Invoke(this, args);
             
             return args.Config;
@@ -796,6 +796,7 @@ namespace DoormatCore.Sites
     {
         public string URL { get; set; }
         public BrowserConfig Config { get; set; }
+        public string RequiredCookie { get; set; }
     }
     
     public class SiteStats

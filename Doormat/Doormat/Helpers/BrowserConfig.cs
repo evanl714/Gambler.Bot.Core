@@ -11,5 +11,6 @@ namespace DoormatCore.Helpers
     {
         public string UserAgent { get; set; }
         public CookieContainer Cookies { get; set; }
+
     }
 }

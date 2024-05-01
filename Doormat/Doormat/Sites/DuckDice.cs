@@ -92,7 +92,7 @@ namespace DoormatCore.Sites
                 HttpResponseMessage EmitResponse = await Client.GetAsync("https://dickdice.io");
                 //if (!EmitResponse.IsSuccessStatusCode)
                 {
-                    var cookies = CallBypassRequired(SiteURL);
+                    var cookies = CallBypassRequired(SiteURL, "__cf_bm");
 
                     HttpClientHandler handler = new HttpClientHandler
                     {

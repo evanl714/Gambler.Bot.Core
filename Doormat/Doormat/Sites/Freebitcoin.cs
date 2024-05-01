@@ -100,7 +100,7 @@ namespace DoormatCore.Sites
                         {
                             callNotify("freebitcoin has their cloudflare protection on HIGH\n\nThis will cause a slight delay in logging in. Please allow up to a minute.");
                         });
-                        var thing = CallBypassRequired(this.SiteURL);
+                        var thing = CallBypassRequired(this.SiteURL, "__cf_bm");
 
 
                     }

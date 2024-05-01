@@ -93,7 +93,7 @@ namespace DoormatCore.Sites
 
                     }
                     //CookieContainer cookies = new CookieContainer();
-                    var cookies = CallBypassRequired(SiteURL);
+                    var cookies = CallBypassRequired(SiteURL, "__cf_bm");
 
                     HttpClientHandler handler = new HttpClientHandler
                     {

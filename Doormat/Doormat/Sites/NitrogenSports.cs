@@ -207,7 +207,7 @@ namespace DoormatCore.Sites
                     {
                         case "PHPSESSID": PHPID = c.Value; break;
                         case "__cfduid": cfuid = c.Value; break;
-                        case "cf_clearance": cfclearnace = c.Value; break;
+                        case "__cf_bm": cfclearnace = c.Value; break;
                         case "login_link": link = c.Value; break;
                         case "x-csrftoken": token = c.Value; break;
 
@@ -219,7 +219,7 @@ namespace DoormatCore.Sites
                 List<KeyValuePair<string, string>> Cookies = new List<KeyValuePair<string, string>>();
                 Cookies.Add(new KeyValuePair<string, string>("PHPSESSID", PHPID));
                 Cookies.Add(new KeyValuePair<string, string>("__cfduid", cfuid));
-                Cookies.Add(new KeyValuePair<string, string>("cf_clearance", cfclearnace));
+                Cookies.Add(new KeyValuePair<string, string>("__cf_bm", cfclearnace));
                 Cookies.Add(new KeyValuePair<string, string>("login_link", link));
                 Cookies.Add(new KeyValuePair<string, string>("x-csrftoken", token));
                 //Cookies.Add(new KeyValuePair<string, string>("csrf_token", token));

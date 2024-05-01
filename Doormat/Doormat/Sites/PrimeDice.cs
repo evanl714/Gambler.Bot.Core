@@ -86,7 +86,8 @@ namespace DoormatCore.Sites
 
                 }
                 //CookieContainer cookies = new CookieContainer();
-                var cookies = CallBypassRequired(SiteURL);
+                string requiredCookie = "__cf_bm";
+                var cookies = CallBypassRequired(SiteURL, requiredCookie);
 
                 HttpClientHandler handler = new HttpClientHandler
                 {
