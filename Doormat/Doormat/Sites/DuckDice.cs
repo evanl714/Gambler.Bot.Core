@@ -49,6 +49,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://duckdice.io/Bets/{0}";
             this.Edge = 1m;
+            NonceBased = true;
         }
 
         void GetBalanceThread()

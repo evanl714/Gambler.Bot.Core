@@ -51,7 +51,7 @@ namespace DoormatCore.Sites
             this.CanSetClientSeed = false;
             this.CanTip = false;
             this.CanVerify = false;
-
+            NonceBased = true;
             SupportedGames = new Games.Games[] { Games.Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
@@ -477,7 +477,7 @@ devise:btc*/
 
 
 
-        public static decimal sGetLucky(string Hash, string server, string client, int nonce)
+        public static decimal sGetLucky(string server, string client, int nonce)
         {
             SHA1 betgenerator = SHA1.Create();
             string Seed = server + "-" + client + "-" + nonce;
@@ -504,10 +504,10 @@ devise:btc*/
             return Lucky;
         }
 
-        protected override decimal _GetLucky(string Hash, string server, string client, int nonce)
+        protected override decimal _GetLucky( string server, string client, int nonce)
         {
 
-            return sGetLucky(Hash, server, client, nonce);
+            return sGetLucky( server, client, nonce);
         }
 
 

@@ -445,11 +445,11 @@ namespace DoormatCore.Sites
         }
         protected virtual async Task<bool> _Register(string Username, string Password) { return false; }
 
-        public decimal GetLucky(string Hash, string ServerSeed, string ClientSeed, int Nonce)
+        public decimal GetLucky(string ServerSeed, string ClientSeed, int Nonce)
         {
-            return _GetLucky(Hash, ServerSeed, ClientSeed, Nonce);
+            return _GetLucky(ServerSeed, ClientSeed, Nonce);
         }
-        protected virtual decimal _GetLucky(string Hash, string ServerSeed, string ClientSeed, int Nonce)
+        protected virtual decimal _GetLucky(string ServerSeed, string ClientSeed, int Nonce)
         {
             HMACSHA512 betgenerator = new HMACSHA512();
 

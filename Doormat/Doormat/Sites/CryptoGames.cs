@@ -47,6 +47,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://www.crypto-games.net/fair.aspx?coin=BTC&type=3&id={0}";
             this.Edge = 0.8m;
+            NonceBased = true;
         }
 
 

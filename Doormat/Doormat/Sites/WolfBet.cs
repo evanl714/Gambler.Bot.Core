@@ -52,6 +52,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://bit-exo.com/{0}";
             this.Edge = 1;
+            NonceBased = true;
 
         }
 

@@ -55,6 +55,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
+            NonceBased = true;
         }
 
 
@@ -478,7 +479,7 @@ namespace DoormatCore.Sites
             }
             return false;
         }
-        protected override decimal _GetLucky(string Hash, string ServerSeed, string ClientSeed, int Nonce)
+        protected override decimal _GetLucky(string ServerSeed, string ClientSeed, int Nonce)
         {
             SHA512 betgenerator = SHA512.Create();
             int charstouse = 5;

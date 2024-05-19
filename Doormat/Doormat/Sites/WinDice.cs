@@ -51,6 +51,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://windice.io/api/v1/api/getBet?hash={0}";
             this.Edge = 1;
+            NonceBased = true;
         }
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)

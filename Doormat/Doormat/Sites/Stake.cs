@@ -49,6 +49,7 @@ namespace DoormatCore.Sites
             this.Currency = 0;
             this.DiceBetURL = "https://stake.com/bet/{0}";
             this.Edge = 2;
+            NonceBased = true;
             URL = "https://stake.com/_api/graphql";
             RolName = "diceRoll";
             GameName = "BetGameDice";
