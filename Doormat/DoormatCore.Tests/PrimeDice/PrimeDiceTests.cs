@@ -1,4 +1,4 @@
-﻿using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,9 +6,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.PrimeDiceT
+namespace Gambler.Bot.Core.Tests.PrimeDiceT
 {
-    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public class PrimeDiceTests : BaseSiteTests, IClassFixture<PrimeDiceFixture>
     {
         public PrimeDiceTests(PrimeDiceFixture fixure) : base(fixure.site)

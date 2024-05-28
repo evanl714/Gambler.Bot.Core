@@ -1,10 +1,10 @@
-﻿using DoormatCore.Helpers;
-using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DoormatCore.Games
+namespace Gambler.Bot.Core.Games
 {
 
     public enum Games

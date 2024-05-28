@@ -1,6 +1,6 @@
-﻿using DoormatCore.Games;
-using DoormatCore.Sites;
-using DoormatCore.Tests.Code;
+﻿using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Tests.Code;
 using Newtonsoft.Json.Bson;
 using OtpNet;
 using System;
@@ -11,9 +11,9 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests
+namespace Gambler.Bot.Core.Tests
 {
-    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public abstract class DiceTests: IAsyncLifetime
     {
         BaseSite _site;

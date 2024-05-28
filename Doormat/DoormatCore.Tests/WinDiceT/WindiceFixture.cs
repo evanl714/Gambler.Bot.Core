@@ -1,9 +1,9 @@
-﻿using DoormatCore.Sites;
-using DoormatCore.Tests.Code;
+﻿using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Tests.Code;
 using System;
 using System.Linq;
 
-namespace DoormatCore.Tests.WinDiceT
+namespace Gambler.Bot.Core.Tests.WinDiceT
 {
     public class WindiceFixture : baseSiteFixture
     {

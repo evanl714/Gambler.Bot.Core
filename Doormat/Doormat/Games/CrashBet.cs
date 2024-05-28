@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using DoormatCore.Sites;
+using Gambler.Bot.Core.Sites;
 
-namespace DoormatCore.Games
+namespace Gambler.Bot.Core.Games
 {
     [MoonSharp.Interpreter.MoonSharpUserData]
     public class CrashBet : Bet

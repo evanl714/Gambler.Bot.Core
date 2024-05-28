@@ -1,5 +1,5 @@
-﻿using DoormatCore.Games;
-using DoormatCore.Helpers;
+﻿using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
-namespace DoormatCore.Sites
+namespace Gambler.Bot.Core.Sites
 {
     public class Stake:BaseSite, iDice
     {

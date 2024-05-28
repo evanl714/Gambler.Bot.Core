@@ -1,11 +1,11 @@
-﻿using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.DuckDiceT
+namespace Gambler.Bot.Core.Tests.DuckDiceT
 {
     public class DuckDiceDiceTests:DiceTests, IClassFixture<DuckDiceFixture>
     {

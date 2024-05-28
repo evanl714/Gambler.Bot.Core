@@ -8,7 +8,7 @@ using System.Threading;
 using System.Security.Cryptography;
 using System.Net.Http;
 
-namespace DoormatCore.Helpers
+namespace Gambler.Bot.Core.Helpers
 {
     public class Hash
     {

@@ -1,4 +1,4 @@
-﻿using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.WinDiceT
+namespace Gambler.Bot.Core.Tests.WinDiceT
 {
     public class WindiceTests : BaseSiteTests, IClassFixture<WindiceFixture>
     {

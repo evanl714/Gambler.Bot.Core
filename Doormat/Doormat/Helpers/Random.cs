@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace DoormatCore.Helpers
+namespace Gambler.Bot.Core.Helpers
 {
     public class Random
     {

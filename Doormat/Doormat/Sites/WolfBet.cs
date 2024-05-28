@@ -1,5 +1,5 @@
-﻿using DoormatCore.Games;
-using DoormatCore.Helpers;
+﻿using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Sites
+namespace Gambler.Bot.Core.Sites
 {
     public class WolfBet : BaseSite, iDice
     {

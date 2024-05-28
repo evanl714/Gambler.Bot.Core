@@ -2,7 +2,7 @@ Build: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/b
 
 Tests: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FDoormat?branchName=master&stageName=Test)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=2&branchName=master)
 
-[![NuGet](https://img.shields.io/nuget/v/DoormatCore.svg)](https://www.nuget.org/packages/DoormatCore/)
+[![NuGet](https://img.shields.io/nuget/v/Gambler.Bot.Core.svg)](https://www.nuget.org/packages/Gambler.Bot.Core/)
 
 
 # Doormat

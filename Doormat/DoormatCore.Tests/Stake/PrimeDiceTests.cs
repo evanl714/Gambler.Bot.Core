@@ -1,4 +1,4 @@
-﻿using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,9 +6,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.StakeT
+namespace Gambler.Bot.Core.Tests.StakeT
 {
-    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public class StakeTests : BaseSiteTests, IClassFixture<StakeFixture>
     {
         public StakeTests(StakeFixture fixure) : base(fixure.site)

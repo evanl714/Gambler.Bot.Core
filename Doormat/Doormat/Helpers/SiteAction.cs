@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DoormatCore.Helpers
+namespace Gambler.Bot.Core.Helpers
 {
     public enum SiteAction
     {

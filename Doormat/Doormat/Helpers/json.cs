@@ -3,7 +3,7 @@ using System.Threading;
 using System.Globalization;
 using Newtonsoft.Json;
 
-namespace DoormatCore.Helpers
+namespace Gambler.Bot.Core.Helpers
 { 
     /// <summary>
     /// Used for converting from the .json data received by site

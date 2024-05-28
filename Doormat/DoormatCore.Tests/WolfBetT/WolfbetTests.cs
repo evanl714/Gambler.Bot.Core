@@ -1,5 +1,5 @@
-﻿using DoormatCore.Sites;
-using DoormatCore.Tests.Code;
+﻿using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Tests.Code;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.WolfBetT
+namespace Gambler.Bot.Core.Tests.WolfBetT
 {
-    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public class WolfbetTests : BaseSiteTests, IClassFixture<wbFixture>
     {
         public WolfbetTests(wbFixture fixure) : base(fixure.site)

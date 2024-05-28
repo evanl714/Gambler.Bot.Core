@@ -1,9 +1,9 @@
-﻿using DoormatCore.Sites;
-using DoormatCore.Tests.Code;
+﻿using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Tests.Code;
 using System;
 using System.Linq;
 
-namespace DoormatCore.Tests.BitslerT
+namespace Gambler.Bot.Core.Tests.BitslerT
 {
     public class BitslerFixture : baseSiteFixture
     {

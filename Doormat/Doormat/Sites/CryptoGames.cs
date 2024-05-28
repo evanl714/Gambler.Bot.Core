@@ -6,11 +6,11 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using DoormatCore.Games;
-using DoormatCore.Helpers;
+using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Helpers;
 using Microsoft.Extensions.Logging;
 
-namespace DoormatCore.Sites
+namespace Gambler.Bot.Core.Sites
 {
     public class CryptoGames : BaseSite, iDice
     {

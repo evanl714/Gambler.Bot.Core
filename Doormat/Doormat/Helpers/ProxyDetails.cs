@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Helpers
+namespace Gambler.Bot.Core.Helpers
 {
     public class ProxyDetails
     {

@@ -1,12 +1,12 @@
-﻿using DoormatCore.Games;
-using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Sites;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace DoormatCore
+namespace Gambler.Bot.Core
 {
     public static class testSample
     {

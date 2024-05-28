@@ -1,5 +1,5 @@
-﻿using DoormatCore.Sites;
-using DoormatCore.Tests.Code;
+﻿using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Tests.Code;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,9 +7,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.BitslerT
+namespace Gambler.Bot.Core.Tests.BitslerT
 {
-    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public class BitslerTests : BaseSiteTests, IClassFixture<BitslerFixture>
     {
         public BitslerTests(BitslerFixture fixure) : base(fixure.site)

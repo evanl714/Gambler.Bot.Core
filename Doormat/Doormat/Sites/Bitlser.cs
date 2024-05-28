@@ -1,5 +1,5 @@
-﻿using DoormatCore.Games;
-using DoormatCore.Helpers;
+﻿using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,9 +13,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using static DoormatCore.Sites.Bitsler;
+using static Gambler.Bot.Core.Sites.Bitsler;
 
-namespace DoormatCore.Sites
+namespace Gambler.Bot.Core.Sites
 {
     public class Bitsler : BaseSite, iDice
     {

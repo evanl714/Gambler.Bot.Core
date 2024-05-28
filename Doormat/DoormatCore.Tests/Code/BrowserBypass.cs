@@ -1,5 +1,5 @@
-﻿using DoormatCore.Helpers;
-using DoormatCore.Sites;
+﻿using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites;
 using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Collections;
@@ -11,7 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DoormatCore.Tests.Code
+namespace Gambler.Bot.Core.Tests.Code
 {
     public class BrowserBypass:Form
     {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace DoormatCore.Tests.Code
+namespace Gambler.Bot.Core.Tests.Code
 {
     public class AlphabeticalOrderer : ITestCaseOrderer
     {

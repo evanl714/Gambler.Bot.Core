@@ -5,11 +5,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DoormatCore.Games;
-using DoormatCore.Helpers;
+using Gambler.Bot.Core.Games;
+using Gambler.Bot.Core.Helpers;
 using Microsoft.Extensions.Logging;
 
-namespace DoormatCore.Sites
+namespace Gambler.Bot.Core.Sites
 {
     public class PrimeDice : BaseSite, iDice
     {

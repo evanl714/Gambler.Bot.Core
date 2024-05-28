@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 
 
-namespace DoormatCore.Tests.Code
+namespace Gambler.Bot.Core.Tests.Code
 {
     public class LoggingFixture
     {

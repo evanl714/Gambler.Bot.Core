@@ -1,6 +1,6 @@
-using DoormatCore.Helpers;
-using DoormatCore.Sites;
-using DoormatCore.Tests.Code;
+using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Tests.Code;
 using Microsoft.Extensions.Configuration;
 using OtpNet;
 using System.Runtime.CompilerServices;
@@ -8,9 +8,9 @@ using System.Text;
 using System.Text.Json;
 using System.Web;
 
-namespace DoormatCore.Tests
+namespace Gambler.Bot.Core.Tests
 {
-    [TestCaseOrderer("DoormatCore.Tests.Code.AlphabeticalOrderer", "DoormatCore.Tests")]
+    [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public abstract class BaseSiteTests: IDisposable
     {
         BaseSite _site;
