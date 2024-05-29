@@ -1,5 +1,6 @@
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Sites.Classes;
 using Gambler.Bot.Core.Tests.Code;
 using Microsoft.Extensions.Configuration;
 using OtpNet;

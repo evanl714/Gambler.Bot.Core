@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Games
 {
-    [PersistentTableName("DICEBET")]
     public class DiceBet:Bet
     {
        

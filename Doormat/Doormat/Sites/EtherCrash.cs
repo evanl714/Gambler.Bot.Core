@@ -6,8 +6,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Gambler.Bot.Core.Enums;
 using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using WebSocket4Net;
 
@@ -95,9 +97,9 @@ namespace Gambler.Bot.Core.Sites
                 string Response = await Client.GetStringAsync("https://www.ethercrash.io/play");
 
 
-                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate());
+                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
 
-                Response =await Client.GetStringAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + json.CurrentDate());
+                Response =await Client.GetStringAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
 
                 string iochat = "";
                 foreach (Cookie c3 in Cookies.GetCookies(new Uri("http://www.ethercrash.io")))
@@ -107,7 +109,7 @@ namespace Gambler.Bot.Core.Sites
                     if (c3.Name == "__cfduid")
                         cfuid = c3.Value;
                 }
-                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate());
+                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
 
 
                 foreach (Cookie c3 in Cookies.GetCookies(new Uri("http://gs.ethercrash.io")))
@@ -134,16 +136,16 @@ namespace Gambler.Bot.Core.Sites
                 string body = "420[\"join\",{\"ott\":\"" + ott + "\",\"api_version\":1}]";
                 body = body.Length + ":" + body;
                 StringContent stringContent = new StringContent(body, UnicodeEncoding.UTF8, "text/plain");
-                RespMsg = await Client.PostAsync("https://gs.ethercrash.io/socket.io/?EIO=3&sid=" + io + "&transport=polling&t=" + json.CurrentDate(), stringContent);
+                RespMsg = await Client.PostAsync("https://gs.ethercrash.io/socket.io/?EIO=3&sid=" + io + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent);
                 Response = await RespMsg.Content.ReadAsStringAsync();
 
                 body = "420[\"join\",[\"english\"]]";
                 body = body.Length + ":" + body;
                 StringContent stringContent2 = new StringContent(body, UnicodeEncoding.UTF8, "text/plain");
-                RespMsg = await Client.PostAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate(), stringContent2);
+                RespMsg = await Client.PostAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent2);
                 Response = await RespMsg.Content.ReadAsStringAsync();
 
-                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + json.CurrentDate());
+                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
 
                 List<KeyValuePair<string, string>> cookies = new List<KeyValuePair<string, string>>();
                 cookies.Add(new KeyValuePair<string, string>("__cfduid", cfuid));

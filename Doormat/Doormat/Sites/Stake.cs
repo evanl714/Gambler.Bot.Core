@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using Gambler.Bot.Core.Enums;
+using Gambler.Bot.Core.Sites.Classes;
 
 namespace Gambler.Bot.Core.Sites
 {

@@ -9,7 +9,7 @@ namespace Gambler.Bot.Core.Helpers
     /// Used for converting from the .json data received by site
     /// Code copied from http://www.codeproject.com/Articles/272335/JSON-Serialization-and-Deserialization-in-ASP-NET
     /// </summary>
-public class json
+public static class Epoch
     {
         
         public static string ToDateString(DateTime Value)

@@ -2,6 +2,7 @@
 using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace Gambler.Bot.Core.Games
@@ -12,14 +13,14 @@ namespace Gambler.Bot.Core.Games
         Dice,Crash,Roulette,Plinko
     }
     
-    public abstract class Bet:PersistentBase
+    public abstract class Bet
     {
         public decimal TotalAmount { get; set; }
 
         public decimal Date { get; set; }
 
-        [NonPersistent]
-        public DateTime DateValue { get { return json.DateFromDecimal(Date); } set { Date = json.DateToDecimal(value); } }
+        [NotMapped]
+        public DateTime DateValue { get { return Epoch.DateFromDecimal(Date); } set { Date = Epoch.DateToDecimal(value); } }
 
         public string BetID { get; set; }
         public decimal Profit { get; set; }

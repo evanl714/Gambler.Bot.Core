@@ -5,8 +5,10 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Gambler.Bot.Core.Enums;
 using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 
 namespace Gambler.Bot.Core.Sites

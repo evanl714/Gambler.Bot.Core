@@ -1,4 +1,4 @@
-﻿using Gambler.Bot.Core.Sites;
+﻿using Gambler.Bot.Core.Sites.Classes;
 using System;
 using System.Collections.Generic;
 using System.Linq;

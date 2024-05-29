@@ -1,5 +1,7 @@
-﻿using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Core.Events;
+using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Sites;
+using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
