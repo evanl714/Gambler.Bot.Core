@@ -1,9 +1,11 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Gambler.Bot.Core.Sites.Classes
 {
     public class SiteDetails
     {
+        [Key]
         public string name { get; set; }
         public decimal edge { get; set; }
         public decimal maxroll { get; set; }

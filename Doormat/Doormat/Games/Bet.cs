@@ -2,6 +2,7 @@
 using Gambler.Bot.Core.Sites;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
@@ -21,7 +22,7 @@ namespace Gambler.Bot.Core.Games
 
         [NotMapped]
         public DateTime DateValue { get { return Epoch.DateFromDecimal(Date); } set { Date = Epoch.DateToDecimal(value); } }
-
+        [Key]
         public string BetID { get; set; }
         public decimal Profit { get; set; }
         public long Userid { get; set; }
