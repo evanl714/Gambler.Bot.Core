@@ -1,4 +1,5 @@
 ﻿using Gambler.Bot.Core.Enums;
+using Gambler.Bot.Core.Events;
 using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Tests.Code;

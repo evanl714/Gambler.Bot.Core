@@ -1,4 +1,5 @@
-﻿using Gambler.Bot.Core.Helpers;
+﻿using Gambler.Bot.Core.Events;
+using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites;
 using Microsoft.Web.WebView2.WinForms;
 using System;

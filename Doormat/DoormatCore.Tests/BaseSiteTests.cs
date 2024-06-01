@@ -1,3 +1,4 @@
+using Gambler.Bot.Core.Events;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Sites.Classes;
