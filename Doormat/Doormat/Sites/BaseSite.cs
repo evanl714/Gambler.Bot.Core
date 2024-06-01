@@ -609,6 +609,7 @@ namespace Gambler.Bot.Core.Sites
         }
         protected void callBetFinished(Bet NewBet)
         {
+            NewBet.Site = this.SiteName;
             if (NewBet is DiceBet dicebet)
             {
                 dicebet.IsWin = dicebet.GetWin(this);

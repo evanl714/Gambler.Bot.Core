@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 
 namespace Gambler.Bot.Core.Helpers
 {
@@ -24,31 +25,9 @@ namespace Gambler.Bot.Core.Helpers
         {
             try
             {
-                string serializedobj = Newtonsoft.Json.JsonConvert.SerializeObject(Instance);
-                object result = Newtonsoft.Json.JsonConvert.DeserializeObject(serializedobj, typ);
-                return result;
-                object tmp = null;
-                if (typ.IsArray)
-                    tmp = Activator.CreateInstance(typ, (Instance as Array).Length);
-                else
-                    tmp = Activator.CreateInstance(typ);
-                foreach (PropertyInfo x in typ.GetProperties())
-                {
-                    if (x.CanWrite)
-                    {
-                        object value = x.GetValue(Instance);
-
-                        if (x.PropertyType.IsClass && !x.PropertyType.Namespace.Contains("System") && value != null)
-                        {
-                            x.SetValue(tmp, CreateCopy(x.PropertyType, value));
-                        }
-                        else
-                        {
-                            x.SetValue(tmp, value);
-                        }
-                    }
-                }
-                return tmp;
+                string serializedobj = JsonSerializer.Serialize(Instance);
+                object result = JsonSerializer.Deserialize(serializedobj, typ);
+                return result;                
             }
             catch (Exception e)
             {

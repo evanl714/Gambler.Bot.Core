@@ -32,6 +32,7 @@ namespace Gambler.Bot.Core.Games
         public bool IsWin { get; set; }
         public abstract bool GetWin(BaseSite Site);
         public abstract PlaceBet CreateRetry();
+        public string Site { get; set; }
     }
     
     public abstract class PlaceBet

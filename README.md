@@ -10,7 +10,7 @@ Doormat is a class library that aims to standardize the interactions with online
 
 This project contains NO automated betting codes or strategies and aims to provide a springboard for people that want to develop their own bots by giving them access to several games at several sites in a standardized way.
 
-At this stage, sites have only been implemented to the bare minimum (logging in, getting stats and placing Dice bets) but will be expanded upon soon after the first stable release of KryGamesBot (or whatever that name is going to be).
+At this stage, sites have only been implemented to the bare minimum (logging in, getting stats and placing Dice bets) but will be expanded upon soon after the first stable release of Gambler.Bot (or whatever that name is going to be).
 
 # How to use
 
@@ -141,4 +141,4 @@ private void Site_BetFinished(object sender, BetFinisedEventArgs e)
 
 ```
 
-Check out Doormat.Bot and KryGamesBot for examples of how Doormat has been implemented there.
+Check out Doormat.Bot and Gambler.Bot for examples of how Doormat has been implemented there.

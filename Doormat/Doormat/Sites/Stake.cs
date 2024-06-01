@@ -10,6 +10,7 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 using Gambler.Bot.Core.Enums;
 using Gambler.Bot.Core.Sites.Classes;
+using System.Text.Json;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -124,11 +125,11 @@ namespace Gambler.Bot.Core.Sites
                         operationName = "DiceBotLogin"
                     };
 
-                    StringContent content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json");
+                    StringContent content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
 
                     var resp = await Client.PostAsync(URL, content);
                     string respostring = await resp.Content.ReadAsStringAsync();
-                    var Resp = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring);
+                    var Resp = JsonSerializer.Deserialize<Payload>(respostring);
                     pdUser user = Resp.data.user;
                     userid = user.id;
                     if (string.IsNullOrWhiteSpace(userid))
@@ -230,7 +231,7 @@ namespace Gambler.Bot.Core.Sites
                         ,
                         operationName = "DiceRoll"
                     };
-                    var response = await Client.PostAsync(URL, new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(betresult), Encoding.UTF8, "application/json"));
+                    var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(betresult), Encoding.UTF8, "application/json"));
                     var responsestring = await response.Content.ReadAsStringAsync();
                 Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
                 if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
@@ -317,9 +318,9 @@ namespace Gambler.Bot.Core.Sites
                         operationName = "DiceBotGetBalance",    
                         query = "query DiceBotGetBalance{user { activeServerSeed { seedHash seed nonce } activeClientSeed { seed } id balances { available { currency amount } } } }"
                     };
-                    var Resp = await Client.PostAsync("", new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(LoginReq), Encoding.UTF8, "application/json"));
+                    var Resp = await Client.PostAsync("", new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json"));
                     string respostring = await Resp.Content.ReadAsStringAsync();
-                    pdUser user = Newtonsoft.Json.JsonConvert.DeserializeObject<Payload>(respostring)?.data.user;
+                    pdUser user = JsonSerializer.Deserialize<Payload>(respostring)?.data.user;
                     //GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
 
                     foreach (Statistic x in user.statistic)
