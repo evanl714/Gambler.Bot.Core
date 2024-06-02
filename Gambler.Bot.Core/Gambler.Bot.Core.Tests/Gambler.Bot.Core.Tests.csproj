@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Doormat\Gambler.Bot.Core.csproj" />
+    <ProjectReference Include="..\Gambler.Bot.Core\Gambler.Bot.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
