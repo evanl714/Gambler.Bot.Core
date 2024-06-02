@@ -1,6 +1,6 @@
-Build: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FDoormat?branchName=master&stageName=Build)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=2&branchName=master)
+Build: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FSeuntjie900.Gambler.Bot.Core?branchName=master&stageName=Build)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=4&branchName=master)
 
-Tests: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FDoormat?branchName=master&stageName=Test)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=2&branchName=master)
+Tests: [![Test Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/build/status%2FSeuntjie900.Gambler.Bot.Core?branchName=master&stageName=Test)](https://eugenebotma.visualstudio.com/seuntjie900/_build/latest?definitionId=4&branchName=master)
 
 [![NuGet](https://img.shields.io/nuget/v/Gambler.Bot.Core.svg)](https://www.nuget.org/packages/Gambler.Bot.Core/)
 
