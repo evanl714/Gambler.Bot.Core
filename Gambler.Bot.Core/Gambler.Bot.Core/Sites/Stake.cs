@@ -1,16 +1,17 @@
-﻿using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites.Classes;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Net;
+using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
-using Microsoft.Extensions.Logging;
-using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Sites.Classes;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -48,7 +49,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = true;
             this.CanVerify = true;
             this.Currencies = new string[] { "Btc", "Ltc", "Eth", "Doge", "Bch" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
+            SupportedGames = new Games[] { Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://stake.com/bet/{0}";
             this.Edge = 2;
@@ -226,7 +227,7 @@ namespace Gambler.Bot.Core.Sites
                             target = tmpchance,
                             condition = (High ? "above" : "below"),
                             currency = Currencies[base.Currency].ToLower(),
-                            identifier = R.Next().ToString()
+                            identifier = Random.Next().ToString()
                         }
                         ,
                         operationName = "DiceRoll"
@@ -268,7 +269,7 @@ namespace Gambler.Bot.Core.Sites
                             if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
                             {*/
                         DiceBet tmpbet = tmp.ToBet();
-                        tmpbet.IsWin = tmpbet.GetWin(this);
+                        tmpbet.IsWin = tmpbet.GetWin(this.MaxRoll);
                         this.Stats.Bets++; ;
                         this.Stats.Wins += tmpbet.IsWin ? 1 : 0; ;
                         this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;

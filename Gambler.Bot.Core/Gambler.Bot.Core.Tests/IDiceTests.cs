@@ -1,17 +1,8 @@
-﻿using Gambler.Bot.Core.Enums;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
 using Gambler.Bot.Core.Events;
-using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Tests.Code;
-using Newtonsoft.Json.Bson;
-using OtpNet;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Tests
 {
@@ -247,7 +238,7 @@ namespace Gambler.Bot.Core.Tests
             Assert.Equal(high, resultingbet.High);
             bool ShouldBeWin = (((bool)high ? (decimal)resultingbet.Roll > (decimal)_site.MaxRoll - (decimal)(chance) : (decimal)resultingbet.Roll < (decimal)(chance)));
             Assert.Equal(ShouldBeWin, resultingbet.IsWin);
-            Assert.Equal(ShouldBeWin, resultingbet.GetWin(_site));
+            Assert.Equal(ShouldBeWin, resultingbet.GetWin(_site.MaxRoll));
             if (resultingbet.IsWin)
             {
                 Assert.Equal(balance+resultingbet.Profit, _site.Stats.Balance);

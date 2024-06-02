@@ -1,19 +1,17 @@
-﻿using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Random = Gambler.Bot.Core.Helpers.Random;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -49,7 +47,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = false;
             this.CanVerify = false;
             this.Currencies = new string[] { "btc", "eth", "ltc", "doge" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
+            SupportedGames = new Games[] { Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://windice.io/api/v1/api/getBet?hash={0}";
             this.Edge = 1;

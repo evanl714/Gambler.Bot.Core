@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Gambler.Bot.Core.Sites.Classes
+namespace Gambler.Bot.Common.Helpers
 {
     public class SiteDetails
     {
@@ -17,6 +17,7 @@ namespace Gambler.Bot.Core.Sites.Classes
         public string siteurl { get; set; }
         public string[] Currencies { get; set; }
         public string[] Games { get; set; }
+        public bool NonceBased { get; set; }
 
     }
 }

@@ -8,7 +8,7 @@ using System.Threading;
 using System.Security.Cryptography;
 using System.Net.Http;
 
-namespace Gambler.Bot.Core.Helpers
+namespace Gambler.Bot.Common.Helpers
 {
     public class Hash
     {

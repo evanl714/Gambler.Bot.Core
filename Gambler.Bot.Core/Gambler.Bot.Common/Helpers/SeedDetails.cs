@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Gambler.Bot.Core.Sites.Classes
+namespace Gambler.Bot.Common.Helpers
 {
     public class SeedDetails
     {

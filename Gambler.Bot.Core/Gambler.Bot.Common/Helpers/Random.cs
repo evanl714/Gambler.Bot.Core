@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Gambler.Bot.Core.Helpers
+namespace Gambler.Bot.Common.Helpers
 {
-    public class Random
+    public class GRandom
     {
 
         RandomNumberGenerator r = RandomNumberGenerator.Create();

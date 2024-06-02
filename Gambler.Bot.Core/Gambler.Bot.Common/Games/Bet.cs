@@ -1,19 +1,9 @@
-﻿using Gambler.Bot.Core.Helpers;
-using Gambler.Bot.Core.Sites;
-using System;
-using System.Collections.Generic;
+﻿using Gambler.Bot.Common.Helpers;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
-namespace Gambler.Bot.Core.Games
+namespace Gambler.Bot.Common.Games
 {
-
-    public enum Games
-    {
-        Dice,Crash,Roulette,Plinko
-    }
-    
     public abstract class Bet
     {
         public decimal TotalAmount { get; set; }
@@ -30,17 +20,7 @@ namespace Gambler.Bot.Core.Games
         public string Guid { get; set; }
         public decimal Edge { get; set; }
         public bool IsWin { get; set; }
-        public abstract bool GetWin(BaseSite Site);
         public abstract PlaceBet CreateRetry();
         public string Site { get; set; }
-    }
-    
-    public abstract class PlaceBet
-    {
-        public string GUID { get; set; }
-        
-        public virtual decimal TotalAmount { get { return 0; } set { } }
-        public decimal BetDelay { get; set; }
-
     }
 }

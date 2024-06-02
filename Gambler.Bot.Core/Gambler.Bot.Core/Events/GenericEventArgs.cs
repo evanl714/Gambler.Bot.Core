@@ -1,7 +1,4 @@
-﻿using Gambler.Bot.Core.Games;
-using Gambler.Bot.Core.Helpers;
-using Gambler.Bot.Core.Sites;
-using System;
+﻿using System;
 
 namespace Gambler.Bot.Core.Events
 {

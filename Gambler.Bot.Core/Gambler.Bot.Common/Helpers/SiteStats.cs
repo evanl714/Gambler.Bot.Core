@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Gambler.Bot.Core.Sites.Classes
+﻿namespace Gambler.Bot.Common.Helpers
 {
     public class SiteStats
     {

@@ -1,5 +1,6 @@
-﻿using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using static Gambler.Bot.Core.Sites.Bitsler;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -54,7 +54,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = false;
             this.CanVerify = false;
             NonceBased = true;
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
+            SupportedGames = new Games[] { Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;

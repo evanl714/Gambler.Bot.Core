@@ -1,7 +1,7 @@
-﻿using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Games;
 using System;
 
-namespace Gambler.Bot.Core.Events
+namespace Gambler.Bot.Common.Events
 {
     public class BetFinisedEventArgs : EventArgs
     {

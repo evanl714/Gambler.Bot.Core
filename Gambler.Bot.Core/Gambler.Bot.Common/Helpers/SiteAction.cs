@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Gambler.Bot.Core.Helpers
+namespace Gambler.Bot.Common.Helpers
 {
     public enum SiteAction
     {

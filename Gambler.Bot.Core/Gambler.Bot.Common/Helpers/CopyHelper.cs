@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
-namespace Gambler.Bot.Core.Helpers
+namespace Gambler.Bot.Common.Helpers
 {
     public class CopyHelper
     {

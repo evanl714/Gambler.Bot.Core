@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Threading;
 
-namespace Gambler.Bot.Core.Helpers
+namespace Gambler.Bot.Common.Helpers
 {
     /// <summary>
     /// Used for converting from the .json data received by site

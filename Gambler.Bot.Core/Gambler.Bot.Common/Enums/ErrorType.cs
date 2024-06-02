@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Gambler.Bot.Core.Enums
+namespace Gambler.Bot.Common.Enums
 {
     public enum ErrorType
     {

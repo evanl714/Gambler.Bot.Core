@@ -1,6 +1,9 @@
-﻿using Gambler.Bot.Core.Enums;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Events;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Helpers;
+using Gambler.Bot.Common.Interfaces;
 using Gambler.Bot.Core.Events;
-using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -15,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Sites
 {
-    public abstract class BaseSite
+    public abstract class BaseSite: IProvablyFair
     {
         protected readonly ILogger _logger;
 
@@ -124,7 +127,7 @@ namespace Gambler.Bot.Core.Sites
         /// <summary>
         /// Site Statistics about the user 
         /// </summary>
-        public SiteStats Stats { get; protected set; }
+        public Common.Helpers.SiteStats Stats { get; protected set; }
 
         /// <summary>
         /// Indicates whether the user is logged in to the site
@@ -166,7 +169,7 @@ namespace Gambler.Bot.Core.Sites
         /// <summary>
         /// Cryptographically secure random number generator with extension functions for random strings and numbers
         /// </summary>
-        public Helpers.Random R { get; internal set; } = new Helpers.Random();
+        public GRandom Random { get; internal set; } = new GRandom();
         #endregion
 
         /// <summary>
@@ -182,7 +185,7 @@ namespace Gambler.Bot.Core.Sites
         /// <summary>
         /// List of supported games for the site
         /// </summary>
-        public Games.Games[] SupportedGames { get; set; } = new Games.Games[] { Games.Games.Dice };
+        public Games[] SupportedGames { get; set; } = new Games[] { Games.Dice };
 
         protected BaseSite()
         {
@@ -240,7 +243,7 @@ namespace Gambler.Bot.Core.Sites
         /// Set the proxy for the connection to the site
         /// </summary>
         /// <param name="ProxyInfo"></param>
-        public abstract void SetProxy(Helpers.ProxyDetails ProxyInfo);
+        public abstract void SetProxy(ProxyDetails ProxyInfo);
 
         /// <summary>
         /// Update the site statistics for whatever reason.
@@ -498,7 +501,7 @@ namespace Gambler.Bot.Core.Sites
         }
         public virtual string GenerateNewClientSeed()
         {
-            string ClientSeed = R.Next(0, int.MaxValue).ToString();
+            string ClientSeed = Random.Next(0, int.MaxValue).ToString();
             return ClientSeed;
         }
 
@@ -612,8 +615,8 @@ namespace Gambler.Bot.Core.Sites
             NewBet.Site = this.SiteName;
             if (NewBet is DiceBet dicebet)
             {
-                dicebet.IsWin = dicebet.GetWin(this);
-                dicebet.CalculateWinnableType(this);                
+                dicebet.IsWin = dicebet.GetWin(this.MaxRoll);
+                dicebet.CalculateWinnableType(this.MaxRoll);                
             }
             if (BetFinished != null)
             {

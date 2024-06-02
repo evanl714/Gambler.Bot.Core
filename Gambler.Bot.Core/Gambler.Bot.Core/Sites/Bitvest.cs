@@ -8,8 +8,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -53,7 +54,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = true;
             this.Currencies = new string[] { "btc", "tok", "ltc", "eth", "doge", "bch" };
             CurrencyMap = new string[] { "bitcoins", "tokens", "litecoins", "ethers", "dogecoins", "bcash" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
+            SupportedGames = new Games[] { Games.Dice };
             this.Currency = 0;
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
@@ -215,10 +216,10 @@ namespace Gambler.Bot.Core.Sites
         {
             string s = "";
             string chars = "0123456789abcdef";
-            int length = R.Next(8, 64);
+            int length = Random.Next(8, 64);
             while (s.Length <= length)
             {
-                s += chars[R.Next(0, chars.Length)];
+                s += chars[Random.Next(0, chars.Length)];
             }
 
             return s;
