@@ -41,10 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Gambler.Bot.Core\Gambler.Bot.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="Code\google_auth.proto" />
   </ItemGroup>
 
