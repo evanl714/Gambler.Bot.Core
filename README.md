@@ -5,19 +5,19 @@ Tests: [![Build Status](https://eugenebotma.visualstudio.com/seuntjie900/_apis/b
 [![NuGet](https://img.shields.io/nuget/v/Gambler.Bot.Core.svg)](https://www.nuget.org/packages/Gambler.Bot.Core/)
 
 
-# Doormat
-Doormat is a class library that aims to standardize the interactions with online casinos for a variety of games, including Dice, Plinko, Roulette, Crash and more (Currently only Dice is supported). Once complete, Doormat should provide an interface to sign in, get user stats, place bets, reset/setting/getting seeds, verify bets, tip/withdraw/invest/bank and potentially even chat (that's a pipe dream). For sites that has cloudflare or other DDOS protection, the library provides an event (OnBrowserBypassRequired) that must be implemented to provide cookies and a user agent that will allow connection to the site.
+# Gambler.Bot.Core
+Gambler.Bot.Core is a class library that aims to standardize the interactions with online casinos for a variety of games, including Dice, Plinko, Roulette, Crash and more (Currently only Dice is supported). Once complete, Gambler.Bot.Core should provide an interface to sign in, get user stats, place bets, reset/setting/getting seeds, verify bets, tip/withdraw/invest/bank and potentially even chat (that's a pipe dream). For sites that has cloudflare or other DDOS protection, the library provides an event (OnBrowserBypassRequired) that must be implemented to provide cookies and a user agent that will allow connection to the site.
 
 This project contains NO automated betting codes or strategies and aims to provide a springboard for people that want to develop their own bots by giving them access to several games at several sites in a standardized way.
 
-At this stage, sites have only been implemented to the bare minimum (logging in, getting stats and placing Dice bets) but will be expanded upon soon after the first stable release of Gambler.Bot (or whatever that name is going to be).
+At this stage, sites have only been implemented to the bare minimum (logging in, getting stats and placing Dice bets) but will be expanded upon soon after the first stable release of Gambler.Bot
 
 # How to use
 
 ### Logging in
 ```
 //Initialize the site you want to test
-//Doormat uses Microsoft.Extensions.Logging for logging. You can use any logger that implements ILogger or pass null if you do not want logging.
+//Gambler.Bot.Core uses Microsoft.Extensions.Logging for logging. You can use any logger that implements ILogger or pass null if you do not want logging.
 //Breaking change coming at some time: I will be adding open telemetry support for tracing and metrics. This change might cause changes to the constructor 
 BaseSite currentSite = new Bitsler(null);//Bitsler is just an example, you can use any site from the list of supported sites
 
@@ -141,4 +141,4 @@ private void Site_BetFinished(object sender, BetFinisedEventArgs e)
 
 ```
 
-Check out Doormat.Bot and Gambler.Bot for examples of how Doormat has been implemented there.
+Check out Gambler.Bot.AutoBet and Gambler.Bot for examples of how Gambler.Bot.Core has been implemented there.
