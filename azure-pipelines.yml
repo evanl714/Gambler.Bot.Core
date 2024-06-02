@@ -51,11 +51,11 @@ stages:
 
     - script: |
         mkdir $(Build.ArtifactStagingDirectory)\Artifacts
-        xcopy /I /E /Y "Doormat\Doormat\bin\Release\net8.0\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+        xcopy /I /E /Y "Gambler.Bot.Core\Gambler.Bot.Core\bin\Release\net8.0\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
       displayName: 'Copy Artifacts to a Common Directory'
     
     - script: |
-        xcopy /I /E /Y "Doormat\DoormatCore.Tests\bin\Release\net8.0-windows\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+        xcopy /I /E /Y "Gambler.Bot.Core\Gambler.Bot.Core.Tests\bin\Release\net8.0-windows\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
       displayName: 'Copy Artifacts to a Common Directory'
 
     - task: PublishBuildArtifacts@1
@@ -114,7 +114,7 @@ stages:
     - task: DotNetCoreCLI@2
       inputs:
         command: 'push'
-        packagesToPush: 'Doormat\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
+        packagesToPush: 'Gambler.Bot.Core\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
         nuGetFeedType: 'external'
         publishVstsFeed: 'https://api.nuget.org/v3/index.json'
         apiKey: '$(NuGetApiKey)'
