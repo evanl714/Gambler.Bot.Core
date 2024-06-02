@@ -1,13 +1,11 @@
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Events;
-using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Sites.Classes;
 using Gambler.Bot.Core.Tests.Code;
 using Microsoft.Extensions.Configuration;
 using OtpNet;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Web;
 

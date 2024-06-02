@@ -141,4 +141,4 @@ private void Site_BetFinished(object sender, BetFinisedEventArgs e)
 
 ```
 
-Check out Gambler.Bot.AutoBet and Gambler.Bot for examples of how Gambler.Bot.Core has been implemented there.
+Check out Gambler.Bot.Strategies and Gambler.Bot for examples of how Gambler.Bot.Core has been implemented there.
