@@ -155,6 +155,7 @@ namespace Gambler.Bot.Core.Sites
                                 siteurl=SiteURL,
                                  tipusingname=TipUsingName,
                                   Currencies=CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
+                                  NonceBased = NonceBased
                     };
                 }
                 return siteDetails;
