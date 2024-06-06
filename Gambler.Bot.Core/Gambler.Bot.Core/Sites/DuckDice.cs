@@ -48,7 +48,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = true;
             this.Currencies = cCurrencies;
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://duckdice.io/Bets/{0}";
             this.Edge = 1m;
             NonceBased = true;

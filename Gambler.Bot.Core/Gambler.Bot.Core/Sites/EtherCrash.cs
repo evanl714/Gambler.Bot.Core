@@ -50,7 +50,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = true;
             this.Currencies = new string[] {"Eth"};
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://EtherCrash.io/{0}";
             this.Edge = 1;
         }

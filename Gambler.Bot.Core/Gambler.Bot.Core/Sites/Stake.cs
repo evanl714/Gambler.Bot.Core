@@ -50,7 +50,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = true;
             this.Currencies = new string[] { "Btc", "Ltc", "Eth", "Doge", "Bch" };
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://stake.com/bet/{0}";
             this.Edge = 2;
             NonceBased = true;
@@ -139,7 +139,7 @@ namespace Gambler.Bot.Core.Sites
                     {
                         foreach (Statistic x in user.statistic)
                         {
-                            if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
+                            if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                             {
                                 this.Stats.Bets = (int)x.bets;
                                 this.Stats.Wins = (int)x.wins;
@@ -152,7 +152,7 @@ namespace Gambler.Bot.Core.Sites
                         }
                         foreach (Balance x in user.balances)
                         {
-                            if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                            if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
                             {
                                 this.Stats.Balance = x.available.amount ?? 0;
                                 break;
@@ -216,7 +216,7 @@ namespace Gambler.Bot.Core.Sites
                     }*/
                     decimal tmpchance = High ? MaxRoll - chance : chance;
 
-                    //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + Currencies[Currency].ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
+                    //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + CurrentCurrency.ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
                     //var primediceRoll = GQLClient.SendMutationAsync<dynamic>(new GraphQLRequest { Query = query }).Result;
                     GraphqlRequestPayload betresult = new GraphqlRequestPayload
                     {
@@ -226,7 +226,7 @@ namespace Gambler.Bot.Core.Sites
                             amount = amount,
                             target = tmpchance,
                             condition = (High ? "above" : "below"),
-                            currency = Currencies[base.Currency].ToLower(),
+                            currency = CurrentCurrency.ToLower(),
                             identifier = Random.Next().ToString()
                         }
                         ,
@@ -266,7 +266,7 @@ namespace Gambler.Bot.Core.Sites
                         lastupdate = DateTime.Now;
                         /*foreach (Statistic x in tmp.user?.statistic)
                         {
-                            if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
+                            if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                             {*/
                         DiceBet tmpbet = tmp.ToBet();
                         tmpbet.IsWin = tmpbet.GetWin(this.MaxRoll);
@@ -280,7 +280,7 @@ namespace Gambler.Bot.Core.Sites
                     }*/
                         /*foreach (Balance x in tmp.user.balances)
                         {
-                            if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                            if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
                             {*/
                         this.Stats.Balance += tmpbet.Profit;
                         /*break;
@@ -326,7 +326,7 @@ namespace Gambler.Bot.Core.Sites
 
                     foreach (Statistic x in user.statistic)
                     {
-                        if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
+                        if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {
                             this.Stats.Bets = (int)x.bets;
                             this.Stats.Wins = (int)x.wins;
@@ -338,7 +338,7 @@ namespace Gambler.Bot.Core.Sites
                     }
                     foreach (Balance x in user.balances)
                     {
-                        if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                        if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
                         {
                             this.Stats.Balance = x.available.amount ?? 0;
                             break;

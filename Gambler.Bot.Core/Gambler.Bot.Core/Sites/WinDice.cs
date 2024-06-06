@@ -48,7 +48,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = false;
             this.Currencies = new string[] { "btc", "eth", "ltc", "doge" };
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://windice.io/api/v1/api/getBet?hash={0}";
             this.Edge = 1;
             NonceBased = true;

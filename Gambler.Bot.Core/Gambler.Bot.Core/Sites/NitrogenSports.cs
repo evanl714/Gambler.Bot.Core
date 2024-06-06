@@ -53,7 +53,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = true;
             this.Currencies = new string[] { "btc"};
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
         }

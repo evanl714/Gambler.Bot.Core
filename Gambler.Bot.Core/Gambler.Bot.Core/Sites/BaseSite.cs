@@ -95,14 +95,9 @@ namespace Gambler.Bot.Core.Sites
         public string DiceBetURL { get; protected set; }
 
         /// <summary>
-        /// The index of the list of supported currencies for the current currency
-        /// </summary>
-        public int Currency { get; set; }
-
-        /// <summary>
         /// The name/abbreviation of the currency currently in use
         /// </summary>
-        public string CurrentCurrency { get { return Currencies[Currency]; } }
+        public string CurrentCurrency { get; set; }
 
         /// <summary>
         /// The maximum roll allowed at the site. Usually 99.99. Used to determine whether the roll is a win
@@ -325,18 +320,28 @@ namespace Gambler.Bot.Core.Sites
         {
             SeedDetails seedDetails = null;
             if (CanChangeSeed)
-            {
-                ActiveActions.Add(SiteAction.ResetSeed);
-                callNotify("Resetting seed.");
-                await Task.Run(async () => 
+            {try
                 {
-                    seedDetails = await _ResetSeed();                    
-                });
-                if (CanSetClientSeed)
+                    ActiveActions.Add(SiteAction.ResetSeed);
+                    callNotify("Resetting seed.");
+                    seedDetails = await _ResetSeed();
+                    if (seedDetails == null )
+                    {
+                        callResetSeedFinished(false, "");
+                        return null;
+                    }
+                    if (CanSetClientSeed && seedDetails != null)
+                    {
+
+                        string client = await SetClientSeed(ClientSeed);
+                        if (!string.IsNullOrWhiteSpace(client))
+                            seedDetails.ClientSeed = client;
+                    }
+                    callResetSeedFinished(true, "");
+                }
+                catch (Exception e)
                 {
-                    string client = await SetClientSeed(ClientSeed);
-                    if (!string.IsNullOrWhiteSpace(client))
-                        seedDetails.ClientSeed = client;
+                    callResetSeedFinished(false, "");
                 }
             }
             else
@@ -353,15 +358,12 @@ namespace Gambler.Bot.Core.Sites
         {
             string result = null;
             if (CanSetClientSeed)
-            {
-                await Task.Run(async () =>
-                {
-                    result = await _SetClientSeed(ClientSeed);
-                });
+            {                
+                result = await _SetClientSeed(ClientSeed);                
             }
             else
                 callError("Setting Client Seed not allowed!", false, ErrorType.NotImplemented);
-            return null;
+            return result;
         }
         protected virtual async Task<string> _SetClientSeed(string ClientSeed) { return null; }
 
@@ -577,31 +579,21 @@ namespace Gambler.Bot.Core.Sites
 
         #endregion
 
-        #region Events
-        public delegate void dStatsUpdated(object sender, StatsUpdatedEventArgs e);
-        public delegate void dBetFinished(object sender, BetFinisedEventArgs e);
-        public delegate void dLoginFinished(object sender, LoginFinishedEventArgs e);
-        public delegate void dRegisterFinished(object sender, GenericEventArgs e);
-        public delegate void dError(object sender, ErrorEventArgs e);
-        public delegate void dNotify(object sender, GenericEventArgs e);
-        public delegate void dGameMessage(object sender, GenericEventArgs e);
-        public delegate void dAction(object sender, GenericEventArgs e);
-        public delegate void dChat(object sender, GenericEventArgs e);
-        
-        public event dStatsUpdated StatsUpdated;
-        public event dBetFinished BetFinished;
-        public event dLoginFinished LoginFinished;
-        public event dRegisterFinished RegisterFinished;
-        public event dError Error;
-        public event dNotify Notify;
-        public event dAction Action;
-        public event dChat ChatReceived;
-        public event dAction OnWithdrawalFinished;
-        public event dAction OnTipFinished;
-        public event dAction OnResetSeedFinished;
-        public event dAction OnDonationFinished;
-        public event dAction OnInvestFinished;
-        public event dGameMessage OnGameMessage;
+        #region Events        
+        public event EventHandler<StatsUpdatedEventArgs> StatsUpdated;
+        public event EventHandler<BetFinisedEventArgs> BetFinished;
+        public event EventHandler<LoginFinishedEventArgs> LoginFinished;
+        public event EventHandler<GenericEventArgs> RegisterFinished;
+        public event EventHandler<ErrorEventArgs> Error;
+        public event EventHandler<GenericEventArgs> Notify;
+        public event EventHandler<GenericEventArgs> Action;
+        public event EventHandler<GenericEventArgs> ChatReceived;
+        public event EventHandler<GenericEventArgs> OnWithdrawalFinished;
+        public event EventHandler<GenericEventArgs> OnTipFinished;
+        public event EventHandler<GenericEventArgs> OnResetSeedFinished;
+        public event EventHandler<GenericEventArgs> OnDonationFinished;
+        public event EventHandler<GenericEventArgs> OnInvestFinished;
+        public event EventHandler<GenericEventArgs> OnGameMessage;
         public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
 
         protected void callStatsUpdated(SiteStats Stats)

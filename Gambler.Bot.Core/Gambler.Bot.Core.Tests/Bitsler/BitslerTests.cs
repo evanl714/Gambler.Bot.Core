@@ -16,23 +16,13 @@ namespace Gambler.Bot.Core.Tests.BitslerT
         {
 
         }
-        [Fact]
-        public override void a2_LogInWithout2faWhenRequiredShouldNotLogIn()
-        {
-            //test s not applicable
-            Assert.True(true);
-        }
+        
         [Fact]
         public override void a3_LogInWith2faWhenNotRequiredShouldLogIn()
         {
             //test s not applicable
             Assert.True(true);
         }
-        [Fact]
-        public override void a4_LogInWit2faWhenRequiredShouldLogIn()
-        {
-            //test s not applicable
-            Assert.True(true);
-        }
+        
     }
 }

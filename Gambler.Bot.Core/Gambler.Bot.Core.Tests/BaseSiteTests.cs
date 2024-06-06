@@ -313,16 +313,18 @@ namespace Gambler.Bot.Core.Tests
         }
 
         [Fact]
-        public void b2_ResetSeedIfPossible()
+        public async void b2_ResetSeedIfPossible()
         {
             if (_site.CanChangeSeed)
             {
+                //string Client = _site.seed
                 _site.OnResetSeedFinished += (s, e) =>
                 {
                     Assert.True(e.Success);
                 };
 
-                _site.ResetSeed();
+                var seedDetails = await _site.ResetSeed();
+                
             }
             else
             {

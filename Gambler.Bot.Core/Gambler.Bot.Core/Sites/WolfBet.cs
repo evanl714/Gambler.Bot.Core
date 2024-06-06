@@ -51,7 +51,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = false;
             this.Currencies = new string[] { "btc", "eth", "ltc", "trx", "bch", "doge" };
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            this.CurrentCurrency = "btc";
             this.DiceBetURL = "https://bit-exo.com/{0}";
             this.Edge = 1;
             NonceBased = true;

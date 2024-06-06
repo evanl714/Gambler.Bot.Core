@@ -48,7 +48,7 @@ namespace Gambler.Bot.Core.Sites
             Currencies = new string[] {"Btc" };
             
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://freebitco.in/?r=2310118&bet={0}";
             this.Edge = 5m;
         }

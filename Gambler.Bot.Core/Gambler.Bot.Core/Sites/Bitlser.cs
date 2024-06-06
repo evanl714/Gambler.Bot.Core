@@ -6,6 +6,7 @@ using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -29,7 +30,8 @@ namespace Gambler.Bot.Core.Sites
         long uid = 0;
         DateTime lastupdate = new DateTime();
         HttpClient Client;
-        public static string[] sCurrencies = new string[] { "BTC", "ETH", "LTC", "BCH", "XRP", "DOGE", "DASH", "ZEC", "ETC", "NEO", "KMD", "BTG", "LSK", "DGB", "QTUM", "STRAT", "WAVES", "BURST", "BTSLR" };
+        public static string[] sCurrencies = new string[] { "ada", "arb", "avax", "bch", "bnb", "brl", "btc", "btg", "btslr", "busd", "dai", "dash", "dgb", "doge", "eos", "etc", "eth", "ethw", "fdusd","link"
+        ,"ltc","matic","neo","op","qtum","shib","sol","ton","trx","usdc","usdt","xlm","xrp","zec"};
         HttpClientHandler ClientHandlr;
 
         public Bitsler(ILogger logger):base(logger)
@@ -55,7 +57,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = false;
             NonceBased = true;
             SupportedGames = new Games[] { Games.Dice };
-            this.Currency = 0;
+            this.CurrentCurrency = "btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             this.Edge = 1;
         }
@@ -191,7 +193,6 @@ devise:btc*/
         DateTime LastReset = new DateTime();
         protected override async Task<SeedDetails> _ResetSeed()
         {
-            Thread.Sleep(100);
             try
             {
                 if ((DateTime.Now - LastReset).TotalMinutes >= 3)
@@ -202,18 +203,19 @@ devise:btc*/
                     string clientseed = GenerateNewClientSeed();
                     pairs.Add(new KeyValuePair<string, string>("seed_client", clientseed));
                     FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                    string sEmitResponse = Client.PostAsync("api/change-seeds", Content).Result.Content.ReadAsStringAsync().Result;
-                    bsResetSeedBase bsbase = JsonSerializer.Deserialize<bsResetSeedBase>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
-                    callResetSeedFinished(true, "");
+                    var response = await Client.PostAsync("api/change-seeds", Content);
+                    string sEmitResponse =await response.Content.ReadAsStringAsync();
+                    bsResetSeed bsbase = JsonSerializer.Deserialize<bsResetSeed>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    
                     return new SeedDetails
                     {
                         ClientSeed = clientseed,
                         Nonce = 0,
-                        PreviousClient = bsbase._return.previous_client,
-                        PreviousHash = bsbase._return.previous_hash,
-                        ServerHash = bsbase._return.current_hash,
-                        PreviousServer = bsbase._return.previous_seed,
-                        ServerSeed = bsbase._return.next_hash
+                        PreviousClient = bsbase.previous_client,
+                        PreviousHash = bsbase.previous_hash,
+                        ServerHash = bsbase.current_hash,
+                        PreviousServer = bsbase.previous_seed,
+                        ServerSeed = bsbase.next_hash
                     };
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server_hashed, bsbase._return.last_seeds_revealed.seed_server_revealed);
 
@@ -243,7 +245,6 @@ devise:btc*/
                 callNotify("Too soon to update seed.");
             }
             Thread.Sleep(51);
-            callResetSeedFinished(false, "");
             return null;
         }
 
@@ -309,26 +310,25 @@ devise:btc*/
                     Content = new FormUrlEncodedContent(pairs);
                     resp = await Client.PostAsync("api/getuserstats", Content);
                     sEmitResponse = await resp.Content.ReadAsStringAsync();
-                    bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
-                    if (bsstatsbase != null)
+                    JsonElement bsstatsbase = JsonSerializer.Deserialize<dynamic>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    if ((object)bsstatsbase != null)
 
-                        if (bsstatsbase.success)
+                        if (bsstatsbase.GetProperty("success").GetBoolean())
                         {
                             GetStatsFromStatsBase(bsstatsbase);
                             this.username = Username;
                         }
                         else
                         {
-                            if (bsstatsbase.error != null)
+                            if (bsstatsbase.GetProperty("error").GetString() != null)
                             {
-                                callNotify(bsstatsbase.error);
+                                callNotify(bsstatsbase.GetProperty("error").GetString());
                             }
                         }
 
                     IsBitsler = true;
                     Thread t = new Thread(GetBalanceThread);
                     t.Start();
-                    callLoginFinished(true);
                     return true;
                 }
                 else
@@ -342,7 +342,6 @@ devise:btc*/
             {
                 _logger?.LogError(e.ToString());
             }
-            callLoginFinished(false);
             return false;
         }
 
@@ -355,14 +354,14 @@ devise:btc*/
             decimal amount = BetDetails.TotalAmount;
             int type_delay = 0;
 
-            if (Currencies[Currency].ToLower() == "btc")
+            if (CurrentCurrency.ToLower() == "btc")
             {
                 if (LastBetAmount <= 0.00000005 || (double)amount <= 0.00000005)
                     type_delay = 1;
                 else
                     type_delay = 2;
             }
-            else if (Currencies[Currency].ToLower() == "eth")
+            else if (CurrentCurrency.ToLower() == "eth")
             {
                 if (LastBetAmount <= 0.00000250 || (double)amount <= 0.00000250)
                     type_delay = 1;
@@ -370,7 +369,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "ltc")
+            else if (CurrentCurrency.ToLower() == "ltc")
             {
                 if (LastBetAmount <= 0.00001000 || (double)amount <= 0.00001000)
                     type_delay = 1;
@@ -378,7 +377,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "doge")
+            else if (CurrentCurrency.ToLower() == "doge")
             {
                 if (LastBetAmount <= 5.00000000 || (double)amount <= 5.00000000)
                     type_delay = 1;
@@ -386,7 +385,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "burst")
+            else if (CurrentCurrency.ToLower() == "burst")
             {
                 if (LastBetAmount <= 5.00000000 || (double)amount <= 5.00000000)
                     type_delay = 1;
@@ -394,7 +393,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "bch")
+            else if (CurrentCurrency.ToLower() == "bch")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -402,7 +401,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "dash")
+            else if (CurrentCurrency.ToLower() == "dash")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -410,7 +409,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "zec")
+            else if (CurrentCurrency.ToLower() == "zec")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -418,7 +417,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "xmr")
+            else if (CurrentCurrency.ToLower() == "xmr")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -426,7 +425,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "etc")
+            else if (CurrentCurrency.ToLower() == "etc")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -434,7 +433,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "neo")
+            else if (CurrentCurrency.ToLower() == "neo")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -442,7 +441,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "strat")
+            else if (CurrentCurrency.ToLower() == "strat")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -450,7 +449,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "kmd")
+            else if (CurrentCurrency.ToLower() == "kmd")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -458,7 +457,7 @@ devise:btc*/
                     type_delay = 2;
 
             }
-            else if (Currencies[Currency].ToLower() == "xrp")
+            else if (CurrentCurrency.ToLower() == "xrp")
             {
                 if (LastBetAmount <= 0.00000025 || (double)amount <= 0.00000025)
                     type_delay = 1;
@@ -523,72 +522,16 @@ devise:btc*/
             throw new NotImplementedException();
         }
 
-        void GetStatsFromStatsBase(bsStats bsstatsbase)
+        void GetStatsFromStatsBase(JsonElement bsstatsbase)
         {
-            switch (Currencies[Currency].ToLower())
+            //if (bsstatsbase is ExpandoObject exp)
             {
-                case "btc":
-                    Stats.Balance = decimal.Parse(bsstatsbase.btc_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.btc_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.btc_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "ltc":
-                    Stats.Balance = decimal.Parse(bsstatsbase.ltc_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.ltc_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.ltc_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "doge":
-                    Stats.Balance = decimal.Parse(bsstatsbase.doge_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.doge_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.doge_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "eth":
-                    Stats.Balance = decimal.Parse(bsstatsbase.eth_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.eth_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.eth_wagered, NumberFormatInfo.InvariantInfo); break;
-
-                case "dash":
-                    Stats.Balance = decimal.Parse(bsstatsbase.dash_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.dash_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.dash_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "zec":
-                    Stats.Balance = decimal.Parse(bsstatsbase.zec_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.zec_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.zec_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "bch":
-                    Stats.Balance = decimal.Parse(bsstatsbase.bch_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.bch_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.bch_wagered, NumberFormatInfo.InvariantInfo); break;
-
-                case "etc":
-                    Stats.Balance = decimal.Parse(bsstatsbase.etc_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.etc_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.etc_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "neo":
-                    Stats.Balance = decimal.Parse(bsstatsbase.neo_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.neo_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.neo_wagered, NumberFormatInfo.InvariantInfo); break;
-
-                case "xrp":
-                    Stats.Balance = decimal.Parse(bsstatsbase.xrp_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.xrp_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.xrp_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "btg":
-                    Stats.Balance = decimal.Parse(bsstatsbase.btg_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.btg_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.btg_wagered, NumberFormatInfo.InvariantInfo); break;
-                case "qtum":
-                    Stats.Balance = decimal.Parse(bsstatsbase.qtum_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.qtum_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.qtum_wagered, NumberFormatInfo.InvariantInfo); break;
-
-                case "dgb":
-                    Stats.Balance = decimal.Parse(bsstatsbase.dgb_balance, NumberFormatInfo.InvariantInfo);
-                    Stats.Profit = decimal.Parse(bsstatsbase.dgb_profit, NumberFormatInfo.InvariantInfo);
-                    Stats.Wagered = decimal.Parse(bsstatsbase.dgb_wagered, NumberFormatInfo.InvariantInfo); break;
-
-
+                Stats.Balance = decimal.Parse(bsstatsbase.GetProperty($"{CurrentCurrency.ToLower()}_balance").GetString(), NumberFormatInfo.InvariantInfo);
+                Stats.Profit = decimal.Parse(bsstatsbase.GetProperty($"{CurrentCurrency.ToLower()}_profit").GetString(), NumberFormatInfo.InvariantInfo);
+                Stats.Wagered = decimal.Parse(bsstatsbase.GetProperty($"{CurrentCurrency.ToLower()}_wagered").GetString(), NumberFormatInfo.InvariantInfo);
             }
-            Stats.Bets = bsstatsbase.bets;
-            Stats.Wins = bsstatsbase.wins;
-            Stats.Losses = bsstatsbase.losses;
+            return;
+            
 
         }
 
@@ -599,7 +542,7 @@ devise:btc*/
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
                 pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                HttpResponseMessage resp = Client.PostAsync("api/getuserstats", Content).Result;
+                HttpResponseMessage resp = await Client.PostAsync("api/getuserstats", Content);
 
                 string s1 = "";
                 string sEmitResponse = "";// resp.Content.ReadAsStringAsync().Result;
@@ -622,18 +565,18 @@ devise:btc*/
                 }
                 if (sEmitResponse != "")
                 {
-                    bsStats bsstatsbase = JsonSerializer.Deserialize<bsStats>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
-                    if (bsstatsbase != null)
+                    JsonElement bsstatsbase = JsonSerializer.Deserialize< dynamic>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                    if ((object)bsstatsbase != null)
                         //if (bsstatsbase._return != null)
-                        if (bsstatsbase.success)
+                        if (bsstatsbase.GetProperty("success").GetBoolean())
                         {
                             GetStatsFromStatsBase(bsstatsbase);
                         }
                         else
                         {
-                            if (bsstatsbase.error != null)
+                            if (bsstatsbase.GetProperty("error").GetString() != null)
                             {
-                                callNotify(bsstatsbase.error);
+                                callNotify(bsstatsbase.GetProperty("error").GetString());
                             }
                         }
                 }
@@ -805,10 +748,7 @@ devise:btc*/
                 return tmp;
             }
         }
-        public class bsResetSeedBase
-        {
-            public bsResetSeed _return { get; set; }
-        }
+       
         public class bsResetSeed
         {
             public string previous_hash { get; set; }
