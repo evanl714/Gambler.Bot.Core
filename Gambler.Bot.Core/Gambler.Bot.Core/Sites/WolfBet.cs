@@ -6,13 +6,16 @@ using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -182,7 +185,79 @@ namespace Gambler.Bot.Core.Sites
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            throw new NotImplementedException();
+            try
+            {
+                
+                decimal tmpchance = Math.Round(BetDetails.Chance, 2);
+                WolfPlaceBet tmp = new WolfPlaceBet
+                {
+                    amount = BetDetails.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    currency =CurrentCurrency,
+                    rule = BetDetails.High ? "over" : "under",
+                    multiplier = ((100m - Edge) / tmpchance).ToString("0.####", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    bet_value = (BetDetails.High ? MaxRoll - tmpchance : tmpchance).ToString("0.##", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    game = "dice"
+                };
+                string LoginString = JsonSerializer.Serialize<WolfPlaceBet>(tmp);
+                HttpContent cont = new StringContent(LoginString);
+                cont.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                HttpResponseMessage resp2 = Client.PostAsync("bet/place", cont).Result;
+
+                string sEmitResponse = resp2.Content.ReadAsStringAsync().Result;
+                if (!resp2.IsSuccessStatusCode)
+                {
+
+                }
+                
+                try
+                {
+                    WolfBetResult result = JsonSerializer.Deserialize<WolfBetResult>(sEmitResponse);
+                    if (result.bet != null)
+                    {
+                        DiceBet tmpRsult = new DiceBet()
+                        {
+                           
+                            TotalAmount = decimal.Parse(result.bet.amount, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Chance = BetDetails.High ? MaxRoll - decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo) : decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            ClientSeed = result.bet.user_seed,
+                            DateValue = DateTime.Now,
+                            Currency = CurrentCurrency,
+                            Guid = BetDetails.GUID,
+                            Nonce = result.bet.nonce,
+                            BetID = result.bet.hash,
+                            High = BetDetails.High,
+                            Roll = decimal.Parse(result.bet.result_value, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Profit = decimal.Parse(result.bet.profit, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            ServerHash = result.bet.server_seed_hashed
+                        };
+                        Stats.Bets++;
+                        bool Win = (((bool)BetDetails.High ? tmpRsult.Roll > (decimal)MaxRoll - (decimal)(tmpRsult.Chance) : (decimal)tmpRsult.Roll < (decimal)(tmpRsult.Chance)));
+                        if (Win)
+                            Stats.Wins++;
+                        else Stats.Losses++;
+                        Stats.Wagered += tmpRsult.TotalAmount;
+                        Stats.Profit += tmpRsult.Profit;
+                        Stats.Balance = decimal.Parse(result.userBalance.amount, CultureInfo.InvariantCulture);
+                        
+                        callBetFinished(tmpRsult);
+                        return tmpRsult;
+                    }
+                    else
+                    {
+                        _logger.LogError (sEmitResponse, -1);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.ToString(), -1);
+                    _logger.LogDebug(sEmitResponse, -1);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString(), -1);
+            }
+            return null;
         }
         SiteStats SetStats(WolfBetStats Stats)
         {
@@ -348,7 +423,7 @@ namespace Gambler.Bot.Core.Sites
             public string bet_value { get; set; }
             public string result_value { get; set; }
             public string state { get; set; }
-            public int published_at { get; set; }
+            public long published_at { get; set; }
             public string server_seed_hashed { get; set; }
             public User user { get; set; }
             public Game game { get; set; }
@@ -356,11 +431,12 @@ namespace Gambler.Bot.Core.Sites
 
         public class UserBalance
         {
-            public decimal amount { get; set; }
+            public string amount { get; set; }
             public string currency { get; set; }
             public string withdraw_fee { get; set; }
             public string withdraw_minimum_amount { get; set; }
             public bool payment_id_required { get; set; }
+            
         }
 
         public class WolfBetResult

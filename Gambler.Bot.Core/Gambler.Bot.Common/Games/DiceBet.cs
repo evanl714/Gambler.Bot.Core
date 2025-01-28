@@ -13,7 +13,7 @@ namespace Gambler.Bot.Common.Games
         public bool High { get; set; }
         public decimal Chance { get; set; }
         public long Nonce { get; set; }
-        public string ServerHash { get; set; }
+        public string? ServerHash { get; set; }
         public string? ServerSeed { get; set; }
         public string ClientSeed { get; set; }
         public int WinnableType { get; set; }
