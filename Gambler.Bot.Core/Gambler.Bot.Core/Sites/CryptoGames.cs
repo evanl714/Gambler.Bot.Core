@@ -23,7 +23,7 @@ namespace Gambler.Bot.Core.Sites
         DateTime lastupdate = new DateTime();
         HttpClient Client;// = new HttpClient { BaseAddress = new Uri("https://api.primedice.com/api/") };
         HttpClientHandler ClientHandlr;
-        public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "DASH", "GAS", "Bch", "STRAT", "PPC", "PLAY", "LTC", "XMR", "ETC" };
+        public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "GAS", "Bch", "PLAY", "LTC", "XMR", "ETC","USDC","USDT","SOL","BNB","POL","PEPE","SHIB", };
         string CurrenyHash = "";
         public CryptoGames(ILogger logger) : base(logger)
         {
@@ -31,7 +31,7 @@ namespace Gambler.Bot.Core.Sites
             this.MaxRoll = 99.999m;
             this.SiteAbbreviation = "CG";
             this.SiteName = "CryptoGames";
-            this.SiteURL = "https://www.crypto-games.net?i=KaSwpL1Bky";
+            this.SiteURL = "https://www.crypto.games?i=KaSwpL1Bky";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -46,7 +46,7 @@ namespace Gambler.Bot.Core.Sites
             this.Currencies = sCurrencies;
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
-            this.DiceBetURL = "https://www.crypto-games.net/fair.aspx?coin=BTC&type=3&id={0}";
+            this.DiceBetURL = "https://www.crypto.games/fair.aspx?coin=BTC&type=3&id={0}";
             this.Edge = 0.8m;
             NonceBased = true;
         }

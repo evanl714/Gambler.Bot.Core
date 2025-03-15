@@ -24,8 +24,11 @@ namespace Gambler.Bot.Core.Sites
         long uid = 0;
         DateTime lastupdate = new DateTime();
         HttpClient Client;
-        HttpClientHandler ClientHandlr;
-        public static string[] cCurrencies = new string[] { "BTC", "ETH", "LTC", "DOGE", "DASH", "BCH", "XMR", "XRP", "ETC", "BTG", "XLM", "ZEC" };
+        HttpClientHandler ClientHandlr;//
+        public static string[] cCurrencies = new string[] { "USDT", "BTC", "LTC", "TRX", "DECOY", "DOGE", "XRP", "ETH", "XLM", 
+            "BCH","BNB","SHIB","USDC","ADA","DASH","SOL","ATOM","ETC","EOS","XMR","BTTC","POL","ZEC","DOT","RVN","LINK","DAI",
+            "TUSD","AVAX","NEAR","ZEN","AAVE","ENA","UNI","TON","FDUSD","TRUMP","WBTC","INR","PKR","USD","VND","GHS","KZT","BDT",
+        "KGS","CAD","UZS","AZN","CLP","IDR","KES","MXN","MYR","NGN","THB"};
         QuackSeed currentseed = null;
 
         public DuckDice(ILogger logger) : base(logger)

@@ -31,7 +31,7 @@ namespace Gambler.Bot.Core.Sites
         DateTime lastupdate = new DateTime();
         HttpClient Client;
         public static string[] sCurrencies = new string[] { "ada", "arb", "avax", "bch", "bnb", "brl", "btc", "btg", "btslr", "busd", "dai", "dash", "dgb", "doge", "eos", "etc", "eth", "ethw", "fdusd","link"
-        ,"ltc","matic","neo","op","qtum","shib","sol","ton","trx","usdc","usdt","xlm","xrp","zec"};
+        ,"ltc","matic","neo","op","pol","qtum","shib","sol","ton","trx","usdc","usdt","xlm","xrp","zec"};
         HttpClientHandler ClientHandlr;
 
         public Bitsler(ILogger logger):base(logger)

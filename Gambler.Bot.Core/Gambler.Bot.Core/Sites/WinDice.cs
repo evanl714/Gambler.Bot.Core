@@ -46,7 +46,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = false;
             this.CanVerify = false;
-            this.Currencies = new string[] { "btc", "eth", "ltc", "doge" };
+            this.Currencies = new string[] { "USDT","BTC","ETH","TRX","LTC","DOGE","BCH","XRP","BNB" };
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://windice.io/api/v1/api/getBet?hash={0}";

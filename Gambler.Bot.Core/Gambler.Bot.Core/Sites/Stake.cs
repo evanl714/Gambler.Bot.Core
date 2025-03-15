@@ -48,7 +48,8 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
-            this.Currencies = new string[] { "Btc", "Ltc", "Eth", "Doge", "Bch" };
+            this.Currencies = new string[] { "JPY","BRL","CAD","IDR","INR","BTC","ETH","LTC","USDT","SOL","DOGE","BCH",
+            "XRP","TRX","EOS","BNB","USDC","APE","BUSD","CRO","DAI","LINK","SAND","SHIB","UNI","POl"};
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://stake.com/bet/{0}";

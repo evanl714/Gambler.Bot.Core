@@ -48,7 +48,8 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
-            this.Currencies = new string[] { "Btc", "Ltc", "Eth", "Doge", "Bch", "XRP", "TRX" };
+            this.Currencies = new string[] { "APE","BTC","ETH","BCH","EOS","BNB","BUSD","CRO","DAI","DOGE","LINK","LTC","POL","SAND","SHIB","SOL","TRUMP",
+                "TRX","UNI","USDC","XRP","USDT", };
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://primedice.com/bet/{0}";
