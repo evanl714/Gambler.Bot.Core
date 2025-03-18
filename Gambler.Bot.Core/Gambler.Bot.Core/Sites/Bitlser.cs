@@ -355,7 +355,7 @@ devise:btc*/
         public override int _TimeToBet(PlaceBet BetDetails)
         {
             //return true;
-            decimal amount = BetDetails.TotalAmount;
+            decimal amount = BetDetails.Amount;
             int type_delay = 0;
 
             if (CurrentCurrency.ToLower() == "btc")

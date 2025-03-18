@@ -310,8 +310,8 @@ namespace Gambler.Bot.Core.Sites
 
                     CrashBet bet = new CrashBet
                     {
-                        TotalAmount = (decimal)LastBet.TotalAmount,
-                        Profit = cashedout? LastBet.Payout * LastBet.TotalAmount - LastBet.TotalAmount: - (decimal)LastBet.TotalAmount,                        
+                        TotalAmount = (decimal)LastBet.Amount,
+                        Profit = cashedout? LastBet.Payout * LastBet.Amount - LastBet.Amount: - (decimal)LastBet.Amount,                        
                         Currency = CurrentCurrency,
                         DateValue = DateTime.Now,
                         BetID = GameId != "" ? GameId : Guid.NewGuid().ToString(),                        
@@ -372,11 +372,11 @@ namespace Gambler.Bot.Core.Sites
 
                             if (guid != null)
                             {
-                                message = string.Format("Game running - {0:0.00000000} at {1:0.0000} - {2:0.00}x", LastBet.TotalAmount, LastBet.Payout, mult / 100);
+                                message = string.Format("Game running - {0:0.00000000} at {1:0.0000} - {2:0.00}x", LastBet.Amount, LastBet.Payout, mult / 100);
                             }
                             else
                             {
-                                message = string.Format("Game running - Cashed out - {2:0.00}x", LastBet.TotalAmount, LastBet.Payout, mult / 100);
+                                message = string.Format("Game running - Cashed out - {2:0.00}x", LastBet.Amount, LastBet.Payout, mult / 100);
                             }
 
                             callGameMessage(new CrashMessage(message, CrashMessageType.Tick, 0 ));//need to get the value from the message
@@ -405,7 +405,7 @@ namespace Gambler.Bot.Core.Sites
         {
             if (betsOpen && Sock.State == WebSocketState.Open)
             {
-                decimal amount = Math.Round(BetDetails.TotalAmount, 6);
+                decimal amount = Math.Round(BetDetails.Amount, 6);
 
                 decimal payout = BetDetails.Payout;
                 decimal returna = payout * 100;

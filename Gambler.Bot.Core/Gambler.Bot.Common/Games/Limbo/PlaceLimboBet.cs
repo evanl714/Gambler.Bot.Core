@@ -5,10 +5,7 @@ namespace Gambler.Bot.Common.Games.Limbo
 {
     public class PlaceLimboBet : PlaceBet
     {
-        /// <summary>
-        /// Amount to be bet
-        /// </summary>
-        public decimal Amount { get; set; }
+        
         /// <summary>
         /// Bet high when true, low when false
         /// </summary>

@@ -3,6 +3,7 @@ using Gambler.Bot.Common.Events;
 using Gambler.Bot.Common.Games;
 using Gambler.Bot.Common.Games.Crash;
 using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.Limbo;
 using Gambler.Bot.Common.Games.Plinko;
 using Gambler.Bot.Common.Games.Roulette;
 using Gambler.Bot.Common.Helpers;
@@ -294,7 +295,7 @@ namespace Gambler.Bot.Core.Sites
                 }
                 if (BetDetails is PlaceCrashBet crashBet && this is iCrash crashsite)
                 {
-                    if (crashBet.TotalAmount < 0)
+                    if (crashBet.Amount < 0)
                     {
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
@@ -303,7 +304,7 @@ namespace Gambler.Bot.Core.Sites
                 }
                 if (BetDetails is PlacePlinkoBet plinkoBet && this is iPlinko PlinkoSite)
                 {
-                    if (plinkoBet.TotalAmount < 0)
+                    if (plinkoBet.Amount < 0)
                     {
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
@@ -312,12 +313,21 @@ namespace Gambler.Bot.Core.Sites
                 }
                 if (BetDetails is PlaceRouletteBet rouletteBet && this is iRoulette RouletteSite)
                 {
-                    if (rouletteBet.TotalAmount < 0)
+                    if (rouletteBet.Amount < 0)
                     {
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
                     }
                     result = await RouletteSite.PlaceRouletteBet(BetDetails as PlaceRouletteBet);
+                }
+                if (BetDetails is PlaceLimboBet limbobet && this is iLimbo limbosite)
+                {
+                    if (limbobet.Amount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    result = await limbosite.PlaceLimboBet(limbobet);
                 }
             });
             return result;

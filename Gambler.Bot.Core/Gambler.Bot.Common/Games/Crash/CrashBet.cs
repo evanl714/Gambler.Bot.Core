@@ -17,11 +17,12 @@ namespace Gambler.Bot.Common.Games.Crash
         public long Nonce { get; set; }
         public string? ServerHash { get; set; }
         public string? ServerSeed { get; set; }
+        public decimal Amount { get; set; }
 
 
         public override PlaceBet CreateRetry()
         {
-            return new PlaceCrashBet { Payout = Payout, TotalAmount = TotalAmount };
+            return new PlaceCrashBet { Payout = Payout, Amount = TotalAmount };
         }
 
 

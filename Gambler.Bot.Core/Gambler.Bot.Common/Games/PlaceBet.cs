@@ -4,8 +4,9 @@
     {
         public string GUID { get; set; }
 
-        public virtual decimal TotalAmount { get { return 0; } set { } }
+        
         public decimal BetDelay { get; set; }
+        public decimal Amount { get; set; }
 
     }
 }
