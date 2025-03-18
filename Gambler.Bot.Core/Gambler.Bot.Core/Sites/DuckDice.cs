@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -31,10 +32,12 @@ namespace Gambler.Bot.Core.Sites
         "KGS","CAD","UZS","AZN","CLP","IDR","KES","MXN","MYR","NGN","THB"};
         QuackSeed currentseed = null;
 
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public DuckDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "DD";
             this.SiteName = "DuckDice";
             this.SiteURL = "https://duckdice.io/?c=53ea652da4";
@@ -53,7 +56,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://duckdice.io/Bets/{0}";
-            this.Edge = 1m;
+            //this.Edge = 1m;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 

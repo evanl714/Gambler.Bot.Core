@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -28,6 +29,8 @@ namespace Gambler.Bot.Core.Sites
         HttpClientHandler ClientHandlr;        
         string URL = "https://wolf.bet";
 
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public WolfBet(ILogger logger) : base(logger)
         {
 
@@ -37,7 +40,7 @@ namespace Gambler.Bot.Core.Sites
         void configure()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "WB";
             this.SiteName = "Wolf.Bet";
             this.SiteURL = "https://wolf.bet?c=Seuntjie";
@@ -57,7 +60,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             this.CurrentCurrency = "btc";
             this.DiceBetURL = "https://bit-exo.com/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
 
         }
@@ -195,8 +199,8 @@ namespace Gambler.Bot.Core.Sites
                     amount = BetDetails.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo),
                     currency =CurrentCurrency,
                     rule = BetDetails.High ? "over" : "under",
-                    multiplier = ((100m - Edge) / tmpchance).ToString("0.####", System.Globalization.NumberFormatInfo.InvariantInfo),
-                    bet_value = (BetDetails.High ? MaxRoll - tmpchance : tmpchance).ToString("0.##", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    multiplier = ((100m - DiceSettings.Edge) / tmpchance).ToString("0.####", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    bet_value = (BetDetails.High ? DiceSettings.MaxRoll - tmpchance : tmpchance).ToString("0.##", System.Globalization.NumberFormatInfo.InvariantInfo),
                     game = "dice"
                 };
                 string LoginString = JsonSerializer.Serialize<WolfPlaceBet>(tmp);
@@ -219,7 +223,7 @@ namespace Gambler.Bot.Core.Sites
                         {
                            
                             TotalAmount = decimal.Parse(result.bet.amount, System.Globalization.NumberFormatInfo.InvariantInfo),
-                            Chance = BetDetails.High ? MaxRoll - decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo) : decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Chance = BetDetails.High ? DiceSettings.MaxRoll - decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo) : decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo),
                             ClientSeed = result.bet.user_seed,
                             DateValue = DateTime.Now,
                             Currency = CurrentCurrency,
@@ -232,7 +236,7 @@ namespace Gambler.Bot.Core.Sites
                             ServerHash = result.bet.server_seed_hashed
                         };
                         Stats.Bets++;
-                        bool Win = (((bool)BetDetails.High ? tmpRsult.Roll > (decimal)MaxRoll - (decimal)(tmpRsult.Chance) : (decimal)tmpRsult.Roll < (decimal)(tmpRsult.Chance)));
+                        bool Win = (((bool)BetDetails.High ? tmpRsult.Roll > (decimal)DiceSettings.MaxRoll - (decimal)(tmpRsult.Chance) : (decimal)tmpRsult.Roll < (decimal)(tmpRsult.Chance)));
                         if (Win)
                             Stats.Wins++;
                         else Stats.Losses++;

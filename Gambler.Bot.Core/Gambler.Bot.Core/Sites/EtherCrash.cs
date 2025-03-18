@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Crash;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -33,7 +34,7 @@ namespace Gambler.Bot.Core.Sites
         public EtherCrash(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
-            this.MaxRoll = 99.99999m;
+            //this.MaxRoll = 99.99999m;
             this.SiteAbbreviation = "EC";
             this.SiteName = "EtherCrash";
             this.SiteURL = "https://EtherCrash.io";
@@ -52,7 +53,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://EtherCrash.io/{0}";
-            this.Edge = 1;
+            CrashSettings = new CrashConfig { Edge = 1, IsMultiplayer = true };
+            //this.Edge = 1;
         }
         public override void SetProxy(ProxyDetails ProxyInfo)
         {
@@ -260,6 +262,7 @@ namespace Gambler.Bot.Core.Sites
                 }
             }
         }
+        CancellationTokenSource src;
 
         private void Sock_Closed(object sender, EventArgs e)
         {
@@ -270,6 +273,7 @@ namespace Gambler.Bot.Core.Sites
         bool betsOpen;
         bool cashedout = false;
         string GameId = "";
+        CrashBet CurrentBet = null; 
         private void Sock_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
             if (e.Message == "3probe")
@@ -290,12 +294,15 @@ namespace Gambler.Bot.Core.Sites
                     this.guid = "";
                     //open betting for user
                     betsOpen = true;
-                    callGameMessage("Game starting - waiting for bet");
+                    //callGameMessage("Game starting - waiting for bet");
+                    callGameMessage(new CrashMessage("Game starting - waiting for bet", CrashMessageType.Starting, 0));
                 }
                 else if (e.Message.StartsWith("42[\"game_started\","))
                 {
                     //close betting and wait for result
+
                     betsOpen = false;
+                    callGameMessage(new CrashMessage("Game started", CrashMessageType.Started, 0));
                 }
                 else if (e.Message.StartsWith("42[\"game_crash\",") && guid != "")
                 {
@@ -323,6 +330,9 @@ namespace Gambler.Bot.Core.Sites
                     Stats.Bets++;
                     guid = "";
                     callBetFinished(bet);
+                    CurrentBet = bet;
+                    src.Cancel();
+                    callGameMessage(new CrashMessage("Crash", CrashMessageType.Crash, 0));//need to get the crash value from the message
                     //Parent.updateStatus("Game crashed - Waiting for next game");
                 }
                 else if (e.Message.StartsWith("42[\"cashed_out\"") && guid != "")
@@ -332,24 +342,7 @@ namespace Gambler.Bot.Core.Sites
                     if (e.Message.Contains("\"" + username + "\""))
                     {
                         cashedout = true;
-                        /*CrashBet bet = new CrashBet
-                        {
-                            TotalAmount = (decimal)LastBet.TotalAmount,
-                            Profit = LastBet.Payout * LastBet.TotalAmount - LastBet.TotalAmount,                            
-                            Currency = CurrentCurrency,
-                            DateValue = DateTime.Now,
-                            BetID = GameId != "" ? GameId : Guid.NewGuid().ToString(),
-                            Guid = guid,
-                            Payout = LastBet.Payout,
-
-                        };
-                        this.guid = "";
-                        Stats.Balance += bet.Profit;
-                        Stats.Profit += bet.Profit;
-                        Stats.Wagered += LastBet.TotalAmount;
-                        Stats.Wins++;
-                        Stats.Bets++;
-                        callBetFinished(bet);*/
+                        callGameMessage(new CrashMessage("Cashed out", CrashMessageType.Cashout, 0));//need to get the cashout value from the message
                     }
                 }
                 else if (e.Message.StartsWith("430[null,{\"state"))
@@ -386,7 +379,7 @@ namespace Gambler.Bot.Core.Sites
                                 message = string.Format("Game running - Cashed out - {2:0.00}x", LastBet.TotalAmount, LastBet.Payout, mult / 100);
                             }
 
-                            callGameMessage(message);
+                            callGameMessage(new CrashMessage(message, CrashMessageType.Tick, 0 ));//need to get the value from the message
                         }
                     }
                 }
@@ -394,6 +387,9 @@ namespace Gambler.Bot.Core.Sites
         }
         int reqid = 1;
         string guid = "";
+
+        public CrashConfig CrashSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         private void Sock_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
             _logger?.LogError(e.Exception.ToString());
@@ -419,9 +415,20 @@ namespace Gambler.Bot.Core.Sites
 
                 //we need some kind of cancellation token that expires after 90 seconds or whenthe bet is finished, then this method
                 //needs to get the result of the method and then return it.
+                src = new CancellationTokenSource();
+                src.CancelAfter(new TimeSpan(0, 0, 90));
+                
+                while (!src.IsCancellationRequested)
+                {
+                    await Task.Delay(10);
+                }
 
-                throw new NotImplementedException();
+                var tmp = CurrentBet;
+                CurrentBet = null;
+                return tmp;
+                
             }
+            callError("Bets are not open. Please wait for bets to open first.", false, ErrorType.Other);
             return null;
         }
 

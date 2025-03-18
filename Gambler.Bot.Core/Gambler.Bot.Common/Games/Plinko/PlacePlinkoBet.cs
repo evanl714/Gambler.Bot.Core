@@ -1,4 +1,4 @@
-﻿namespace Gambler.Bot.Common.Games
+﻿namespace Gambler.Bot.Common.Games.Plinko
 {
     public class PlacePlinkoBet : PlaceBet
     {

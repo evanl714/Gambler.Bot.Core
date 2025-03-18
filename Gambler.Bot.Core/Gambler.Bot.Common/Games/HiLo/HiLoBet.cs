@@ -1,13 +1,13 @@
-﻿namespace Gambler.Bot.Common.Games
+﻿using System;
+using System.Linq;
+
+namespace Gambler.Bot.Common.Games.HiLo
 {
-    
-    public class PlinkoBet : Bet
+    public class HiLoBet : Bet
     {
         public override PlaceBet CreateRetry()
         {
             throw new NotImplementedException();
         }
-
-        
     }
 }

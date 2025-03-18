@@ -1,6 +1,10 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Events;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Crash;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.Plinko;
+using Gambler.Bot.Common.Games.Roulette;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Common.Interfaces;
 using Gambler.Bot.Core.Events;
@@ -99,15 +103,15 @@ namespace Gambler.Bot.Core.Sites
         /// </summary>
         public string CurrentCurrency { get; set; }
 
-        /// <summary>
+       /* /// <summary>
         /// The maximum roll allowed at the site. Usually 99.99. Used to determine whether the roll is a win
         /// </summary>
-        public decimal MaxRoll { get; protected set; }
+        public decimal MaxRoll { get; protected set; }*/
 
-        /// <summary>
+       /* /// <summary>
         /// The house edge for the site. Used to determine payout and profit for bets and simulations
         /// </summary>
-        public decimal Edge { get; protected set; }
+        public decimal Edge { get; protected set; }*/
 
         /// <summary>
         /// List of currencies supported by the site
@@ -140,18 +144,25 @@ namespace Gambler.Bot.Core.Sites
                 if (siteDetails==null)
                 {
                     siteDetails = new SiteDetails {
-                         caninvest=AutoInvest,
-                          canresetseed=CanChangeSeed,
-                           cantip=CanTip,
-                            canwithdraw=AutoWithdraw,
-                             edge=Edge,
-                              maxroll=MaxRoll,
-                               name=SiteName,
-                                siteurl=SiteURL,
-                                 tipusingname=TipUsingName,
-                                  Currencies=CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
-                                  NonceBased = NonceBased
+                        caninvest = AutoInvest,
+                        canresetseed = CanChangeSeed,
+                        cantip = CanTip,
+                        canwithdraw = AutoWithdraw,
+                        /*edge=dicese.Edge,
+                         maxroll=MaxRoll,*/
+                        name = SiteName,
+                        siteurl = SiteURL,
+                        tipusingname = TipUsingName,
+                        Currencies = CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
+                        NonceBased = NonceBased,
+                        GameSettings = new Dictionary<string, IGameConfig>()
                     };
+                    if (this is iDice dice)
+                    {
+                        SiteDetails.edge = dice.DiceSettings.Edge;
+                        SiteDetails.maxroll = dice.DiceSettings.MaxRoll;
+                        SiteDetails.GameSettings.Add("Dice", dice.DiceSettings);
+                    }
                 }
                 return siteDetails;
             }
@@ -517,7 +528,7 @@ namespace Gambler.Bot.Core.Sites
                 {
                     seed = await _GetSeed(BetID);
                     callNotify($"Got seed for bet {BetID}");
-                    callGameMessage(seed);
+                    //callGameMessage(seed);
                 });
             }
             else
@@ -593,7 +604,7 @@ namespace Gambler.Bot.Core.Sites
         public event EventHandler<GenericEventArgs> OnResetSeedFinished;
         public event EventHandler<GenericEventArgs> OnDonationFinished;
         public event EventHandler<GenericEventArgs> OnInvestFinished;
-        public event EventHandler<GenericEventArgs> OnGameMessage;
+        public event EventHandler<GameMessageEventArgs> OnGameMessage;
         public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
 
         protected void callStatsUpdated(SiteStats Stats)
@@ -606,10 +617,10 @@ namespace Gambler.Bot.Core.Sites
         protected void callBetFinished(Bet NewBet)
         {
             NewBet.Site = this.SiteName;
-            if (NewBet is DiceBet dicebet)
+            if (NewBet is DiceBet dicebet && this is iDice site)
             {
-                dicebet.IsWin = dicebet.GetWin(this.MaxRoll);
-                dicebet.CalculateWinnableType(this.MaxRoll);                
+                dicebet.IsWin = dicebet.GetWin(site.DiceSettings.MaxRoll);
+                dicebet.CalculateWinnableType(site.DiceSettings.MaxRoll);                
             }
             if (BetFinished != null)
             {
@@ -644,9 +655,9 @@ namespace Gambler.Bot.Core.Sites
                 Notify(this, new GenericEventArgs { Message = Message });
             }
         }
-        protected void callGameMessage(string Message)
+        protected void callGameMessage(IGameMessage message)
         {            
-            OnGameMessage?.Invoke(this, new GenericEventArgs { Message = Message });            
+            OnGameMessage?.Invoke(this, new GameMessageEventArgs { Message = message });            
         }
         protected void callAction(string CurrentAction)
         {

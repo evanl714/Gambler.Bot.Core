@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -36,10 +37,12 @@ namespace Gambler.Bot.Core.Sites
         Dictionary<string, string> CurrencyMap = new Dictionary<string, string>();
         string seed = "";
 
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public Bitvest(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "BV";
             this.SiteName = "Bitvest";
             this.SiteURL = "https://bitvest.io?r=46534";
@@ -64,7 +67,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency = "btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 
@@ -241,7 +245,7 @@ namespace Gambler.Bot.Core.Sites
                 decimal chance = BetDetails.Chance;
                 bool High = BetDetails.High;
 
-                decimal tmpchance = High ? MaxRoll - chance + 0.0001m : chance - 0.0001m;
+                decimal tmpchance = High ? DiceSettings.MaxRoll - chance + 0.0001m : chance - 0.0001m;
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
 
                 pairs.Add(new KeyValuePair<string, string>("bet", (amount).ToString(System.Globalization.NumberFormatInfo.InvariantInfo)));
@@ -284,7 +288,7 @@ namespace Gambler.Bot.Core.Sites
                         resbet.Guid = BetDetails.GUID;
                         Stats.Bets++;
                         lasthash = tmp.server_hash;
-                        bool Win = (((bool)High ? (decimal)tmp.game_result.roll > (decimal)MaxRoll - (decimal)(chance) : (decimal)tmp.game_result.roll < (decimal)(chance)));
+                        bool Win = (((bool)High ? (decimal)tmp.game_result.roll > (decimal)DiceSettings.MaxRoll - (decimal)(chance) : (decimal)tmp.game_result.roll < (decimal)(chance)));
                         if (Win)
                             Stats.Wins++;
                         else Stats.Losses++;

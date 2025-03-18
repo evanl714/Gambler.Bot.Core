@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -33,7 +34,7 @@ namespace Gambler.Bot.Core.Sites
         public PrimeDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "PD";
             this.SiteName = "PrimeDice";
             this.SiteURL = "https://primedice.com?c=Seuntjie";
@@ -53,7 +54,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://primedice.com/bet/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 
@@ -197,6 +199,8 @@ namespace Gambler.Bot.Core.Sites
         int retrycount = 0;
         DateTime Lastbet = DateTime.Now;
 
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
@@ -208,7 +212,7 @@ namespace Gambler.Bot.Core.Sites
                 {
                     Thread.Sleep((int)(500.0 - (DateTime.Now - Lastbet).TotalMilliseconds));
                 }*/
-                decimal tmpchance = High ? MaxRoll - chance : chance;
+                decimal tmpchance = High ? DiceSettings.MaxRoll - chance : chance;
 
                 //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + CurrentCurrency.ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
                 //var primediceRoll = GQLClient.SendMutationAsync<dynamic>(new GraphQLRequest { Query = query }).Result;
@@ -262,7 +266,7 @@ namespace Gambler.Bot.Core.Sites
                         if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
                     DiceBet tmpbet = tmp.ToBet();
-                    tmpbet.IsWin = tmpbet.GetWin(this.MaxRoll);
+                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
                     this.Stats.Bets++; ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0; ;
                     this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;

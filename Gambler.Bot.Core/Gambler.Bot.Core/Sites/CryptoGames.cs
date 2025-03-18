@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -25,10 +26,13 @@ namespace Gambler.Bot.Core.Sites
         HttpClientHandler ClientHandlr;
         public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "GAS", "Bch", "PLAY", "LTC", "XMR", "ETC","USDC","USDT","SOL","BNB","POL","PEPE","SHIB", };
         string CurrenyHash = "";
+
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public CryptoGames(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
-            this.MaxRoll = 99.999m;
+            //this.MaxRoll = 99.999m;
             this.SiteAbbreviation = "CG";
             this.SiteName = "CryptoGames";
             this.SiteURL = "https://www.crypto.games?i=KaSwpL1Bky";
@@ -47,8 +51,9 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://www.crypto.games/fair.aspx?coin=BTC&type=3&id={0}";
-            this.Edge = 0.8m;
+            //this.Edge = 0.8m;
             NonceBased = true;
+            DiceSettings = new DiceConfig() { Edge = 0.8m, MaxRoll = 99.99m };
         }
 
 
@@ -140,7 +145,7 @@ namespace Gambler.Bot.Core.Sites
         {
 
             string Clients = GenerateNewClientSeed();
-            decimal payout = decimal.Parse(((100m - Edge) / (decimal)BetDetails.Chance).ToString("0.0000"));
+            decimal payout = decimal.Parse(((100m - DiceSettings.Edge) / (decimal)BetDetails.Chance).ToString("0.0000"));
             cgPlaceBet tmpPlaceBet = new cgPlaceBet() { Bet = BetDetails.Amount, ClientSeed = Clients, UnderOver = BetDetails.High, Payout = (decimal)payout };
 
             string post = JsonSerializer.Serialize<cgPlaceBet>(tmpPlaceBet);
@@ -192,9 +197,9 @@ namespace Gambler.Bot.Core.Sites
                     ServerSeed = Response.ServerSeed
                 };
                 if (bet.High)
-                    bet.Chance = (decimal)MaxRoll - bet.Chance;
+                    bet.Chance = (decimal)DiceSettings.MaxRoll - bet.Chance;
                 this.CurrenyHash = Response.NextServerSeedHash;
-                bool Win = (((bool)bet.High ? (decimal)bet.Roll > (decimal)MaxRoll - (decimal)(bet.Chance) : (decimal)bet.Roll < (decimal)(bet.Chance)));
+                bool Win = (((bool)bet.High ? (decimal)bet.Roll > (decimal)DiceSettings.MaxRoll - (decimal)(bet.Chance) : (decimal)bet.Roll < (decimal)(bet.Chance)));
                 if (Win)
                     Stats.Wins++;
                 else

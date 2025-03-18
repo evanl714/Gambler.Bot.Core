@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Gambler.Bot.Common.Games.Dice;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Gambler.Bot.Common.Helpers
@@ -18,6 +19,7 @@ namespace Gambler.Bot.Common.Helpers
         public string[] Currencies { get; set; }
         public string[] Games { get; set; }
         public bool NonceBased { get; set; }
+        public Dictionary<string,IGameConfig> GameSettings { get; set; }
 
     }
 }

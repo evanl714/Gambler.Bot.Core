@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -34,13 +35,15 @@ namespace Gambler.Bot.Core.Sites
         ,"ltc","matic","neo","op","pol","qtum","shib","sol","ton","trx","usdc","usdt","xlm","xrp","zec"};
         HttpClientHandler ClientHandlr;
 
+        public DiceConfig DiceSettings { get; set; }
+
         public Bitsler(ILogger logger):base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("API Key", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
             Currencies = sCurrencies;
             DiceBetURL = "https://www.bitsler.com/?ref=seuntjie/";
             SiteURL = "https://www.bitsler.com/?ref=seuntjie";
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "BS";
             this.SiteName = "Bitsler";
             this.SiteURL = "https://bitvest.io?r=46534";
@@ -59,7 +62,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             this.CurrentCurrency = "btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll= 99.99m };
         }
 
 
@@ -99,7 +103,7 @@ devise:btc*/
                 //pairs.Add(new KeyValuePair<string, string>("type", "dice"));
                 pairs.Add(new KeyValuePair<string, string>("amount", BetObj.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("over", BetObj.High.ToString().ToLower()));
-                pairs.Add(new KeyValuePair<string, string>("target", !BetObj.High ? BetObj.Chance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) : (MaxRoll - BetObj.Chance).ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo)));
+                pairs.Add(new KeyValuePair<string, string>("target", !BetObj.High ? BetObj.Chance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) : (DiceSettings.MaxRoll - BetObj.Chance).ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
                 pairs.Add(new KeyValuePair<string, string>("api_key", "0b2edbfe44e98df79665e52896c22987445683e78"));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);

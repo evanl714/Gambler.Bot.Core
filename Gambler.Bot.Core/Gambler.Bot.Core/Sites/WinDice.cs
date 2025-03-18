@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -28,10 +29,12 @@ namespace Gambler.Bot.Core.Sites
         Random R = new Random();
         WDGetSeed currentseed;
 
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public WinDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "WD";
             this.SiteName = "WinDice";
             this.SiteURL = "https://windice.io/?r=08406hjdd";
@@ -50,7 +53,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://windice.io/api/v1/api/getBet?hash={0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 
@@ -61,8 +65,8 @@ namespace Gambler.Bot.Core.Sites
             decimal high = 0;
             if (BetDetails.High)
             {
-                high = MaxRoll * 100;
-                low = (MaxRoll - BetDetails.Chance) * 100 + 1;
+                high = DiceSettings.MaxRoll * 100;
+                low = (DiceSettings.MaxRoll - BetDetails.Chance) * 100 + 1;
             }
             else
             {
@@ -137,7 +141,7 @@ namespace Gambler.Bot.Core.Sites
                         ServerHash = currentseed.hash
                     };
                     Stats.Bets++;
-                    bool Win = (((bool)BetDetails.High ? (decimal)Result.Roll > (decimal)MaxRoll - (decimal)(BetDetails.Chance) : (decimal)Result.Roll < (decimal)(BetDetails.Chance)));
+                    bool Win = (((bool)BetDetails.High ? (decimal)Result.Roll > (decimal)DiceSettings.MaxRoll - (decimal)(BetDetails.Chance) : (decimal)Result.Roll < (decimal)(BetDetails.Chance)));
                     if (Win)
                         Stats.Wins++;
                     else Stats.Losses++;

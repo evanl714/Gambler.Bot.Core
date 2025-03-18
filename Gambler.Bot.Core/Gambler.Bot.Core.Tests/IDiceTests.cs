@@ -1,5 +1,6 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Core.Events;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Tests.Code;
@@ -231,18 +232,19 @@ namespace Gambler.Bot.Core.Tests
             {
                 Task.Delay(1000).Wait();
             }
+            var dicesettings = (_site as iDice).DiceSettings;
             Assert.True(finished);
             Assert.Null(error);
             Assert.Equal(amount, resultingbet.TotalAmount);
             Assert.Equal(chance, resultingbet.Chance);
             Assert.Equal(high, resultingbet.High);
-            bool ShouldBeWin = (((bool)high ? (decimal)resultingbet.Roll > (decimal)_site.MaxRoll - (decimal)(chance) : (decimal)resultingbet.Roll < (decimal)(chance)));
+            bool ShouldBeWin = (((bool)high ? (decimal)resultingbet.Roll > (decimal)dicesettings.MaxRoll - (decimal)(chance) : (decimal)resultingbet.Roll < (decimal)(chance)));
             Assert.Equal(ShouldBeWin, resultingbet.IsWin);
-            Assert.Equal(ShouldBeWin, resultingbet.GetWin(_site.MaxRoll));
+            Assert.Equal(ShouldBeWin, resultingbet.GetWin(dicesettings.MaxRoll));
             if (resultingbet.IsWin)
             {
                 Assert.Equal(balance+resultingbet.Profit, _site.Stats.Balance);
-                decimal AssumedProfit = Math.Floor(((((100 - _site.Edge) / chance) * amount)-amount)*100000000m)/100000000m;
+                decimal AssumedProfit = Math.Floor(((((100 - dicesettings.Edge) / chance) * amount)-amount)*100000000m)/100000000m;
                 Assert.Equal(AssumedProfit.ToString("0.00000000"), resultingbet.Profit.ToString("0.00000000"));
             }
             else

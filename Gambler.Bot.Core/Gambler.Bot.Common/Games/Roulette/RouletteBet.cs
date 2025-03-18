@@ -1,4 +1,4 @@
-﻿namespace Gambler.Bot.Common.Games
+﻿namespace Gambler.Bot.Common.Games.Roulette
 {
     public class RouletteBet : Bet
     {
@@ -7,10 +7,10 @@
             throw new NotImplementedException();
         }
 
-        
+
     }
 
-    public class PlaceRouletteBet:PlaceBet
+    public class PlaceRouletteBet : PlaceBet
     {
 
     }

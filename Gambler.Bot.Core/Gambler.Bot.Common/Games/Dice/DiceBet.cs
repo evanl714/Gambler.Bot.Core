@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Gambler.Bot.Common.Games
+namespace Gambler.Bot.Common.Games.Dice
 {
-    public class DiceBet:Bet
+    public class DiceBet : Bet
     {
-       
+
         public decimal Roll { get; set; }
         public bool High { get; set; }
         public decimal Chance { get; set; }
@@ -22,14 +22,14 @@ namespace Gambler.Bot.Common.Games
             return new PlaceDiceBet(TotalAmount, High, Chance);
         }
 
-       public bool GetWin(decimal maxRoll)
+        public bool GetWin(decimal maxRoll)
         {
-            return (((bool)High ? (decimal)Roll > (decimal)maxRoll - (decimal)(Chance) : (decimal)Roll < (decimal)(Chance)));
+            return High ? Roll > maxRoll - Chance : Roll < Chance;
         }
 
         public int CalculateWinnableType(decimal maxroll)
         {
-            if (Chance>=50 && Roll > maxroll - Chance && Roll < Chance)
+            if (Chance >= 50 && Roll > maxroll - Chance && Roll < Chance)
             {
                 WinnableType = 1;
             }

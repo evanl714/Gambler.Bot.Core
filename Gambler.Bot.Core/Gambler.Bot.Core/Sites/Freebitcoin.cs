@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -30,7 +31,7 @@ namespace Gambler.Bot.Core.Sites
         public Freebitcoin(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
-            this.MaxRoll = 100m;
+            //this.MaxRoll = 100m;
             this.SiteAbbreviation = "FBtc";
             this.SiteName = "FreeBitcoin";
             this.SiteURL = "https://freebitco.in/?r=2310118";
@@ -50,7 +51,8 @@ namespace Gambler.Bot.Core.Sites
             SupportedGames = new Games[] { Games.Dice };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://freebitco.in/?r=2310118&bet={0}";
-            this.Edge = 5m;
+            //this.Edge = 5m;
+            DiceSettings = new DiceConfig() { Edge = 5, MaxRoll = 100m };
         }
 
 
@@ -209,6 +211,8 @@ namespace Gambler.Bot.Core.Sites
         }
         string clientseed = "";
 
+        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public override string GenerateNewClientSeed()
         {
             string seed = "";
@@ -231,7 +235,7 @@ namespace Gambler.Bot.Core.Sites
                 
                 clientseed = GenerateNewClientSeed();
                 string Params = string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "m={0}&client_seed={1}&jackpot=0&stake={2}&multiplier={3}&rand={5}&csrf_token={4}",
-                    High ? "hi" : "lo", clientseed, amount, (100m - Edge) / chance, csrf, Random.Next(0, 9999999) / 10000000);
+                    High ? "hi" : "lo", clientseed, amount, (100m - DiceSettings.Edge) / chance, csrf, Random.Next(0, 9999999) / 10000000);
 
                 var betresult =await Client.GetAsync("https://freebitco.in/cgi-bin/bet.pl?" + Params);
                 if (betresult.IsSuccessStatusCode)
@@ -284,7 +288,7 @@ namespace Gambler.Bot.Core.Sites
                             Roll = decimal.Parse(msgs[2], System.Globalization.NumberFormatInfo.InvariantInfo) / 100.0m
 
                         };
-                        tmp.IsWin = tmp.GetWin(this.MaxRoll);
+                        tmp.IsWin = tmp.GetWin(this.DiceSettings.MaxRoll);
                         Stats.Balance = decimal.Parse(msgs[3], System.Globalization.NumberFormatInfo.InvariantInfo);
                         if (msgs[1] == "w")
                             Stats.Wins++;

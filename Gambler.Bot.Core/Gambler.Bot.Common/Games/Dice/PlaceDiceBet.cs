@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Gambler.Bot.Common.Games
+namespace Gambler.Bot.Common.Games.Dice
 {
     public class PlaceDiceBet : PlaceBet
     {
@@ -24,14 +24,14 @@ namespace Gambler.Bot.Common.Games
 
         public PlaceDiceBet(decimal Amount, bool High, decimal Chance, string Guid)
         {
-            this.Amount = Amount;
+            TotalAmount = this.Amount = Amount;
             this.High = High;
             this.Chance = Chance;
-            this.GUID = GUID;
+            GUID = GUID;
         }
         public PlaceDiceBet(decimal Amount, bool High, decimal Chance)
         {
-            this.Amount = Amount;
+            TotalAmount = this.Amount = Amount;
             this.High = High;
             this.Chance = Chance;
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Gambler.Bot.Common.Games
+namespace Gambler.Bot.Common.Games.Crash
 {
     public class PlaceCrashBet : PlaceBet
     {
