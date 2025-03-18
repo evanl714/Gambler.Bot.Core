@@ -9,7 +9,7 @@ namespace Gambler.Bot.Common.Games.Plinko
 
     public class PlinkoConfig : IGameConfig
     {
-        public decimal Edge { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public decimal Edge { get; set; }
     }
 
 }

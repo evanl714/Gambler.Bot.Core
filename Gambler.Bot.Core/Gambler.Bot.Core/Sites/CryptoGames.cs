@@ -27,7 +27,7 @@ namespace Gambler.Bot.Core.Sites
         public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "GAS", "Bch", "PLAY", "LTC", "XMR", "ETC","USDC","USDT","SOL","BNB","POL","PEPE","SHIB", };
         string CurrenyHash = "";
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public CryptoGames(ILogger logger) : base(logger)
         {

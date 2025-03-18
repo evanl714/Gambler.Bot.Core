@@ -32,7 +32,7 @@ namespace Gambler.Bot.Core.Sites
         "KGS","CAD","UZS","AZN","CLP","IDR","KES","MXN","MYR","NGN","THB"};
         QuackSeed currentseed = null;
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public DuckDice(ILogger logger) : base(logger)
         {

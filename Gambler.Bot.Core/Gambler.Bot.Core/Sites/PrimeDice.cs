@@ -199,7 +199,7 @@ namespace Gambler.Bot.Core.Sites
         int retrycount = 0;
         DateTime Lastbet = DateTime.Now;
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {

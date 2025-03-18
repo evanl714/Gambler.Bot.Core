@@ -12,5 +12,6 @@ namespace Gambler.Bot.Common.Games.Limbo
     public interface iLimbo
     {
         public Task<LimboBet> PlaceLimboBet(PlaceLimboBet bet);
+        public LimboConfig LimboSettings { get; set; }
     }
 }

@@ -29,7 +29,7 @@ namespace Gambler.Bot.Core.Sites
         Random R = new Random();
         WDGetSeed currentseed;
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public WinDice(ILogger logger) : base(logger)
         {

@@ -388,7 +388,7 @@ namespace Gambler.Bot.Core.Sites
         int reqid = 1;
         string guid = "";
 
-        public CrashConfig CrashSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public CrashConfig CrashSettings { get; set; }
 
         private void Sock_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {

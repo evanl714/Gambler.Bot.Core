@@ -1,6 +1,7 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
 using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.Limbo;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
@@ -12,11 +13,13 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitsler;
 
 namespace Gambler.Bot.Core.Sites
 {
-    public class Stake:BaseSite, iDice
+    public class Stake:BaseSite, iDice, iLimbo
     {
         protected string URL = "https://primedice.com/_api/graphql";
         protected string RolName = "primediceRoll";
@@ -51,7 +54,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanVerify = true;
             this.Currencies = new string[] { "JPY","BRL","CAD","IDR","INR","BTC","ETH","LTC","USDT","SOL","DOGE","BCH",
             "XRP","TRX","EOS","BNB","USDC","APE","BUSD","CRO","DAI","LINK","SAND","SHIB","UNI","POl"};
-            SupportedGames = new Games[] { Games.Dice };
+            SupportedGames = new Games[] { Games.Dice, Games.Limbo };
             CurrentCurrency ="btc";
             this.DiceBetURL = "https://stake.com/bet/{0}";
             //this.Edge = 2;
@@ -61,6 +64,7 @@ namespace Gambler.Bot.Core.Sites
             GameName = "BetGameDice";
             StatGameName = "dice";
             DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 100m };
+            LimboSettings = new LimboConfig() { Edge = 1, MinChance = 0.00099m };
         }
     
 
@@ -206,7 +210,8 @@ namespace Gambler.Bot.Core.Sites
             int retrycount = 0;
             DateTime Lastbet = DateTime.Now;
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
+        public LimboConfig LimboSettings { get; set; }
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
             {
@@ -364,8 +369,109 @@ namespace Gambler.Bot.Core.Sites
 
             }
 
+        public async Task<LimboBet> PlaceLimboBet(PlaceLimboBet BetDetails)
+        {
+            try
+            {
+                decimal amount = BetDetails.Amount;
+                decimal payout = BetDetails.Payout;
+                
+                /*if (amount < 10000 && (DateTime.Now - Lastbet).TotalMilliseconds < 500)
+                {
+                    Thread.Sleep((int)(500.0 - (DateTime.Now - Lastbet).TotalMilliseconds));
+                }*/
+                
 
-            public class Sender
+                //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + CurrentCurrency.ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
+                //var primediceRoll = GQLClient.SendMutationAsync<dynamic>(new GraphQLRequest { Query = query }).Result;
+                GraphqlRequestPayload betresult = new GraphqlRequestPayload
+                {
+                    operationName = "LimboBet",
+                    query = "mutation LimboBet($amount:Float! $multiplierTarget:Float! $currency:CurrencyEnum! $identifier:String!){limboBet(amount:$amount currency:$currency multiplierTarget:$multiplierTarget identifier:$identifier){...CasinoBet state{...CasinoGameLimbo}}}fragment CasinoBet on CasinoBet{id active payoutMultiplier amountMultiplier amount payout updatedAt currency game nonce user{id name balances{available{currency amount}}activeServerSeed{seedHash seed nonce}activeClientSeed{seed}}}fragment CasinoGameLimbo on CasinoGameLimbo{result multiplierTarget}",
+                    variables = new
+                    {
+                        amount = amount,
+                        multiplierTarget = payout,
+                        currency = base.CurrentCurrency.ToLower(),
+                        identifier = this.Random.RandomString(21)
+                    }
+                };
+                var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(betresult), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    string error = ResponsePayload.errors[0].message;
+                    ErrorType errorType = ErrorType.Unknown;
+
+                    if (error == ("Number too small."))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("Maximum bet exceeded"))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("You do not have enough balance to do that."))
+                    {
+                        errorType = ErrorType.BalanceTooLow;
+                    }
+
+                    callError(error, false, errorType);
+                    return null;
+                }
+                StakeLimboBet tmp = ResponsePayload.data.LimboBetResult;
+
+
+                Lastbet = DateTime.Now;
+                try
+                {
+
+                    lastupdate = DateTime.Now;
+                    /*foreach (Statistic x in tmp.user?.statistic)
+                    {
+                        if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
+                        {*/
+                    LimboBet tmpbet = tmp.ToBet();
+                    tmpbet.IsWin = tmpbet.GetWin();
+                    this.Stats.Bets++; ;
+                    this.Stats.Wins += tmpbet.IsWin ? 1 : 0; ;
+                    this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;
+                    this.Stats.Profit += tmpbet.Profit;
+                    this.Stats.Wagered += tmpbet.TotalAmount;
+
+                    /*}
+                }*/
+                    /*foreach (Balance x in tmp.user.balances)
+                    {
+                        if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
+                        {*/
+                    this.Stats.Balance += tmpbet.Profit;
+                    /*break;
+                }
+            }*/
+
+
+                    tmpbet.Guid = BetDetails.GUID;
+                    callBetFinished(tmpbet);
+                    retrycount = 0;
+                    return tmpbet;
+                }
+                catch (Exception e)
+                {
+                    _logger?.LogError(e.ToString());
+                    callNotify("Some kind of error happened. I don't really know graphql, so your guess as to what went wrong is as good as mine.");
+                }
+            }
+            catch (Exception e2)
+            {
+                callNotify("Error occured while trying to bet, retrying in 30 seconds. Probably.");
+                _logger?.LogError(e2.ToString());
+            }
+            return null;
+        }
+
+        public class Sender
             {
                 public string name { get; set; }
                 public string __typename { get; set; }
@@ -440,22 +546,45 @@ namespace Gambler.Bot.Core.Sites
                 public string condition { get; set; }
 
             }
-            public class RollDice
+        public class StakeBaseBet
+        {
+            public string id { get; set; }
+
+            public string iid { get; set; }
+
+            public bool active { get; set; }
+
+            public decimal amount { get; set; }
+
+            public decimal payout { get; set; }
+
+            public string createdAt { get; set; }
+
+            public string currency { get; set; }
+
+            public string game { get; set; }
+
+            public int nonce { get; set; }
+
+            public decimal payoutMultiplier { get; set; }
+
+            
+            public pdUser user { get; set; }
+
+            public pdSeed serverSeed { get; set; }
+
+            public pdSeed clientSeed { get; set; }
+
+           
+        }
+        public class RollDice:StakeBaseBet
             {
                 public RollDice primediceRoll { get; set; }
-                public string id { get; set; }
-                public string iid { get; set; }
+                
                 public decimal result { get; set; }
-                public decimal payoutMultiplier { get; set; }
-                public decimal amount { get; set; }
-                public decimal payout { get; set; }
-                public string createdAt { get; set; }
-                public string currency { get; set; }
-                public pdUser user { get; set; }
+                
                 public string __typename { get; set; }
-                public pdSeed serverSeed { get; set; }
-                public pdSeed clientSeed { get; set; }
-                public int nonce { get; set; }
+                
                 public DiceState state { get; set; }
 
                 public DiceBet ToBet()
@@ -513,7 +642,8 @@ namespace Gambler.Bot.Core.Sites
                 public RollDice diceRoll { get; set; }
                 public pdUser user { get; set; }
                 public RollDice bet { get; set; }
-            }
+                public StakeLimboBet LimboBetResult { get; set; }
+        }
 
             public class Payload
             {
@@ -529,7 +659,37 @@ namespace Gambler.Bot.Core.Sites
                 public string message { get; set; }
                 public string errorType { get; set; }
             }
-    public class RootObject
+        public class StakeLimboBet : StakeBaseBet
+        {
+            public StakeLimboState state { get; set; }
+
+            public LimboBet ToBet()
+            {
+                LimboBet bet = new LimboBet
+                {
+                    TotalAmount = amount,
+                    Payout = state.multiplierTarget,
+                    
+                    Currency = currency,
+                    DateValue = DateTime.Now,
+                    BetID = id.ToString(),
+                    Result = (decimal)state.result,
+                    ClientSeed = clientSeed.seed,
+                    ServerHash = serverSeed.seedHash,
+                    Nonce = nonce
+                };
+                bet.IsWin = bet.Result >= state.multiplierTarget;
+                bet.Profit = (bet.IsWin ? ((decimal)(base.payout - base.amount)) : ((decimal)(0.0m - base.amount)));
+                return bet;
+            }
+        }
+        public class StakeLimboState
+        {
+            public decimal result { get; set; }
+
+            public decimal multiplierTarget { get; set; }
+        }
+        public class RootObject
             {
                 public string type { get; set; }
                 public string id { get; set; }

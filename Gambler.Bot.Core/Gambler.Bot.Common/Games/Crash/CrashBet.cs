@@ -7,6 +7,11 @@ namespace Gambler.Bot.Common.Games.Crash
 {
     public class CrashBet : Bet
     {
+
+        public CrashBet()
+        {
+            Game = Games.Crash;
+        }
         public decimal Payout { get; set; }
         public decimal Crash { get; set; }
         public long Nonce { get; set; }

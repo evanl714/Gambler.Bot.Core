@@ -8,7 +8,10 @@ namespace Gambler.Bot.Common.Games.Dice
 {
     public class DiceBet : Bet
     {
-
+        public DiceBet()
+        {
+            Game = Games.Dice;
+        }
         public decimal Roll { get; set; }
         public bool High { get; set; }
         public decimal Chance { get; set; }

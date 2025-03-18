@@ -37,7 +37,7 @@ namespace Gambler.Bot.Core.Sites
         Dictionary<string, string> CurrencyMap = new Dictionary<string, string>();
         string seed = "";
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public Bitvest(ILogger logger) : base(logger)
         {

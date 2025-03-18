@@ -6,6 +6,7 @@ namespace Gambler.Bot.Common.Games
 {
     public abstract class Bet
     {
+        public Games Game { get; set; }
         public decimal TotalAmount { get; set; }
 
         public decimal Date { get; set; }

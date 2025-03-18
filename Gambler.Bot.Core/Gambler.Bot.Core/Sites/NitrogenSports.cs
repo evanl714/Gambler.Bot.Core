@@ -34,7 +34,7 @@ namespace Gambler.Bot.Core.Sites
         string link = "";
         WebSocket NSSocket = null;
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public NitrogenSports(ILogger logger) : base(logger)
         {

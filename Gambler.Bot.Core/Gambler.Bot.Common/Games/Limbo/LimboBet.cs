@@ -5,6 +5,10 @@ namespace Gambler.Bot.Common.Games.Limbo
 {
     public class LimboBet : Bet
     {
+        public LimboBet()
+        {
+            Game = Games.Limbo;
+        }
         public decimal Payout { get; set; }
         public decimal Result { get; set; }
         public long Nonce { get; set; }

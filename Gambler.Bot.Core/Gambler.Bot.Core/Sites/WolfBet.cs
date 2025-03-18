@@ -29,7 +29,7 @@ namespace Gambler.Bot.Core.Sites
         HttpClientHandler ClientHandlr;        
         string URL = "https://wolf.bet";
 
-        public DiceConfig DiceSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DiceConfig DiceSettings { get; set; }
 
         public WolfBet(ILogger logger) : base(logger)
         {

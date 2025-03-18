@@ -2,6 +2,10 @@
 {
     public class RouletteBet : Bet
     {
+        public RouletteBet()
+        {
+            Game = Games.Roulette;
+        }
         public override PlaceBet CreateRetry()
         {
             throw new NotImplementedException();
