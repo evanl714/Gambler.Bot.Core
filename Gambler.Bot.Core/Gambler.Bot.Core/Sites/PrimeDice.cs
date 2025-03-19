@@ -7,6 +7,7 @@ using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -49,6 +50,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
+            AutoBank = true;
             this.Currencies = new string[] { "APE","BTC","ETH","BCH","EOS","BNB","BUSD","CRO","DAI","DOGE","LINK","LTC","POL","SAND","SHIB","SOL","TRUMP",
                 "TRX","UNI","USDC","XRP","USDT", };
             SupportedGames = new Games[] { Games.Dice };
@@ -355,7 +357,38 @@ namespace Gambler.Bot.Core.Sites
             return 100 - (int)(DateTime.Now - Lastbet).TotalMilliseconds;
 
         }
-
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            try
+            {
+                GraphqlRequestPayload payload = new GraphqlRequestPayload
+                {
+                    query = "mutation CreateVaultDeposit($currency: CurrencyEnum!, $amount: Float!) {\n  createVaultDeposit(currency: $currency, amount: $amount) {\n    id\n    amount\n    currency\n    user {\n      id\n      balances {\n        available {\n          amount\n          currency\n          __typename\n        }\n        vault {\n          amount\n          currency\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
+                    variables = new
+                    {
+                        currency = CurrentCurrency.ToLower(),
+                        amount = Amount
+                    }
+                };
+                var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    callError("An error occured while trying to bank your funds: ", false, ErrorType.Bank);
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+                    await UpdateStats();
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                callError("An error occured while trying to bank your funds.", false, ErrorType.Bank);
+                _logger?.LogError(ex.ToString());
+            }
+            return false;
+        }
 
         public class Sender
         {

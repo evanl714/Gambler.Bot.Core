@@ -45,6 +45,11 @@ namespace Gambler.Bot.Core.Sites
         public bool AutoWithdraw { get; protected set; }
 
         /// <summary>
+        /// Specifies wether the bot is able to bank/vault on the specified site.
+        /// </summary>
+        public bool AutoBank { get; protected set; }
+
+        /// <summary>
         /// Specifies whether the bot can invest coins into the site, if the site supports the feature.
         /// </summary>
         public bool AutoInvest { get; protected set; }
@@ -103,16 +108,7 @@ namespace Gambler.Bot.Core.Sites
         /// The name/abbreviation of the currency currently in use
         /// </summary>
         public string CurrentCurrency { get; set; }
-
-       /* /// <summary>
-        /// The maximum roll allowed at the site. Usually 99.99. Used to determine whether the roll is a win
-        /// </summary>
-        public decimal MaxRoll { get; protected set; }*/
-
-       /* /// <summary>
-        /// The house edge for the site. Used to determine payout and profit for bets and simulations
-        /// </summary>
-        public decimal Edge { get; protected set; }*/
+              
 
         /// <summary>
         /// List of currencies supported by the site
@@ -156,7 +152,8 @@ namespace Gambler.Bot.Core.Sites
                         tipusingname = TipUsingName,
                         Currencies = CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
                         NonceBased = NonceBased,
-                        GameSettings = new Dictionary<string, IGameConfig>()
+                        GameSettings = new Dictionary<string, IGameConfig>(),
+                        canbank =AutoBank
                     };
                     if (this is iDice dice)
                     {
@@ -447,9 +444,34 @@ namespace Gambler.Bot.Core.Sites
                 callError("Withdrawing not allowed!", false, ErrorType.NotImplemented);
             return success;
         }
+
+
         protected virtual async Task<bool> _Withdraw(string Address, decimal Amount) 
         { 
             callError("Withdrawing not implemented", false, ErrorType.Withdrawal);
+            return false;
+        }
+        public async Task<bool> Bank(decimal Amount)
+        {
+            bool success = false;
+            if (AutoBank)
+            {
+                ActiveActions.Add(SiteAction.Bank);
+                callNotify($"Banking {Amount} {CurrentCurrency}");
+                await Task.Run(async () =>
+                {
+                    success = await _Bank(Amount);
+                });
+
+                await UpdateStats();
+            }
+            else
+                callError("Banking not supported!", false, ErrorType.NotImplemented);
+            return success;
+        }
+        protected virtual async Task<bool> _Bank(decimal Amount)
+        {
+            callError("Withdrawing not implemented", false, ErrorType.Bank);
             return false;
         }
 

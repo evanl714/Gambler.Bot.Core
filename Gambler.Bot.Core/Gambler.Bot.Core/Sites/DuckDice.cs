@@ -12,7 +12,9 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -45,6 +47,7 @@ namespace Gambler.Bot.Core.Sites
             this.TipUsingName = true;
             this.AutoInvest = false;
             this.AutoWithdraw = false;
+            AutoBank = true;
             this.CanChangeSeed = true;
             this.CanChat = false;
             this.CanGetSeed = false;
@@ -258,6 +261,36 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            QuackBank bnk = new QuackBank { amount = Amount, symbol = CurrentCurrency.ToUpper() };
+            StringContent Content = new StringContent(JsonSerializer.Serialize(bnk), Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await Client.PostAsync("bank/deposit" + "?api_key=" + accesstoken, Content);
+                string sEmitResponse = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    QuackBankResponse resp = JsonSerializer.Deserialize<QuackBankResponse>(sEmitResponse);
+                    Stats.Balance = decimal.Parse(resp.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                    callStatsUpdated(Stats);
+                    return true;
+                }
+                else
+                {
+                    callError(sEmitResponse,false, ErrorType.Bank);
+                    return false;
+                }
+                
+            }
+            catch (Exception e) 
+            {
+                _logger.LogError(e.ToString());
+                callError("Failed to bank funds.", false, ErrorType.Bank);
+            }
+            return false;
+        }
+
         public class QuackLogin
         {
             public string token { get; set; }
@@ -342,7 +375,18 @@ namespace Gambler.Bot.Core.Sites
             public string main { get; set; }
             public string faucet { get; set; }
         }      
-    
+    public class QuackBank
+        {
+            public decimal amount { get; set; }
+            public string symbol { get; set; }
+        }
+        public class QuackBankResponse
+        {
+            public string amount { get; set; }
+            public string symbol { get; set; }
+            public string balance { get; set; }
+            public string bankBalance { get; set; }
+        }
 
     }
 }

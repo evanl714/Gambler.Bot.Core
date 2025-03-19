@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -25,6 +26,7 @@ namespace Gambler.Bot.Core.Sites
     {
         bool IsBitsler = false;
         string accesstoken = "";
+        string sessiontoken = "";
         DateTime LastSeedReset = new DateTime();
 
         string username = "";
@@ -80,6 +82,29 @@ namespace Gambler.Bot.Core.Sites
             }
         }
 
+        private async Task<bool> RefreshToken()
+        {
+            if (string.IsNullOrWhiteSpace(sessiontoken))
+                return false;
+
+            List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+            pairs.Add(new KeyValuePair<string, string>("session_token", sessiontoken));
+            FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+            HttpResponseMessage tmpresp = await Client.PostAsync("api/new-token", Content);
+            byte[] bytes = await tmpresp.Content.ReadAsByteArrayAsync();
+            string sEmitResponse = await tmpresp.Content.ReadAsStringAsync();
+
+            //getuserstats 
+            bsLogin bsbase = JsonSerializer.Deserialize<bsLogin>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+
+
+            if (bsbase?.success ?? false)
+            {
+                accesstoken = bsbase.access_token;
+                return true;
+            }
+            return false;
+        }
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetObj)
         {
@@ -109,6 +134,7 @@ devise:btc*/
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 HttpResponseMessage tmpmsg = await Client.PostAsync("api/bet-dice", Content);
                 string sEmitResponse =await tmpmsg.Content.ReadAsStringAsync();
+                
                 bsBet bsbase = null;
                 try
                 {
@@ -153,7 +179,17 @@ devise:btc*/
                         if (bsbase.error != null)
                         {
                              ErrorType type = ErrorType.Unknown;
-                            
+                            if (bsbase.error == "token_invalid")
+                            {
+                                if (await RefreshToken())
+                                {
+                                    return await PlaceDiceBet(BetObj);
+                                }
+                                else
+                                {
+                                    type = ErrorType.Other;
+                                }
+                            }
                             if (bsbase.error.StartsWith("Maximum bet") )
                             {
                                 type = ErrorType.InvalidBet;
@@ -210,24 +246,40 @@ devise:btc*/
                     var response = await Client.PostAsync("api/change-seeds", Content);
                     string sEmitResponse =await response.Content.ReadAsStringAsync();
                     bsResetSeed bsbase = JsonSerializer.Deserialize<bsResetSeed>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
-                    
-                    return new SeedDetails
+                    if (bsbase.success)
                     {
-                        ClientSeed = clientseed,
-                        Nonce = 0,
-                        PreviousClient = bsbase.previous_client,
-                        PreviousHash = bsbase.previous_hash,
-                        ServerHash = bsbase.current_hash,
-                        PreviousServer = bsbase.previous_seed,
-                        ServerSeed = bsbase.next_hash
-                    };
+                        return new SeedDetails
+                        {
+                            ClientSeed = clientseed,
+                            Nonce = 0,
+                            PreviousClient = bsbase.previous_client,
+                            PreviousHash = bsbase.previous_hash,
+                            ServerHash = bsbase.current_hash,
+                            PreviousServer = bsbase.previous_seed,
+                            ServerSeed = bsbase.next_hash
+                        };
+                    }
+                    else
+                    {
+                        if (bsbase.error == "token_invalid")
+                        {
+                            if (await RefreshToken())
+                            {
+                                return await _ResetSeed();
+                            }
+                            else
+                            {
+                                callError("Session invalid", false, ErrorType.ResetSeed);
+                            }
+                        }
+                    }
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server_hashed, bsbase._return.last_seeds_revealed.seed_server_revealed);
 
                     //sqlite_helper.InsertSeed(bsbase._return.last_seeds_revealed.seed_server, bsbase._return.last_seeds_revealed.seed_server_revealed);
                 }
                 else
                 {
-                    callNotify("Too soon to update seed.");
+                    callError("Too soon to reset seed", false, ErrorType.ResetSeed);
                 }
             }
             catch (WebException e)
@@ -244,9 +296,11 @@ devise:btc*/
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                callNotify("Too soon to update seed.");
+                _logger.LogError(ex.ToString());
+                callError("Failed to reset seed", false, ErrorType.ResetSeed);
+                
             }
             Thread.Sleep(51);
             return null;
@@ -305,6 +359,7 @@ devise:btc*/
                 if (bsbase?.success ?? false)
                 {
                     accesstoken = bsbase.access_token;
+                    sessiontoken = bsbase.session_token;
                     IsBitsler = true;
                     lastupdate = DateTime.Now;
 
@@ -554,6 +609,17 @@ devise:btc*/
                 if (resp.IsSuccessStatusCode)
                 {
                     sEmitResponse = await resp.Content.ReadAsStringAsync();
+                    if (sEmitResponse.Contains("token_invalid"))
+                    {
+                        if (await RefreshToken())
+                        {
+                            return await _UpdateStats();
+                        }
+                        else
+                        {
+                            callError("Session invalid", false, ErrorType.ResetSeed);
+                        }
+                    }
                 }
                 else
                 {
@@ -763,6 +829,7 @@ devise:btc*/
             public string current_hash { get; set; }
             public string next_hash { get; set; }
             public bool success { get; set; }
+            public string error { get; set; }
         }
 
     }

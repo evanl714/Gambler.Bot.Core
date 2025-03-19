@@ -6,13 +6,16 @@ using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -42,6 +45,7 @@ namespace Gambler.Bot.Core.Sites
             this.TipUsingName = true;
             this.AutoInvest = false;
             this.AutoWithdraw = false;
+            AutoBank = true;
             this.CanChangeSeed = false;
             this.CanChat = false;
             this.CanGetSeed = false;
@@ -285,13 +289,78 @@ namespace Gambler.Bot.Core.Sites
             }
         }
 
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            try
+            {
+                bool result = false;
+                HttpContent val = (HttpContent)new StringContent(JsonSerializer.Serialize(new WDVault
+                {
+                    curr = base.CurrentCurrency,
+                    amount = Math.Round((Amount * 1000m), 5)
+                }));
+                val.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                HttpResponseMessage result2 = await Client.PostAsync("/api/v1/user/bank/send", val);
+                if (result2.IsSuccessStatusCode)
+                {
+                    WDVaultResponse wDVaultResponse = JsonSerializer.Deserialize<WDVaultResponse>(await result2.Content.ReadAsStringAsync());
+                    if (wDVaultResponse.status == "success")
+                    {
+                        foreach (var balance in wDVaultResponse.data.balances)
+                        {
+                            if (balance.curr.Equals(CurrentCurrency, StringComparison.InvariantCultureIgnoreCase))
+                            {                                
+                                Stats.Balance = balance.amount;
+                                callStatsUpdated(Stats);
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Failed to bank :{wDVaultResponse.message}");
+                        callError($"Failed to bank funds: {wDVaultResponse.message}", false, ErrorType.Bank);
+                    }
+                }  
+                else
+                {
+                    string errorresponse = await result2.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                callError("Failed to bank funds", false, ErrorType.Bank);
+            }
+            return false;
+        }
+        public class WDCurrencyBalance
+        {
+            public string curr { get; set; }
 
+            public decimal amount { get; set; }
+        }
+        public class WDBalances
+        {
+            public List<WDCurrencyBalance> balances { get; set; }
+
+            public List<WDCurrencyBalance> bank { get; set; }
+        }
+        public class WDVaultResponse : WDBaseResponse
+        {
+            public WDBalances data { get; set; }
+        }
         public class WDBaseResponse
         {
             public string status { get; set; }
             public string message { get; set; }
         }
+        public class WDVault
+        {
+            public string curr { get; set; }
 
+            public decimal amount { get; set; }
+        }
         public class WDUserResponse : WDBaseResponse
         {
             public WDUserResponse data { get; set; }

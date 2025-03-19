@@ -13,6 +13,7 @@ namespace Gambler.Bot.Common.Enums
         NotImplemented,
         Other,
         BetMismatch,
-        Unknown
+        Unknown,
+        Bank
     }
 }

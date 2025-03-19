@@ -8,14 +8,17 @@ using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using static Gambler.Bot.Core.Sites.Bitsler;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -40,7 +43,7 @@ namespace Gambler.Bot.Core.Sites
             //this.MaxRoll = 100m;
             this.SiteAbbreviation = "ST";
             this.SiteName = "Stake";
-            this.SiteURL = "https://Stake.com";
+            this.SiteURL = "https://stake.com/?c=sdicebot";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -52,6 +55,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
+            this.AutoBank = true;
             this.Currencies = new string[] { "JPY","BRL","CAD","IDR","INR","BTC","ETH","LTC","USDT","SOL","DOGE","BCH",
             "XRP","TRX","EOS","BNB","USDC","APE","BUSD","CRO","DAI","LINK","SAND","SHIB","UNI","POl"};
             SupportedGames = new Games[] { Games.Dice, Games.Limbo };
@@ -471,6 +475,39 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            try
+            {
+                GraphqlRequestPayload payload = new GraphqlRequestPayload
+                {
+                    query = "mutation CreateVaultDeposit($currency: CurrencyEnum!, $amount: Float!) {\n  createVaultDeposit(currency: $currency, amount: $amount) {\n    id\n    amount\n    currency\n    user {\n      id\n      balances {\n        available {\n          amount\n          currency\n          __typename\n        }\n        vault {\n          amount\n          currency\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
+                    variables = new
+                    {
+                        currency = CurrentCurrency.ToLower(),
+                        amount = Amount
+                    }
+                };
+                var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    callError("An error occured while trying to bank your funds: ", false, ErrorType.Bank);
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x=>x.ToString())));
+                    await UpdateStats();
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                callError("An error occured while trying to bank your funds.", false, ErrorType.Bank);
+                _logger?.LogError(ex.ToString());
+            }
+            return false;
+        }
+
         public class Sender
             {
                 public string name { get; set; }
@@ -658,7 +695,12 @@ namespace Gambler.Bot.Core.Sites
                 public string[] path { get; set; }
                 public string message { get; set; }
                 public string errorType { get; set; }
+
+            public override string ToString()
+            {
+                return $"{errorType} - {message}.{Environment.NewLine}{string.Join(Environment.NewLine, path)}";
             }
+        }
         public class StakeLimboBet : StakeBaseBet
         {
             public StakeLimboState state { get; set; }
