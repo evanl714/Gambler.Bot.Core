@@ -287,7 +287,7 @@ namespace Gambler.Bot.Core.Sites
                         callError("Chance to win must be > 0", false, ErrorType.InvalidBet);
                         return;
                     }
-                    callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High ? "High" : "Low")}");
+                    callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} at {dicebet.Chance:0.0000}% chance to win, {(dicebet.High ? "High" : "Low")}");
                     result = await DiceSite.PlaceDiceBet(dicebet);
                 }
                 if (BetDetails is PlaceCrashBet crashBet && this is iCrash crashsite)
@@ -324,6 +324,7 @@ namespace Gambler.Bot.Core.Sites
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
                     }
+                    callNotify($"Placing Limbo Bet: {limbobet.Amount:0.00######} with {limbobet.Payout:0.0000}% payout");
                     result = await limbosite.PlaceLimboBet(limbobet);
                 }
             });
