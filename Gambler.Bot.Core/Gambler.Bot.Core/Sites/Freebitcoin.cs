@@ -64,6 +64,8 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             ispd = false;
+            Client = null;
+            ClientHandlr = null;
         }
         CookieContainer Cookies = new CookieContainer();
         string csrf = "";

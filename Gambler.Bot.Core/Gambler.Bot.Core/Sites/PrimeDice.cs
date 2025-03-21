@@ -70,6 +70,8 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             ispd = false;
+            Client = null;
+            
         }
         string userid = "";
         async Task OnWSConnected(GraphQL.Client.Http.GraphQLHttpClient client)

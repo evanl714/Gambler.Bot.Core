@@ -78,8 +78,11 @@ namespace Gambler.Bot.Core.Sites
             isec = false;
             if (Sock != null && Sock.State == WebSocketState.Open)
             {
+                ChatSock.Close();
                 Sock.Close();
             }
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)

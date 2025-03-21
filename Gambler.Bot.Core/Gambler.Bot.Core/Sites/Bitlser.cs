@@ -574,6 +574,8 @@ devise:btc*/
         protected override void _Disconnect()
         {
             this.IsBitsler = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         public override void SetProxy(ProxyDetails ProxyInfo)

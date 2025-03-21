@@ -77,6 +77,8 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             this.ispd = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)

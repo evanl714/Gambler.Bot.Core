@@ -244,6 +244,7 @@ namespace Gambler.Bot.Core.Sites
         {
             LoggedIn = false;
             _Disconnect();
+            
         }
 
         /// <summary>
