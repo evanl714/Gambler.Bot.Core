@@ -22,6 +22,7 @@ namespace Gambler.Bot.Core.Sites
         public BCHGames()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true),};
+            IsEnabled = false;
             //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "BCH";
             this.SiteName = "BCH.Games";

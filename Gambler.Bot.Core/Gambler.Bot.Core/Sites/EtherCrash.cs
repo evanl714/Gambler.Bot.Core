@@ -34,10 +34,11 @@ namespace Gambler.Bot.Core.Sites
         public EtherCrash(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
+            IsEnabled = false;
             //this.MaxRoll = 99.99999m;
             this.SiteAbbreviation = "EC";
             this.SiteName = "EtherCrash";
-            this.SiteURL = "https://EtherCrash.io";
+            this.SiteURL = "https://www.EtherCrash.io/play";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -49,10 +50,10 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
-            this.Currencies = new string[] {"Eth"};
-            SupportedGames = new Games[] { Games.Dice };
-            CurrentCurrency ="btc";
-            this.DiceBetURL = "https://EtherCrash.io/{0}";
+            this.Currencies = new string[] { "Eth" };
+            SupportedGames = new Games[] { Games.Crash };
+            CurrentCurrency = "btc";
+            this.DiceBetURL = "https://www.EtherCrash.io/{0}";
             CrashSettings = new CrashConfig { Edge = 1, IsMultiplayer = true };
             //this.Edge = 1;
         }
@@ -74,11 +75,16 @@ namespace Gambler.Bot.Core.Sites
 
         protected override void _Disconnect()
         {
-            throw new NotImplementedException();
+            isec = false;
+            if (Sock != null && Sock.State == WebSocketState.Open)
+            {
+                Sock.Close();
+            }
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
+
             string APIKey = "";
             foreach (LoginParamValue x in LoginParams)
             {
@@ -86,45 +92,68 @@ namespace Gambler.Bot.Core.Sites
                     APIKey = x.Value;
 
             }
-            Cookies = new CookieContainer();
+            var bypassResult = CallBypassRequired(SiteURL, "cf_clearance");
+            Cookies = bypassResult.Cookies;
             ClientHandlr = new HttpClientHandler { UseCookies = true, CookieContainer = Cookies, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip }; ;
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://ethercrash.io") };
-            Client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
-            Client.DefaultRequestHeaders.Add("referer", "https://www.ethercrash.io/play");
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://www.ethercrash.io") };
+            //Client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
+
+            Client.DefaultRequestHeaders.UserAgent.ParseAdd(bypassResult.UserAgent);
+            Client.DefaultRequestHeaders.Add("referer", "https://www.ethercrash.io/");
             Client.DefaultRequestHeaders.Add("origin", "https://www.ethercrash.io");
             try
             {
-                Cookies.Add(new Cookie("id", APIKey, "/", "ethercrash.io"));
-
-
-                string Response = await Client.GetStringAsync("https://www.ethercrash.io/play");
-
-
-                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
-
-                Response =await Client.GetStringAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
-
+                var webresponse = await Client.GetAsync("https://www.ethercrash.io/play");
+                if (!webresponse.IsSuccessStatusCode)
+                {
+                    Thread.Sleep(100);
+                    webresponse = await Client.GetAsync("https://www.ethercrash.io/play");
+                }
+                string Response = await webresponse.Content.ReadAsStringAsync();
+                Thread.Sleep(10);
+                int counter = 0;
+                string datestring = Epoch.CurrentDate();
                 string iochat = "";
-                foreach (Cookie c3 in Cookies.GetCookies(new Uri("http://www.ethercrash.io")))
+
+                Response = await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
+                //while (counter++ < 3)
+                Response = Response.Substring(4);
+                SocketIOInit chatinit = JsonSerializer.Deserialize<SocketIOInit>(Response);
+                iochat = chatinit.sid;
+                 webresponse = await Client.GetAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
+                Response = await webresponse.Content.ReadAsStringAsync();
+                webresponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookies);
+                Cookies.Add(new Cookie("io", iochat, "/", "www.ethercrash.io"));
+
+                /*datestring = Epoch.CurrentDate();
+                webresponse = await Client.GetAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + datestring);
+                Response = await webresponse.Content.ReadAsStringAsync();
+                if (!webresponse.IsSuccessStatusCode)
                 {
-                    if (c3.Name == "io")
-                        iochat = c3.Value;
-                    if (c3.Name == "__cfduid")
-                        cfuid = c3.Value;
+                    Thread.Sleep(counter * 100);
                 }
-                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
-
-
-                foreach (Cookie c3 in Cookies.GetCookies(new Uri("http://gs.ethercrash.io")))
+                else
                 {
-                    if (c3.Name == "io")
-                        io = c3.Value;
-                    if (c3.Name == "__cfduid")
-                        cfuid = c3.Value;
+                    //break;
+                }
+                */
+                foreach (Cookie c in Cookies.GetCookies(new Uri("https://www.ethercrash.io")))
+                {
+                    if (c.Name == "cf_clearance")
+                    {
+                        cfuid = c.Value;
+                        break;
+                    }
                 }
 
+
+
+
+
+
+                Cookies.Add(new Cookie("id", APIKey, "/", "ethercrash.io"));
                 StringContent ottcontent = new StringContent("");
-                HttpResponseMessage RespMsg =await Client.PostAsync("https://www.ethercrash.io/ott", ottcontent);
+                HttpResponseMessage RespMsg = await Client.PostAsync("https://www.ethercrash.io/ott", ottcontent);
 
                 Response = await RespMsg.Content.ReadAsStringAsync();
                 if (RespMsg.IsSuccessStatusCode)
@@ -139,8 +168,8 @@ namespace Gambler.Bot.Core.Sites
                 string body = "420[\"join\",{\"ott\":\"" + ott + "\",\"api_version\":1}]";
                 body = body.Length + ":" + body;
                 StringContent stringContent = new StringContent(body, UnicodeEncoding.UTF8, "text/plain");
-                RespMsg = await Client.PostAsync("https://gs.ethercrash.io/socket.io/?EIO=3&sid=" + io + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent);
-                Response = await RespMsg.Content.ReadAsStringAsync();
+                //RespMsg = await Client.PostAsync("https://gs.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent);
+                //Response = await RespMsg.Content.ReadAsStringAsync();
 
                 body = "420[\"join\",[\"english\"]]";
                 body = body.Length + ":" + body;
@@ -148,24 +177,25 @@ namespace Gambler.Bot.Core.Sites
                 RespMsg = await Client.PostAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent2);
                 Response = await RespMsg.Content.ReadAsStringAsync();
 
-                Response =await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
+                Response = await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
 
-                List<KeyValuePair<string, string>> cookies = new List<KeyValuePair<string, string>>();
-                cookies.Add(new KeyValuePair<string, string>("__cfduid", cfuid));
-                cookies.Add(new KeyValuePair<string, string>("io", iochat));
-                cookies.Add(new KeyValuePair<string, string>("id", APIKey));
+                List<KeyValuePair<string, string>> wscookies = new List<KeyValuePair<string, string>>();
+                wscookies.Add(new KeyValuePair<string, string>("cf_clearance", cfuid));
+                wscookies.Add(new KeyValuePair<string, string>("io", iochat));
+                wscookies.Add(new KeyValuePair<string, string>("id", APIKey));
 
                 ChatSock = new WebSocket("wss://www.ethercrash.io/socket.io/?EIO=3&transport=websocket&sid=" + iochat,
                    null,
-                   cookies/*,
+                   wscookies,
                    null,
-                   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36",
-                   "https://www.ethercrash.io",
+                   bypassResult.UserAgent,
+                   "https://www.ethercrash.io"/*,
                     WebSocketVersion.None*/);
                 ChatSock.Opened += Sock_Opened;
                 ChatSock.Error += Sock_Error;
                 ChatSock.MessageReceived += Sock_MessageReceived;
                 ChatSock.Closed += Sock_Closed;
+                
                 ChatSock.Open();
                 while (ChatSock.State == WebSocketState.Connecting)
                 {
@@ -273,7 +303,7 @@ namespace Gambler.Bot.Core.Sites
         bool betsOpen;
         bool cashedout = false;
         string GameId = "";
-        CrashBet CurrentBet = null; 
+        CrashBet CurrentBet = null;
         private void Sock_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
             if (e.Message == "3probe")
@@ -311,10 +341,10 @@ namespace Gambler.Bot.Core.Sites
                     CrashBet bet = new CrashBet
                     {
                         TotalAmount = (decimal)LastBet.Amount,
-                        Profit = cashedout? LastBet.Payout * LastBet.Amount - LastBet.Amount: - (decimal)LastBet.Amount,                        
+                        Profit = cashedout ? LastBet.Payout * LastBet.Amount - LastBet.Amount : -(decimal)LastBet.Amount,
                         Currency = CurrentCurrency,
                         DateValue = DateTime.Now,
-                        BetID = GameId != "" ? GameId : Guid.NewGuid().ToString(),                        
+                        BetID = GameId != "" ? GameId : Guid.NewGuid().ToString(),
                         Guid = guid,
                         Payout = LastBet.Payout,
                         Crash = 0//get crash payout from game message
@@ -379,7 +409,7 @@ namespace Gambler.Bot.Core.Sites
                                 message = string.Format("Game running - Cashed out - {2:0.00}x", LastBet.Amount, LastBet.Payout, mult / 100);
                             }
 
-                            callGameMessage(new CrashMessage(message, CrashMessageType.Tick, 0 ));//need to get the value from the message
+                            callGameMessage(new CrashMessage(message, CrashMessageType.Tick, 0));//need to get the value from the message
                         }
                     }
                 }
@@ -393,7 +423,7 @@ namespace Gambler.Bot.Core.Sites
         private void Sock_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
             _logger?.LogError(e.Exception.ToString());
-            callError("Websocket error - disconnected.",true, ErrorType.Unknown );
+            callError("Websocket error - disconnected.", true, ErrorType.Unknown);
         }
 
         private void Sock_Opened(object sender, EventArgs e)
@@ -417,7 +447,7 @@ namespace Gambler.Bot.Core.Sites
                 //needs to get the result of the method and then return it.
                 src = new CancellationTokenSource();
                 src.CancelAfter(new TimeSpan(0, 0, 90));
-                
+
                 while (!src.IsCancellationRequested)
                 {
                     await Task.Delay(10);
@@ -426,10 +456,19 @@ namespace Gambler.Bot.Core.Sites
                 var tmp = CurrentBet;
                 CurrentBet = null;
                 return tmp;
-                
+
             }
             callError("Bets are not open. Please wait for bets to open first.", false, ErrorType.Other);
             return null;
+        }
+
+
+        public class SocketIOInit
+        {
+            public string sid { get; set; }
+            public string[] upgrades { get; set; }
+            public int pingInterval { get; set; }
+            public int pingTimeout { get; set; }
         }
 
         public class ECLogin

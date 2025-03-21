@@ -38,6 +38,7 @@ namespace Gambler.Bot.Core.Sites
 
         public NitrogenSports(ILogger logger) : base(logger)
         {
+            IsEnabled = false;
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
             //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "NitrogenSports";

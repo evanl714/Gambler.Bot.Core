@@ -34,6 +34,8 @@ namespace Gambler.Bot.Core.Sites
         
         public LoginParameter[] LoginParams { get { return StaticLoginParams; } }
         #region Properties
+        public bool IsEnabled { get; set; } = true;
+
         /// <summary>
         /// Specifies wether the user can register a new account on the website using the bot.
         /// </summary>

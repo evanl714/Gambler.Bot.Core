@@ -14,7 +14,7 @@ namespace Gambler.Bot.Common.Games.Limbo
         public long Nonce { get; set; }
         public string? ServerHash { get; set; }
         public string? ServerSeed { get; set; }
-        public string ClientSeed { get; set; }
+        public string? ClientSeed { get; set; }
         public int WinnableType { get; set; }
         public override PlaceBet CreateRetry()
         {

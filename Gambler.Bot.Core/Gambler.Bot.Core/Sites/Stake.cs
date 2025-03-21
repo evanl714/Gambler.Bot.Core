@@ -169,7 +169,7 @@ namespace Gambler.Bot.Core.Sites
                                 break;
                             }
                         }
-
+                    callStatsUpdated(Stats);
                         callLoginFinished(true);
                         return true;
                     }
@@ -424,7 +424,7 @@ namespace Gambler.Bot.Core.Sites
                     callError(error, false, errorType);
                     return null;
                 }
-                StakeLimboBet tmp = ResponsePayload.data.LimboBetResult;
+                StakeLimboBet tmp = ResponsePayload.data.limboBet;
 
 
                 Lastbet = DateTime.Now;
@@ -494,9 +494,15 @@ namespace Gambler.Bot.Core.Sites
                 if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
                 {
                     callError("An error occured while trying to bank your funds: ", false, ErrorType.Bank);
-                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x=>x.ToString())));
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
                     await UpdateStats();
                     return false;
+                }
+                else
+                {
+
+                    Stats.Balance = ResponsePayload.data.createVaultDeposit.user.balances.FirstOrDefault(x => x.available.currency.ToLower() == CurrentCurrency.ToLower()).available.amount ?? 0;
+                    callStatsUpdated(Stats);
                 }
                 return true;
             }
@@ -506,6 +512,12 @@ namespace Gambler.Bot.Core.Sites
                 _logger?.LogError(ex.ToString());
             }
             return false;
+        }
+        public class StakeVaultDepost
+        {
+            public string currency { get; set; }
+            public decimal amount { get; set; }
+            public pdUser user { get; set; }
         }
 
         public class Sender
@@ -679,7 +691,8 @@ namespace Gambler.Bot.Core.Sites
                 public RollDice diceRoll { get; set; }
                 public pdUser user { get; set; }
                 public RollDice bet { get; set; }
-                public StakeLimboBet LimboBetResult { get; set; }
+                public StakeLimboBet limboBet { get; set; }
+            public StakeVaultDepost createVaultDeposit { get; set; }
         }
 
             public class Payload
@@ -716,8 +729,8 @@ namespace Gambler.Bot.Core.Sites
                     DateValue = DateTime.Now,
                     BetID = id.ToString(),
                     Result = (decimal)state.result,
-                    ClientSeed = clientSeed.seed,
-                    ServerHash = serverSeed.seedHash,
+                    ClientSeed = clientSeed?.seed,
+                    ServerHash = serverSeed?.seedHash,
                     Nonce = nonce
                 };
                 bet.IsWin = bet.Result >= state.multiplierTarget;

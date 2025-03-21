@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Stake;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -380,7 +381,11 @@ namespace Gambler.Bot.Core.Sites
                     await UpdateStats();
                     return false;
                 }
-                return true;
+                else
+                {
+                    Stats.Balance = ResponsePayload.data.createVaultDeposit.user.balances.FirstOrDefault(x => x.available.currency.ToLower() == CurrentCurrency.ToLower()).available.amount??0;
+                }
+                    return true;
             }
             catch (Exception ex)
             {
@@ -539,8 +544,14 @@ namespace Gambler.Bot.Core.Sites
             public RollDice primediceRoll { get; set; }
             public pdUser user { get; set; }
             public RollDice bet { get; set; }
+            public StakeVaultDepost createVaultDeposit { get; set; }
         }
-
+        public class PDVaultDepost
+        {
+            public string currency { get; set; }
+            public decimal amount { get; set; }
+            public pdUser user { get; set; }
+        }
         public class Payload
         {
             public Data data { get; set; }
