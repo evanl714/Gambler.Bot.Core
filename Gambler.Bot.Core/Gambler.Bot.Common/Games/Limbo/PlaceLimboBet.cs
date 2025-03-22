@@ -22,11 +22,13 @@ namespace Gambler.Bot.Common.Games.Limbo
             this.Amount = Amount;
             this.Payout = Payout;
             GUID = GUID;
+            Game = Games.Limbo;
         }
         public PlaceLimboBet(decimal Amount, decimal Payout)
         {
             this.Amount = Amount;
             this.Payout = Payout;
+            Game = Games.Limbo;
 
         }
     }

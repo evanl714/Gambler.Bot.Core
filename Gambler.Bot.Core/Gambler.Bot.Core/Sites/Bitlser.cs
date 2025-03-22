@@ -1,12 +1,14 @@
 ﻿using Gambler.Bot.Common.Enums;
 using Gambler.Bot.Common.Games;
 using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.Limbo;
 using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Dynamic;
 using System.Globalization;
 using System.IO;
@@ -22,7 +24,7 @@ using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
-    public class Bitsler : BaseSite, iDice
+    public class Bitsler : BaseSite, iDice, iTwist, iLimbo
     {
         bool IsBitsler = false;
         string accesstoken = "";
@@ -38,6 +40,8 @@ namespace Gambler.Bot.Core.Sites
         HttpClientHandler ClientHandlr;
 
         public DiceConfig DiceSettings { get; set; }
+        public LimboConfig LimboSettings { get; set; }
+        public TwistConfig TwistSettings { get; set; }
 
         public Bitsler(ILogger logger):base(logger)
         {
@@ -53,6 +57,7 @@ namespace Gambler.Bot.Core.Sites
             this.TipUsingName = true;
             this.AutoInvest = false;
             this.AutoWithdraw = false;
+            AutoBank = true;
             this.CanChangeSeed = true;
             this.CanChat = false;
             this.CanGetSeed = false;
@@ -61,11 +66,13 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = false;
             this.CanVerify = false;
             NonceBased = true;
-            SupportedGames = new Games[] { Games.Dice };
+            SupportedGames = new Games[] { Games.Dice, Games.Twist, Games.Limbo };
             this.CurrentCurrency = "btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
             //this.Edge = 1;
             DiceSettings = new DiceConfig() { Edge = 1, MaxRoll= 99.99m };
+            TwistSettings = new TwistConfig() { Edge = 2, MaxRoll = 99m };
+            LimboSettings = new LimboConfig() { Edge = 2, MinChance = 0.000098m };
         }
 
 
@@ -599,6 +606,50 @@ devise:btc*/
 
         }
 
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            try
+            {
+                List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+                
+                pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
+                pairs.Add(new KeyValuePair<string, string>("amount", Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
+                pairs.Add(new KeyValuePair<string, string>("jp_optin", "0"));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
+                pairs.Add(new KeyValuePair<string, string>("to", "true"));
+                pairs.Add(new KeyValuePair<string, string>("api_key", "0b2edbfe44e98df79665e52896c22987445683e78"));
+                FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+                HttpResponseMessage tmpmsg = await Client.PostAsync("/api/vault-transaction", Content);
+                string sEmitResponse = await tmpmsg.Content.ReadAsStringAsync();
+                bsLogin result = JsonSerializer.Deserialize<bsLogin>(sEmitResponse);
+                if(tmpmsg.IsSuccessStatusCode && result.success)
+                {
+                    Stats.Balance -= Amount;
+                    callStatsUpdated(Stats);
+                    return true;
+                }
+                else
+                {
+                    callError("Could not bank funds: "+result.error, false, ErrorType.Bank);
+                    _logger.LogError(result.error);
+                    return false;
+                }
+                //
+
+            }
+            catch (AggregateException e)
+            {
+                callError("An Unknown error has ocurred.", false, ErrorType.Bank);
+                callNotify("An Unknown error has ocurred.");
+            }
+            catch (Exception e)
+            {
+                callError("An Unknown error has ocurred.", false, ErrorType.Bank);
+                callNotify("An Unknown error has ocurred.");
+            }
+            return false;
+        
+        }
         protected override async Task<SiteStats> _UpdateStats()
         {
             try
@@ -664,7 +715,245 @@ devise:btc*/
                 return null; 
             }
         }
+        public async Task<TwistBet> PlaceTwistBet(PlaceTwistBet bet)
+        {
+            try
+            {
+                if (bet.Chance > 98m)
+                {
+                    callError("Chance must be less than 99.99", false, ErrorType.InvalidBet);
+                    return null;
+                }
+                List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+                /*access_token
+type:dice
+amount:0.00000001
+condition:< or >
+game:49.5
+devise:btc*/
+                pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
+                //pairs.Add(new KeyValuePair<string, string>("type", "dice"));
+                pairs.Add(new KeyValuePair<string, string>("amount", bet.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
+                pairs.Add(new KeyValuePair<string, string>("over", "false"));
+                pairs.Add(new KeyValuePair<string, string>("target", !bet.High ? bet.Chance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) : (TwistSettings.MaxRoll - bet.Chance).ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo)));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
+                pairs.Add(new KeyValuePair<string, string>("api_key", "0b2edbfe44e98df79665e52896c22987445683e78"));
+                pairs.Add(new KeyValuePair<string, string>("jp_optin", "0"));
+                pairs.Add(new KeyValuePair<string, string>("auto", "false"));
+                FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+                HttpResponseMessage tmpmsg = await Client.PostAsync("api/bet-twist", Content);
+                string sEmitResponse = await tmpmsg.Content.ReadAsStringAsync();
 
+                bsBet bsbase = null;
+                try
+                {
+                    bsbase = JsonSerializer.Deserialize<bsBet>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                }
+                catch (Exception e)
+                {
+
+                }
+
+                if (bsbase != null)
+                    // if (bsbase._return != null)
+                    if (bsbase.success)
+                    {
+                        Stats.Balance = decimal.Parse(bsbase.new_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        lastupdate = DateTime.Now;
+                        TwistBet tmp = bsbase.ToTwistBet();                       
+                        tmp.High = bet.High;
+                        tmp.Chance = bet.Chance;
+                        tmp.Guid = bet.GUID;
+                        Stats.Profit += (decimal)tmp.Profit;
+                        Stats.Wagered += (decimal)tmp.TotalAmount;
+                        tmp.DateValue = DateTime.Now;
+                        tmp.IsWin = tmp.GetWin(TwistSettings.MaxRoll);
+
+                        //set win
+                        if (tmp.IsWin)
+                            Stats.Wins++;
+                        else
+                            Stats.Losses++;
+                        Stats.Bets++;
+                        LastBetAmount = (double)bet.Amount;
+                        LastBet = DateTime.Now;
+                        callBetFinished(tmp);
+                        return tmp;
+                    }
+                    else
+                    {
+                        if (bsbase.error != null)
+                        {
+                            ErrorType type = ErrorType.Unknown;
+                            if (bsbase.error == "token_invalid")
+                            {
+                                if (await RefreshToken())
+                                {
+                                    return await PlaceTwistBet(bet);
+                                }
+                                else
+                                {
+                                    type = ErrorType.Other;
+                                }
+                            }
+                            if (bsbase.error.StartsWith("Maximum bet"))
+                            {
+                                type = ErrorType.InvalidBet;
+                            }
+                            else if (bsbase.error == "Bet amount not valid")
+                            {
+                                type = ErrorType.BetTooLow;
+                            }
+                            else if (bsbase.error.Contains("Bet in progress, please wait few seconds and retry."))
+                            {
+
+                            }
+                            else if (bsbase.error == "Insufficient fund")
+                                type = ErrorType.BalanceTooLow;
+                            else
+                            {
+
+                            }
+                            callError(bsbase.error, false, type);
+                            return null;
+                        }
+                    }
+                //
+
+            }
+            catch (AggregateException e)
+            {
+                callError("An Unknown error has ocurred.", false, ErrorType.Unknown);
+                callNotify("An Unknown error has ocurred.");
+            }
+            catch (Exception e)
+            {
+                callError("An Unknown error has ocurred.", false, ErrorType.Unknown);
+                callNotify("An Unknown error has ocurred.");
+            }
+            return null;
+        }
+        public async Task<LimboBet> PlaceLimboBet(PlaceLimboBet bet)
+        {
+            try
+            {
+                if ((100m- LimboSettings.Edge)/ bet.Payout < LimboSettings.MinChance)
+                {
+                    callError("Chance must be more than "+ LimboSettings.MinChance, false, ErrorType.InvalidBet);
+                    return null;
+                }
+
+
+                List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+                /*access_token
+type:dice
+amount:0.00000001
+condition:< or >
+game:49.5
+devise:btc*/
+                pairs.Add(new KeyValuePair<string, string>("access_token", accesstoken));
+                //pairs.Add(new KeyValuePair<string, string>("type", "dice"));
+                pairs.Add(new KeyValuePair<string, string>("amount", bet.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
+                
+                pairs.Add(new KeyValuePair<string, string>("payout", (bet.Payout).ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) ));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
+                pairs.Add(new KeyValuePair<string, string>("api_key", "0b2edbfe44e98df79665e52896c22987445683e78"));
+                pairs.Add(new KeyValuePair<string, string>("jp_optin", "0"));
+                pairs.Add(new KeyValuePair<string, string>("auto", "false"));
+                FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+                HttpResponseMessage tmpmsg = await Client.PostAsync("api/bet-boom", Content);
+                string sEmitResponse = await tmpmsg.Content.ReadAsStringAsync();
+
+                bsBet bsbase = null;
+                try
+                {
+                    bsbase = JsonSerializer.Deserialize<bsBet>(sEmitResponse.Replace("\"return\":", "\"_return\":"));
+                }
+                catch (Exception e)
+                {
+
+                }
+
+                if (bsbase != null)
+                    // if (bsbase._return != null)
+                    if (bsbase.success)
+                    {
+                        Stats.Balance = decimal.Parse(bsbase.new_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        lastupdate = DateTime.Now;
+                        LimboBet tmp = bsbase.ToLimboBet();
+                        tmp.Payout = bet.Payout;
+                        tmp.Guid = bet.GUID;
+                        Stats.Profit += (decimal)tmp.Profit;
+                        Stats.Wagered += (decimal)tmp.TotalAmount;
+                        tmp.DateValue = DateTime.Now;
+                        tmp.IsWin = tmp.GetWin();
+                        
+                        //set win
+                        if (tmp.IsWin)
+                            Stats.Wins++;
+                        else
+                            Stats.Losses++;
+                        Stats.Bets++;
+                        LastBetAmount = (double)bet.Amount;
+                        LastBet = DateTime.Now;
+                        callBetFinished(tmp);
+                        return tmp;
+                    }
+                    else
+                    {
+                        if (bsbase.error != null)
+                        {
+                            ErrorType type = ErrorType.Unknown;
+                            if (bsbase.error == "token_invalid")
+                            {
+                                if (await RefreshToken())
+                                {
+                                    return await PlaceLimboBet(bet);
+                                }
+                                else
+                                {
+                                    type = ErrorType.Other;
+                                }
+                            }
+                            if (bsbase.error.StartsWith("Maximum bet"))
+                            {
+                                type = ErrorType.InvalidBet;
+                            }
+                            else if (bsbase.error == "Bet amount not valid")
+                            {
+                                type = ErrorType.BetTooLow;
+                            }
+                            else if (bsbase.error.Contains("Bet in progress, please wait few seconds and retry."))
+                            {
+
+                            }
+                            else if (bsbase.error == "Insufficient fund")
+                                type = ErrorType.BalanceTooLow;
+                            else
+                            {
+
+                            }
+                            callError(bsbase.error, false, type);
+                            return null;
+                        }
+                    }
+                //
+
+            }
+            catch (AggregateException e)
+            {
+                callError("An Unknown error has ocurred.", false, ErrorType.Unknown);
+                callNotify("An Unknown error has ocurred.");
+            }
+            catch (Exception e)
+            {
+                callError("An Unknown error has ocurred.", false, ErrorType.Unknown);
+                callNotify("An Unknown error has ocurred.");
+            }
+            return null;
+        }
+
+       
 
         public class bsLogin
         {
@@ -816,6 +1105,38 @@ devise:btc*/
                     Profit = decimal.Parse(profit, System.Globalization.NumberFormatInfo.InvariantInfo),
                     Roll = (decimal)result,
                    
+                    Nonce = nonce,
+                    ServerHash = server_seed,
+                    ClientSeed = client_seed
+                };
+                return tmp;
+            }
+            public TwistBet ToTwistBet()
+            {
+                TwistBet tmp = new TwistBet
+                {
+                    TotalAmount = decimal.Parse(amount, System.Globalization.NumberFormatInfo.InvariantInfo),
+                    DateValue = DateTime.Now,
+                    BetID = id,
+                    Profit = decimal.Parse(profit, System.Globalization.NumberFormatInfo.InvariantInfo),
+                    Roll = (decimal)result,
+
+                    Nonce = nonce,
+                    ServerHash = server_seed,
+                    ClientSeed = client_seed
+                };
+                return tmp;
+            }
+            public LimboBet ToLimboBet()
+            {
+                LimboBet tmp = new LimboBet
+                {
+                    TotalAmount = decimal.Parse(amount, System.Globalization.NumberFormatInfo.InvariantInfo),
+                    DateValue = DateTime.Now,
+                    BetID = id,
+                    Profit = decimal.Parse(profit, System.Globalization.NumberFormatInfo.InvariantInfo),
+                    Result = (decimal)result,
+                    
                     Nonce = nonce,
                     ServerHash = server_seed,
                     ClientSeed = client_seed

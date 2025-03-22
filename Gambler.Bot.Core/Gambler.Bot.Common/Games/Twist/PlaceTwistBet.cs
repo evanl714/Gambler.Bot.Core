@@ -2,7 +2,7 @@
 
 namespace Gambler.Bot.Common.Games.Dice
 {
-    public class PlaceDiceBet : PlaceBet
+    public class PlaceTwistBet : PlaceBet
     {
         /// <summary>
         /// Bet high when true, low when false
@@ -18,20 +18,20 @@ namespace Gambler.Bot.Common.Games.Dice
         /// </summary>
 
 
-        public PlaceDiceBet(decimal Amount, bool High, decimal Chance, string Guid)
+        public PlaceTwistBet(decimal Amount, bool High, decimal Chance, string Guid)
         {
             this.Amount = Amount;
             this.High = High;
             this.Chance = Chance;
             GUID = GUID;
-            Game = Games.Dice;
+            Game = Games.Twist;
         }
-        public PlaceDiceBet(decimal Amount, bool High, decimal Chance)
+        public PlaceTwistBet(decimal Amount, bool High, decimal Chance)
         {
             this.Amount = Amount;
             this.High = High;
             this.Chance = Chance;
-            Game = Games.Dice;
+            Game = Games.Twist;
 
         }
     }

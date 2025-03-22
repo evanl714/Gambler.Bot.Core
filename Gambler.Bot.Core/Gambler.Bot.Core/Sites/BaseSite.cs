@@ -3,6 +3,7 @@ using Gambler.Bot.Common.Events;
 using Gambler.Bot.Common.Games;
 using Gambler.Bot.Common.Games.Crash;
 using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.HiLo;
 using Gambler.Bot.Common.Games.Limbo;
 using Gambler.Bot.Common.Games.Plinko;
 using Gambler.Bot.Common.Games.Roulette;
@@ -329,6 +330,16 @@ namespace Gambler.Bot.Core.Sites
                     }
                     callNotify($"Placing Limbo Bet: {limbobet.Amount:0.00######} with {limbobet.Payout:0.0000}% payout");
                     result = await limbosite.PlaceLimboBet(limbobet);
+                }
+                if (BetDetails is PlaceTwistBet twistbet && this is iTwist twistsite)
+                {
+                    if (twistbet.Amount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    callNotify($"Placing Twist Bet: {twistbet.Amount:0.00######} with {twistbet.Chance:0.0000}% payout");
+                    result = await twistsite.PlaceTwistBet(twistbet);
                 }
             });
             return result;
@@ -747,8 +758,26 @@ namespace Gambler.Bot.Core.Sites
             
             return args.Config;
         }
+
+        public IGameConfig GetGameSettings(Games currentGame)
+        {
+            switch (currentGame)
+            {
+                case Games.Dice:
+                    return (this as iDice).DiceSettings;
+                case Games.Limbo:
+                    return (this as iLimbo).LimboSettings;
+                case Games.Twist:
+                    return (this as iTwist).TwistSettings;
+                case Games.Crash:
+                    return (this as iCrash).CrashSettings;
+                
+                default:
+                    return null;
+            }
+        }
         #endregion
-      
-       
+
+
     }
 }

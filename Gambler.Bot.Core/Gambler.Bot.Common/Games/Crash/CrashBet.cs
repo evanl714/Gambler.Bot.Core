@@ -22,7 +22,7 @@ namespace Gambler.Bot.Common.Games.Crash
 
         public override PlaceBet CreateRetry()
         {
-            return new PlaceCrashBet { Payout = Payout, Amount = TotalAmount };
+            return new PlaceCrashBet (Payout, Amount) ;
         }
 
 
