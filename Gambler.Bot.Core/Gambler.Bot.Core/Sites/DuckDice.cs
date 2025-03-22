@@ -128,9 +128,15 @@ namespace Gambler.Bot.Core.Sites
                
 
                 EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
+                if (!EmitResponse.IsSuccessStatusCode)
+                {
+                    await Task.Delay(107);
+                    EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
+                }
                 if (EmitResponse.IsSuccessStatusCode)
                 {
-                    string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                     Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
                     sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
                     QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);

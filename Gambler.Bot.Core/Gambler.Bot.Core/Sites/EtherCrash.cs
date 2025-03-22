@@ -107,15 +107,15 @@ namespace Gambler.Bot.Core.Sites
             try
             {
                 var webresponse = await Client.GetAsync("https://www.ethercrash.io/play");
+                string Response = await webresponse.Content.ReadAsStringAsync();
                 if (!webresponse.IsSuccessStatusCode)
                 {
                     Thread.Sleep(100);
                     webresponse = await Client.GetAsync("https://www.ethercrash.io/play");
                 }
-                string Response = await webresponse.Content.ReadAsStringAsync();
+                Response = await webresponse.Content.ReadAsStringAsync();
                 Thread.Sleep(10);
                 int counter = 0;
-                string datestring = Epoch.CurrentDate();
                 string iochat = "";
 
                 Response = await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
@@ -128,8 +128,8 @@ namespace Gambler.Bot.Core.Sites
                 webresponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookies);
                 Cookies.Add(new Cookie("io", iochat, "/", "www.ethercrash.io"));
 
-                /*datestring = Epoch.CurrentDate();
-                webresponse = await Client.GetAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + datestring);
+                
+                webresponse = await Client.GetAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
                 Response = await webresponse.Content.ReadAsStringAsync();
                 if (!webresponse.IsSuccessStatusCode)
                 {
@@ -137,9 +137,11 @@ namespace Gambler.Bot.Core.Sites
                 }
                 else
                 {
+                    webresponse = await Client.GetAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
+                    Response = await webresponse.Content.ReadAsStringAsync();
                     //break;
                 }
-                */
+                
                 foreach (Cookie c in Cookies.GetCookies(new Uri("https://www.ethercrash.io")))
                 {
                     if (c.Name == "cf_clearance")
@@ -148,10 +150,6 @@ namespace Gambler.Bot.Core.Sites
                         break;
                     }
                 }
-
-
-
-
 
 
                 Cookies.Add(new Cookie("id", APIKey, "/", "ethercrash.io"));
