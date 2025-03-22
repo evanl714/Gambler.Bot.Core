@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -30,13 +34,15 @@ namespace Gambler.Bot.Core.Sites
         double[] Limits = new double[0];
         string pw = "";
         string lasthash = "";
-        string[] CurrencyMap = new string[] { };
+        Dictionary<string, string> CurrencyMap = new Dictionary<string, string>();
         string seed = "";
+
+        public DiceConfig DiceSettings { get; set; }
 
         public Bitvest(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "BV";
             this.SiteName = "Bitvest";
             this.SiteURL = "https://bitvest.io?r=46534";
@@ -48,15 +54,21 @@ namespace Gambler.Bot.Core.Sites
             this.CanChat = false;
             this.CanGetSeed = true;
             this.CanRegister = false;
-            this.CanSetClientSeed = false;
+            this.CanSetClientSeed = true;
             this.CanTip = true;
             this.CanVerify = true;
             this.Currencies = new string[] { "btc", "tok", "ltc", "eth", "doge", "bch" };
-            CurrencyMap = new string[] { "bitcoins", "tokens", "litecoins", "ethers", "dogecoins", "bcash" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
-            this.Currency = 0;
+
+            CurrencyMap.Add("tok", "tokens");
+            CurrencyMap.Add("ltc", "litecoins");
+            CurrencyMap.Add("eth", "ethers");
+            CurrencyMap.Add("doge", "dogecoins");
+            CurrencyMap.Add("bch", "bcash");
+            SupportedGames = new Games[] { Games.Dice };
+            CurrentCurrency = "btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 
@@ -69,10 +81,12 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             isbv = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
-        {            
+        {
             //ServicePointManager.SecurityProtocol &= SecurityProtocolType.Ssl3;
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip/*, Proxy = this.Prox, UseProxy = Prox != null*/ };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://bitvest.io/") };
@@ -140,7 +154,7 @@ namespace Gambler.Bot.Core.Sites
                     if (Currencies[0].ToLower() == "btc")
                     {
                         Stats.Balance = decimal.Parse(tmplogin.balance ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
-                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice??"0", System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(tmplogin.self_total_bet_dice ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
                         Stats.Profit = decimal.Parse(tmplogin.self_total_won_dice ?? "0", System.Globalization.NumberFormatInfo.InvariantInfo);
 
                     }
@@ -215,10 +229,10 @@ namespace Gambler.Bot.Core.Sites
         {
             string s = "";
             string chars = "0123456789abcdef";
-            int length = R.Next(8, 64);
+            int length = Random.Next(8, 64);
             while (s.Length <= length)
             {
-                s += chars[R.Next(0, chars.Length)];
+                s += chars[Random.Next(0, chars.Length)];
             }
 
             return s;
@@ -233,14 +247,14 @@ namespace Gambler.Bot.Core.Sites
                 decimal chance = BetDetails.Chance;
                 bool High = BetDetails.High;
 
-                decimal tmpchance = High ? MaxRoll - chance + 0.0001m : chance - 0.0001m;
+                decimal tmpchance = High ? DiceSettings.MaxRoll - chance + 0.0001m : chance - 0.0001m;
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
 
                 pairs.Add(new KeyValuePair<string, string>("bet", (amount).ToString(System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("target", tmpchance.ToString("0.0000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("side", High ? "high" : "low"));
                 pairs.Add(new KeyValuePair<string, string>("act", "play_dice"));
-                pairs.Add(new KeyValuePair<string, string>("currency", CurrencyMap[Currency]));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrencyMap[CurrentCurrency]));
                 pairs.Add(new KeyValuePair<string, string>("secret", secret));
                 pairs.Add(new KeyValuePair<string, string>("token", accesstoken));
                 pairs.Add(new KeyValuePair<string, string>("user_seed", seed));
@@ -270,26 +284,26 @@ namespace Gambler.Bot.Core.Sites
                             Profit = tmp.game_result.win == 0 ? -amount : (decimal)tmp.game_result.win - amount,
                             Nonce = long.Parse(tmp.player_seed.Substring(tmp.player_seed.IndexOf("|") + 1)),
                             BetID = tmp.game_id.ToString(),
-                            Currency = Currencies[Currency]
+                            Currency = CurrentCurrency
 
                         };
                         resbet.Guid = BetDetails.GUID;
                         Stats.Bets++;
                         lasthash = tmp.server_hash;
-                        bool Win = (((bool)High ? (decimal)tmp.game_result.roll > (decimal)MaxRoll - (decimal)(chance) : (decimal)tmp.game_result.roll < (decimal)(chance)));
+                        bool Win = (((bool)High ? (decimal)tmp.game_result.roll > (decimal)DiceSettings.MaxRoll - (decimal)(chance) : (decimal)tmp.game_result.roll < (decimal)(chance)));
                         if (Win)
                             Stats.Wins++;
                         else Stats.Losses++;
                         Stats.Wagered += amount;
                         Stats.Profit += resbet.Profit;
-                        Stats.Balance = decimal.Parse(CurrencyMap[Currency].ToLower() == "bitcoins" ?
+                        Stats.Balance = decimal.Parse(CurrencyMap[CurrentCurrency].ToLower() == "bitcoins" ?
                                 tmp.data.balance :
-                                CurrencyMap[Currency].ToLower() == "ethers" ? tmp.data.balance_ether
-                                : CurrencyMap[Currency].ToLower() == "litecoins" ? tmp.data.balance_litecoin :
-                                CurrencyMap[Currency].ToLower() == "dogecoins" ? tmp.data.balance_dogecoin :
-                                CurrencyMap[Currency].ToLower() == "bcash" ? tmp.data.balance_bcash : tmp.data.token_balance,
+                                CurrencyMap[CurrentCurrency].ToLower() == "ethers" ? tmp.data.balance_ether
+                                : CurrencyMap[CurrentCurrency].ToLower() == "litecoins" ? tmp.data.balance_litecoin :
+                                CurrencyMap[CurrentCurrency].ToLower() == "dogecoins" ? tmp.data.balance_dogecoin :
+                                CurrencyMap[CurrentCurrency].ToLower() == "bcash" ? tmp.data.balance_bcash : tmp.data.token_balance,
                             System.Globalization.NumberFormatInfo.InvariantInfo);
-                        
+
                         callBetFinished(resbet);
                         retrycount = 0;
                         return resbet;
@@ -303,16 +317,16 @@ namespace Gambler.Bot.Core.Sites
                         }
                         else if (tmp.msg == "Insufficient Funds")
                         {
-                            type= ErrorType.BalanceTooLow;
+                            type = ErrorType.BalanceTooLow;
                         }
-                        
-                        else if (tmp.msg.ToLower() == "bet rate limit exceeded")
+
+                        else if (tmp.msg?.ToLower() == "bet rate limit exceeded")
                         {
-                           
+
                         }
                         else
                         {
-                            
+
                         }
                         callError(tmp.msg, false, type);
                         callNotify(tmp.msg);
@@ -363,15 +377,15 @@ namespace Gambler.Bot.Core.Sites
                 string s1 = "";
                 if (resp1.IsSuccessStatusCode)
                 {
-                    s1 =await resp1.Content.ReadAsStringAsync();
+                    s1 = await resp1.Content.ReadAsStringAsync();
                     //Parent.DumpLog("BE login 2.1", 7);
                 }
                 else
-                {                        
+                {
                     if (resp1.StatusCode == HttpStatusCode.ServiceUnavailable)
                     {
                         s1 = await resp1.Content.ReadAsStringAsync();
-                    }                        
+                    }
                 }
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
@@ -384,25 +398,25 @@ namespace Gambler.Bot.Core.Sites
                 {
                     if (tmpbase.data != null)
                     {
-                        switch (Currency)
+                        switch (CurrentCurrency)
                         {
                             //"btc", "tok", "ltc", "eth", "doge","bch" 
-                            case 0:
+                            case "btc":
                                 Stats.Balance = (decimal)tmpbase.data.balance; break;
-                            case 1:
+                            case "tok":
                                 Stats.Balance = (decimal)tmpbase.data.token_balance; break;
-                            case 2:
+                            case "ltc":
                                 Stats.Balance = (decimal)tmpbase.data.litecoin_balance; break;
-                            case 3: Stats.Balance = (decimal)tmpbase.data.ether_balance; break;
-                            case 4: Stats.Balance = (decimal)tmpbase.data.balance_dogecoin; break;
-                            case 5: Stats.Balance = (decimal)tmpbase.data.balance_bcash; break;
+                            case "eth": Stats.Balance = (decimal)tmpbase.data.ether_balance; break;
+                            case "doge": Stats.Balance = (decimal)tmpbase.data.balance_dogecoin; break;
+                            case "bch": Stats.Balance = (decimal)tmpbase.data.balance_bcash; break;
                             default:
                                 Stats.Balance = (decimal)tmpbase.data.token_balance; break;
                         }
 
                         return Stats;
                     }
-                }                
+                }
             }
             catch (Exception e)
             {
@@ -417,20 +431,7 @@ namespace Gambler.Bot.Core.Sites
             {
 
                 decimal weight = 1;
-                if (Currency == 0)
-                {
-                    switch (CurrencyMap[Currency].ToLower())
-                    {
-                        /*case "bitcoins": weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case "tokens": weight = decimal.Parse(Weights.TOK, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case "litecoins": weight = decimal.Parse(Weights.LTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case "ethers": weight = decimal.Parse(Weights.ETH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case "dogecoins": weight = decimal.Parse(Weights.DOGE, System.Globalization.NumberFormatInfo.InvariantInfo); break;
-                        case "bcash": weight = decimal.Parse(Weights.BCH, System.Globalization.NumberFormatInfo.InvariantInfo); break;
 
-                        default: weight = decimal.Parse(Weights.BTC, System.Globalization.NumberFormatInfo.InvariantInfo); break;*/
-                    }
-                }
 
 
                 for (int i = Limits.Length - 1; i >= 0; i--)
@@ -467,7 +468,7 @@ namespace Gambler.Bot.Core.Sites
                 pairs.Add(new KeyValuePair<string, string>("secret", secret));
                 pairs.Add(new KeyValuePair<string, string>("tfa", ""));
                 pairs.Add(new KeyValuePair<string, string>("token", accesstoken));
-                pairs.Add(new KeyValuePair<string, string>("currency", Currencies[Currency]));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 var response = await Client.PostAsync("action.php", Content);
@@ -510,7 +511,7 @@ namespace Gambler.Bot.Core.Sites
             try
             {
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
-                pairs.Add(new KeyValuePair<string, string>("currency", Currencies[Currency].ToLower()));
+                pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency.ToLower()));
                 pairs.Add(new KeyValuePair<string, string>("username", Username));
                 pairs.Add(new KeyValuePair<string, string>("quantity", Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 pairs.Add(new KeyValuePair<string, string>("act", "send_tip"));
@@ -535,6 +536,44 @@ namespace Gambler.Bot.Core.Sites
             return false;
         }
 
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+
+            List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+
+            pairs.Add(new KeyValuePair<string, string>("token", accesstoken));
+            pairs.Add(new KeyValuePair<string, string>("secret", "0"));
+            pairs.Add(new KeyValuePair<string, string>("act", "new_server_seed"));
+
+            FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+            var result = await Client.PostAsync("action.php", Content);
+            string sEmitResponse = await result.Content.ReadAsStringAsync();
+            SeedReset newSeed = JsonSerializer.Deserialize<SeedReset>(sEmitResponse);
+            return new SeedDetails
+            { 
+                Nonce=0, 
+                ServerHash=newSeed.server_hash,                  
+                ServerSeed = newSeed.server_seed,
+            };
+
+        }
+
+        protected override async Task<string> _SetClientSeed(string ClientSeed)
+        {
+            List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
+
+            pairs.Add(new KeyValuePair<string, string>("token", accesstoken));
+            pairs.Add(new KeyValuePair<string, string>("secret", "0"));
+            pairs.Add(new KeyValuePair<string, string>("act", "change_seed"));
+            pairs.Add(new KeyValuePair<string, string>("new_seed", ClientSeed));
+
+            FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
+            var result = await Client.PostAsync("action.php", Content);
+            string sEmitResponse = await result.Content.ReadAsStringAsync();
+            this.seed = ClientSeed;
+            return ClientSeed;
+        }
+
         public class bitvestLoginBase
         {
             public int update_interval { get; set; }
@@ -543,7 +582,7 @@ namespace Gambler.Bot.Core.Sites
             public Game game { get; set; }
             public bitvestAccount account { get; set; }
             public double[] rate_limits { get; set; }
-            public  string last_user_seed { get; set; }
+            public string last_user_seed { get; set; }
             public string server_hash { get; set; }
             public bitvesttip tip { get; set; }
         }
@@ -576,7 +615,7 @@ namespace Gambler.Bot.Core.Sites
             public bool api_enabled { get; set; }
             public bool mystats_private { get; set; }
             public Divest_Lock divest_lock { get; set; }
-            
+
             public string self_total_bet { get; set; }
             public string self_total_bet_ether { get; set; }
             public string self_total_bet_litecoin { get; set; }
@@ -703,7 +742,7 @@ namespace Gambler.Bot.Core.Sites
             public string self_ref_total_profit_ltc { get; set; }
             public string self_ref_total_profit_bch { get; set; }
             public string self_ref_total_profit_doge { get; set; }
-            
+
         }
 
         public class Exchange_Rates
@@ -901,6 +940,15 @@ namespace Gambler.Bot.Core.Sites
             public string server_hash { get; set; }
             public string player_seed { get; set; }
         }
+
+        public class SeedReset
+        {
+            public bool success { get; set; }
+            public string server_seed { get; set; }
+            public string server_hash { get; set; }
+        }
+
+
         public class bitvestbetdata
         {
             public string balance { get; set; }

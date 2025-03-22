@@ -1,6 +1,15 @@
-﻿using Gambler.Bot.Core.Enums;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Events;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Crash;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.HiLo;
+using Gambler.Bot.Common.Games.Limbo;
+using Gambler.Bot.Common.Games.Plinko;
+using Gambler.Bot.Common.Games.Roulette;
+using Gambler.Bot.Common.Helpers;
+using Gambler.Bot.Common.Interfaces;
 using Gambler.Bot.Core.Events;
-using Gambler.Bot.Core.Games;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -15,7 +24,7 @@ using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Sites
 {
-    public abstract class BaseSite
+    public abstract class BaseSite: IProvablyFair
     {
         protected readonly ILogger _logger;
 
@@ -26,6 +35,8 @@ namespace Gambler.Bot.Core.Sites
         
         public LoginParameter[] LoginParams { get { return StaticLoginParams; } }
         #region Properties
+        public bool IsEnabled { get; set; } = true;
+
         /// <summary>
         /// Specifies wether the user can register a new account on the website using the bot.
         /// </summary>
@@ -35,6 +46,11 @@ namespace Gambler.Bot.Core.Sites
         /// Specifies wether the bot is able to withdraw from the specified site.
         /// </summary>
         public bool AutoWithdraw { get; protected set; }
+
+        /// <summary>
+        /// Specifies wether the bot is able to bank/vault on the specified site.
+        /// </summary>
+        public bool AutoBank { get; protected set; }
 
         /// <summary>
         /// Specifies whether the bot can invest coins into the site, if the site supports the feature.
@@ -92,24 +108,10 @@ namespace Gambler.Bot.Core.Sites
         public string DiceBetURL { get; protected set; }
 
         /// <summary>
-        /// The index of the list of supported currencies for the current currency
-        /// </summary>
-        public int Currency { get; set; }
-
-        /// <summary>
         /// The name/abbreviation of the currency currently in use
         /// </summary>
-        public string CurrentCurrency { get { return Currencies[Currency]; } }
-
-        /// <summary>
-        /// The maximum roll allowed at the site. Usually 99.99. Used to determine whether the roll is a win
-        /// </summary>
-        public decimal MaxRoll { get; protected set; }
-
-        /// <summary>
-        /// The house edge for the site. Used to determine payout and profit for bets and simulations
-        /// </summary>
-        public decimal Edge { get; protected set; }
+        public string CurrentCurrency { get; set; }
+              
 
         /// <summary>
         /// List of currencies supported by the site
@@ -124,7 +126,7 @@ namespace Gambler.Bot.Core.Sites
         /// <summary>
         /// Site Statistics about the user 
         /// </summary>
-        public SiteStats Stats { get; protected set; }
+        public Common.Helpers.SiteStats Stats { get; protected set; }
 
         /// <summary>
         /// Indicates whether the user is logged in to the site
@@ -142,17 +144,26 @@ namespace Gambler.Bot.Core.Sites
                 if (siteDetails==null)
                 {
                     siteDetails = new SiteDetails {
-                         caninvest=AutoInvest,
-                          canresetseed=CanChangeSeed,
-                           cantip=CanTip,
-                            canwithdraw=AutoWithdraw,
-                             edge=Edge,
-                              maxroll=MaxRoll,
-                               name=SiteName,
-                                siteurl=SiteURL,
-                                 tipusingname=TipUsingName,
-                                  Currencies=CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
+                        caninvest = AutoInvest,
+                        canresetseed = CanChangeSeed,
+                        cantip = CanTip,
+                        canwithdraw = AutoWithdraw,
+                        /*edge=dicese.Edge,
+                         maxroll=MaxRoll,*/
+                        name = SiteName,
+                        siteurl = SiteURL,
+                        tipusingname = TipUsingName,
+                        Currencies = CopyHelper.CreateCopy(Currencies.GetType(), Currencies) as string[],
+                        NonceBased = NonceBased,
+                        GameSettings = new Dictionary<string, IGameConfig>(),
+                        canbank =AutoBank
                     };
+                    if (this is iDice dice)
+                    {
+                        SiteDetails.edge = dice.DiceSettings.Edge;
+                        SiteDetails.maxroll = dice.DiceSettings.MaxRoll;
+                        SiteDetails.GameSettings.Add("Dice", dice.DiceSettings);
+                    }
                 }
                 return siteDetails;
             }
@@ -166,7 +177,7 @@ namespace Gambler.Bot.Core.Sites
         /// <summary>
         /// Cryptographically secure random number generator with extension functions for random strings and numbers
         /// </summary>
-        public Helpers.Random R { get; internal set; } = new Helpers.Random();
+        public GRandom Random { get; internal set; } = new GRandom();
         #endregion
 
         /// <summary>
@@ -182,7 +193,7 @@ namespace Gambler.Bot.Core.Sites
         /// <summary>
         /// List of supported games for the site
         /// </summary>
-        public Games.Games[] SupportedGames { get; set; } = new Games.Games[] { Games.Games.Dice };
+        public Games[] SupportedGames { get; set; } = new Games[] { Games.Dice };
 
         protected BaseSite()
         {
@@ -234,13 +245,14 @@ namespace Gambler.Bot.Core.Sites
         {
             LoggedIn = false;
             _Disconnect();
+            
         }
 
         /// <summary>
         /// Set the proxy for the connection to the site
         /// </summary>
         /// <param name="ProxyInfo"></param>
-        public abstract void SetProxy(Helpers.ProxyDetails ProxyInfo);
+        public abstract void SetProxy(ProxyDetails ProxyInfo);
 
         /// <summary>
         /// Update the site statistics for whatever reason.
@@ -279,12 +291,12 @@ namespace Gambler.Bot.Core.Sites
                         callError("Chance to win must be > 0", false, ErrorType.InvalidBet);
                         return;
                     }
-                    callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} as {dicebet.Chance:0.0000}% chance to win, {(dicebet.High ? "High" : "Low")}");
+                    callNotify($"Placing Dice Bet: {dicebet.Amount:0.00######} at {dicebet.Chance:0.0000}% chance to win, {(dicebet.High ? "High" : "Low")}");
                     result = await DiceSite.PlaceDiceBet(dicebet);
                 }
                 if (BetDetails is PlaceCrashBet crashBet && this is iCrash crashsite)
                 {
-                    if (crashBet.TotalAmount < 0)
+                    if (crashBet.Amount < 0)
                     {
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
@@ -293,7 +305,7 @@ namespace Gambler.Bot.Core.Sites
                 }
                 if (BetDetails is PlacePlinkoBet plinkoBet && this is iPlinko PlinkoSite)
                 {
-                    if (plinkoBet.TotalAmount < 0)
+                    if (plinkoBet.Amount < 0)
                     {
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
@@ -302,12 +314,32 @@ namespace Gambler.Bot.Core.Sites
                 }
                 if (BetDetails is PlaceRouletteBet rouletteBet && this is iRoulette RouletteSite)
                 {
-                    if (rouletteBet.TotalAmount < 0)
+                    if (rouletteBet.Amount < 0)
                     {
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
                     }
                     result = await RouletteSite.PlaceRouletteBet(BetDetails as PlaceRouletteBet);
+                }
+                if (BetDetails is PlaceLimboBet limbobet && this is iLimbo limbosite)
+                {
+                    if (limbobet.Amount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    callNotify($"Placing Limbo Bet: {limbobet.Amount:0.00######} with {limbobet.Payout:0.0000}% payout");
+                    result = await limbosite.PlaceLimboBet(limbobet);
+                }
+                if (BetDetails is PlaceTwistBet twistbet && this is iTwist twistsite)
+                {
+                    if (twistbet.Amount < 0)
+                    {
+                        callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
+                        return;
+                    }
+                    callNotify($"Placing Twist Bet: {twistbet.Amount:0.00######} with {twistbet.Chance:0.0000}% payout");
+                    result = await twistsite.PlaceTwistBet(twistbet);
                 }
             });
             return result;
@@ -321,18 +353,28 @@ namespace Gambler.Bot.Core.Sites
         {
             SeedDetails seedDetails = null;
             if (CanChangeSeed)
-            {
-                ActiveActions.Add(SiteAction.ResetSeed);
-                callNotify("Resetting seed.");
-                await Task.Run(async () => 
+            {try
                 {
-                    seedDetails = await _ResetSeed();                    
-                });
-                if (CanSetClientSeed)
+                    ActiveActions.Add(SiteAction.ResetSeed);
+                    callNotify("Resetting seed.");
+                    seedDetails = await _ResetSeed();
+                    if (seedDetails == null )
+                    {
+                        callResetSeedFinished(false, "");
+                        return null;
+                    }
+                    if (CanSetClientSeed && seedDetails != null)
+                    {
+
+                        string client = await SetClientSeed(ClientSeed);
+                        if (!string.IsNullOrWhiteSpace(client))
+                            seedDetails.ClientSeed = client;
+                    }
+                    callResetSeedFinished(true, "");
+                }
+                catch (Exception e)
                 {
-                    string client = await SetClientSeed(ClientSeed);
-                    if (!string.IsNullOrWhiteSpace(client))
-                        seedDetails.ClientSeed = client;
+                    callResetSeedFinished(false, "");
                 }
             }
             else
@@ -349,15 +391,12 @@ namespace Gambler.Bot.Core.Sites
         {
             string result = null;
             if (CanSetClientSeed)
-            {
-                await Task.Run(async () =>
-                {
-                    result = await _SetClientSeed(ClientSeed);
-                });
+            {                
+                result = await _SetClientSeed(ClientSeed);                
             }
             else
                 callError("Setting Client Seed not allowed!", false, ErrorType.NotImplemented);
-            return null;
+            return result;
         }
         protected virtual async Task<string> _SetClientSeed(string ClientSeed) { return null; }
 
@@ -420,9 +459,34 @@ namespace Gambler.Bot.Core.Sites
                 callError("Withdrawing not allowed!", false, ErrorType.NotImplemented);
             return success;
         }
+
+
         protected virtual async Task<bool> _Withdraw(string Address, decimal Amount) 
         { 
             callError("Withdrawing not implemented", false, ErrorType.Withdrawal);
+            return false;
+        }
+        public async Task<bool> Bank(decimal Amount)
+        {
+            bool success = false;
+            if (AutoBank)
+            {
+                ActiveActions.Add(SiteAction.Bank);
+                callNotify($"Banking {Amount} {CurrentCurrency}");
+                await Task.Run(async () =>
+                {
+                    success = await _Bank(Amount);
+                });
+
+                await UpdateStats();
+            }
+            else
+                callError("Banking not supported!", false, ErrorType.NotImplemented);
+            return success;
+        }
+        protected virtual async Task<bool> _Bank(decimal Amount)
+        {
+            callError("Withdrawing not implemented", false, ErrorType.Bank);
             return false;
         }
 
@@ -498,7 +562,7 @@ namespace Gambler.Bot.Core.Sites
         }
         public virtual string GenerateNewClientSeed()
         {
-            string ClientSeed = R.Next(0, int.MaxValue).ToString();
+            string ClientSeed = Random.Next(0, int.MaxValue).ToString();
             return ClientSeed;
         }
 
@@ -511,7 +575,7 @@ namespace Gambler.Bot.Core.Sites
                 {
                     seed = await _GetSeed(BetID);
                     callNotify($"Got seed for bet {BetID}");
-                    callGameMessage(seed);
+                    //callGameMessage(seed);
                 });
             }
             else
@@ -573,31 +637,21 @@ namespace Gambler.Bot.Core.Sites
 
         #endregion
 
-        #region Events
-        public delegate void dStatsUpdated(object sender, StatsUpdatedEventArgs e);
-        public delegate void dBetFinished(object sender, BetFinisedEventArgs e);
-        public delegate void dLoginFinished(object sender, LoginFinishedEventArgs e);
-        public delegate void dRegisterFinished(object sender, GenericEventArgs e);
-        public delegate void dError(object sender, ErrorEventArgs e);
-        public delegate void dNotify(object sender, GenericEventArgs e);
-        public delegate void dGameMessage(object sender, GenericEventArgs e);
-        public delegate void dAction(object sender, GenericEventArgs e);
-        public delegate void dChat(object sender, GenericEventArgs e);
-        
-        public event dStatsUpdated StatsUpdated;
-        public event dBetFinished BetFinished;
-        public event dLoginFinished LoginFinished;
-        public event dRegisterFinished RegisterFinished;
-        public event dError Error;
-        public event dNotify Notify;
-        public event dAction Action;
-        public event dChat ChatReceived;
-        public event dAction OnWithdrawalFinished;
-        public event dAction OnTipFinished;
-        public event dAction OnResetSeedFinished;
-        public event dAction OnDonationFinished;
-        public event dAction OnInvestFinished;
-        public event dGameMessage OnGameMessage;
+        #region Events        
+        public event EventHandler<StatsUpdatedEventArgs> StatsUpdated;
+        public event EventHandler<BetFinisedEventArgs> BetFinished;
+        public event EventHandler<LoginFinishedEventArgs> LoginFinished;
+        public event EventHandler<GenericEventArgs> RegisterFinished;
+        public event EventHandler<ErrorEventArgs> Error;
+        public event EventHandler<GenericEventArgs> Notify;
+        public event EventHandler<GenericEventArgs> Action;
+        public event EventHandler<GenericEventArgs> ChatReceived;
+        public event EventHandler<GenericEventArgs> OnWithdrawalFinished;
+        public event EventHandler<GenericEventArgs> OnTipFinished;
+        public event EventHandler<GenericEventArgs> OnResetSeedFinished;
+        public event EventHandler<GenericEventArgs> OnDonationFinished;
+        public event EventHandler<GenericEventArgs> OnInvestFinished;
+        public event EventHandler<GameMessageEventArgs> OnGameMessage;
         public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
 
         protected void callStatsUpdated(SiteStats Stats)
@@ -610,10 +664,10 @@ namespace Gambler.Bot.Core.Sites
         protected void callBetFinished(Bet NewBet)
         {
             NewBet.Site = this.SiteName;
-            if (NewBet is DiceBet dicebet)
+            if (NewBet is DiceBet dicebet && this is iDice site)
             {
-                dicebet.IsWin = dicebet.GetWin(this);
-                dicebet.CalculateWinnableType(this);                
+                dicebet.IsWin = dicebet.GetWin(site.DiceSettings.MaxRoll);
+                dicebet.CalculateWinnableType(site.DiceSettings.MaxRoll);                
             }
             if (BetFinished != null)
             {
@@ -648,9 +702,9 @@ namespace Gambler.Bot.Core.Sites
                 Notify(this, new GenericEventArgs { Message = Message });
             }
         }
-        protected void callGameMessage(string Message)
+        protected void callGameMessage(IGameMessage message)
         {            
-            OnGameMessage?.Invoke(this, new GenericEventArgs { Message = Message });            
+            OnGameMessage?.Invoke(this, new GameMessageEventArgs { Message = message });            
         }
         protected void callAction(string CurrentAction)
         {
@@ -704,8 +758,26 @@ namespace Gambler.Bot.Core.Sites
             
             return args.Config;
         }
+
+        public IGameConfig GetGameSettings(Games currentGame)
+        {
+            switch (currentGame)
+            {
+                case Games.Dice:
+                    return (this as iDice).DiceSettings;
+                case Games.Limbo:
+                    return (this as iLimbo).LimboSettings;
+                case Games.Twist:
+                    return (this as iTwist).TwistSettings;
+                case Games.Crash:
+                    return (this as iCrash).CrashSettings;
+                
+                default:
+                    return null;
+            }
+        }
         #endregion
-      
-       
+
+
     }
 }

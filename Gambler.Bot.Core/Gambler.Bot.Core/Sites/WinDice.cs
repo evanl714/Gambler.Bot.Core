@@ -1,5 +1,7 @@
-﻿using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -8,12 +10,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Random = Gambler.Bot.Core.Helpers.Random;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -30,10 +32,12 @@ namespace Gambler.Bot.Core.Sites
         Random R = new Random();
         WDGetSeed currentseed;
 
+        public DiceConfig DiceSettings { get; set; }
+
         public WinDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "WD";
             this.SiteName = "WinDice";
             this.SiteURL = "https://windice.io/?r=08406hjdd";
@@ -41,6 +45,7 @@ namespace Gambler.Bot.Core.Sites
             this.TipUsingName = true;
             this.AutoInvest = false;
             this.AutoWithdraw = false;
+            AutoBank = true;
             this.CanChangeSeed = false;
             this.CanChat = false;
             this.CanGetSeed = false;
@@ -48,11 +53,12 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = false;
             this.CanVerify = false;
-            this.Currencies = new string[] { "btc", "eth", "ltc", "doge" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
-            this.Currency = 0;
+            this.Currencies = new string[] { "USDT","BTC","ETH","TRX","LTC","DOGE","BCH","XRP","BNB" };
+            SupportedGames = new Games[] { Games.Dice };
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://windice.io/api/v1/api/getBet?hash={0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 
@@ -63,8 +69,8 @@ namespace Gambler.Bot.Core.Sites
             decimal high = 0;
             if (BetDetails.High)
             {
-                high = MaxRoll * 100;
-                low = (MaxRoll - BetDetails.Chance) * 100 + 1;
+                high = DiceSettings.MaxRoll * 100;
+                low = (DiceSettings.MaxRoll - BetDetails.Chance) * 100 + 1;
             }
             else
             {
@@ -139,7 +145,7 @@ namespace Gambler.Bot.Core.Sites
                         ServerHash = currentseed.hash
                     };
                     Stats.Bets++;
-                    bool Win = (((bool)BetDetails.High ? (decimal)Result.Roll > (decimal)MaxRoll - (decimal)(BetDetails.Chance) : (decimal)Result.Roll < (decimal)(BetDetails.Chance)));
+                    bool Win = (((bool)BetDetails.High ? (decimal)Result.Roll > (decimal)DiceSettings.MaxRoll - (decimal)(BetDetails.Chance) : (decimal)Result.Roll < (decimal)(BetDetails.Chance)));
                     if (Win)
                         Stats.Wins++;
                     else Stats.Losses++;
@@ -166,6 +172,8 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             ispd = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
@@ -283,13 +291,78 @@ namespace Gambler.Bot.Core.Sites
             }
         }
 
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            try
+            {
+                bool result = false;
+                HttpContent val = (HttpContent)new StringContent(JsonSerializer.Serialize(new WDVault
+                {
+                    curr = base.CurrentCurrency,
+                    amount = Math.Round((Amount * 1000m), 5)
+                }));
+                val.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                HttpResponseMessage result2 = await Client.PostAsync("/api/v1/user/bank/send", val);
+                if (result2.IsSuccessStatusCode)
+                {
+                    WDVaultResponse wDVaultResponse = JsonSerializer.Deserialize<WDVaultResponse>(await result2.Content.ReadAsStringAsync());
+                    if (wDVaultResponse.status == "success")
+                    {
+                        foreach (var balance in wDVaultResponse.data.balances)
+                        {
+                            if (balance.curr.Equals(CurrentCurrency, StringComparison.InvariantCultureIgnoreCase))
+                            {                                
+                                Stats.Balance = balance.amount;
+                                callStatsUpdated(Stats);
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Failed to bank :{wDVaultResponse.message}");
+                        callError($"Failed to bank funds: {wDVaultResponse.message}", false, ErrorType.Bank);
+                    }
+                }  
+                else
+                {
+                    string errorresponse = await result2.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                callError("Failed to bank funds", false, ErrorType.Bank);
+            }
+            return false;
+        }
+        public class WDCurrencyBalance
+        {
+            public string curr { get; set; }
 
+            public decimal amount { get; set; }
+        }
+        public class WDBalances
+        {
+            public List<WDCurrencyBalance> balances { get; set; }
+
+            public List<WDCurrencyBalance> bank { get; set; }
+        }
+        public class WDVaultResponse : WDBaseResponse
+        {
+            public WDBalances data { get; set; }
+        }
         public class WDBaseResponse
         {
             public string status { get; set; }
             public string message { get; set; }
         }
+        public class WDVault
+        {
+            public string curr { get; set; }
 
+            public decimal amount { get; set; }
+        }
         public class WDUserResponse : WDBaseResponse
         {
             public WDUserResponse data { get; set; }

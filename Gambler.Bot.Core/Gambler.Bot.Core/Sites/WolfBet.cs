@@ -1,29 +1,37 @@
-﻿using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Games.Limbo;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitvest;
 
 namespace Gambler.Bot.Core.Sites
 {
-    public class WolfBet : BaseSite, iDice
+    public class WolfBet : BaseSite, iDice, iLimbo
     {
         string accesstoken = "";
         public bool ispd = false;
         DateTime lastupdate = new DateTime();
         HttpClient Client;
-        HttpClientHandler ClientHandlr;        
+        HttpClientHandler ClientHandlr;
         string URL = "https://wolf.bet";
+
+        public DiceConfig DiceSettings { get; set; }
+        public LimboConfig LimboSettings { get; set; }
 
         public WolfBet(ILogger logger) : base(logger)
         {
@@ -34,7 +42,7 @@ namespace Gambler.Bot.Core.Sites
         void configure()
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "WB";
             this.SiteName = "Wolf.Bet";
             this.SiteURL = "https://wolf.bet?c=Seuntjie";
@@ -49,11 +57,13 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = true;
             this.CanTip = false;
             this.CanVerify = false;
-            this.Currencies = new string[] { "btc", "eth", "ltc", "trx", "bch", "doge" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
-            this.Currency = 0;
-            this.DiceBetURL = "https://bit-exo.com/{0}";
-            this.Edge = 1;
+            this.Currencies = new string[] { "ada","bch","bnb","bonk","btc","doge","dot","etc","eth","floki","ltc",
+            "matic","optim","pepe","shib","sushi","trx","uni","usdt","xlm","xrp"};
+            SupportedGames = new Games[] { Games.Dice, Games.Limbo };
+            this.CurrentCurrency = "btc";
+            this.DiceBetURL = "https://wolf.bet?c=Seuntjie/{0}";
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
 
         }
@@ -61,18 +71,20 @@ namespace Gambler.Bot.Core.Sites
 
         public override void SetProxy(ProxyDetails ProxyInfo)
         {
-            
+
         }
 
         protected override void _Disconnect()
         {
             this.ispd = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
-            
-            ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip};
+
+            ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URL + "/api/v1/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
@@ -97,7 +109,7 @@ namespace Gambler.Bot.Core.Sites
                         {
                             if (x.currency.ToLower() == CurrentCurrency.ToLower())
                             {
-                                Stats.Balance = decimal.Parse(x.amount, System.Globalization.NumberFormatInfo.InvariantInfo);                                
+                                Stats.Balance = decimal.Parse(x.amount, System.Globalization.NumberFormatInfo.InvariantInfo);
                             }
                         }
                         //get stats
@@ -118,13 +130,13 @@ namespace Gambler.Bot.Core.Sites
                     _logger?.LogInformation(sEmitResponse);
                     callError(sEmitResponse, false, ErrorType.Unknown);
                     callNotify("Error: " + sEmitResponse);
-                    
+
                 }
             }
             catch (Exception e)
             {
                 _logger?.LogError(e.ToString());
-                
+
             }
             this.callLoginFinished(false);
             return false;
@@ -182,7 +194,78 @@ namespace Gambler.Bot.Core.Sites
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            throw new NotImplementedException();
+            try
+            {
+
+                decimal tmpchance = Math.Round(BetDetails.Chance, 2);
+                WolfPlaceDiceBet tmp = new WolfPlaceDiceBet
+                {
+                    amount = BetDetails.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    currency = CurrentCurrency,
+                    rule = BetDetails.High ? "over" : "under",
+                    multiplier = ((100m - DiceSettings.Edge) / tmpchance).ToString("0.####", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    bet_value = (BetDetails.High ? DiceSettings.MaxRoll - tmpchance : tmpchance).ToString("0.##", System.Globalization.NumberFormatInfo.InvariantInfo)                    
+                };
+                string LoginString = JsonSerializer.Serialize(tmp);
+                HttpContent cont = new StringContent(LoginString);
+                cont.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                HttpResponseMessage resp2 = await Client.PostAsync("bet/place", cont);
+
+                string sEmitResponse = resp2.Content.ReadAsStringAsync().Result;
+                if (!resp2.IsSuccessStatusCode)
+                {
+
+                }
+
+                try
+                {
+                    WolfDiceBetResult result = JsonSerializer.Deserialize<WolfDiceBetResult>(sEmitResponse);
+                    if (result.bet != null)
+                    {
+                        DiceBet tmpRsult = new DiceBet()
+                        {
+
+                            TotalAmount = decimal.Parse(result.bet.amount, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Chance = BetDetails.High ? DiceSettings.MaxRoll - decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo) : decimal.Parse(result.bet.bet_value, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            ClientSeed = result.bet.user_seed,
+                            DateValue = DateTime.Now,
+                            Currency = CurrentCurrency,
+                            Guid = BetDetails.GUID,
+                            Nonce = result.bet.nonce,
+                            BetID = result.bet.hash,
+                            High = BetDetails.High,
+                            Roll = decimal.Parse(result.bet.result_value, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Profit = decimal.Parse(result.bet.profit, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            ServerHash = result.bet.server_seed_hashed
+                        };
+                        Stats.Bets++;
+                        bool Win = (((bool)BetDetails.High ? tmpRsult.Roll > (decimal)DiceSettings.MaxRoll - (decimal)(tmpRsult.Chance) : (decimal)tmpRsult.Roll < (decimal)(tmpRsult.Chance)));
+                        if (Win)
+                            Stats.Wins++;
+                        else Stats.Losses++;
+                        Stats.Wagered += tmpRsult.TotalAmount;
+                        Stats.Profit += tmpRsult.Profit;
+                        Stats.Balance = decimal.Parse(result.userBalance.amount, CultureInfo.InvariantCulture);
+
+                        callBetFinished(tmpRsult);
+                        return tmpRsult;
+                    }
+                    else
+                    {
+                        _logger.LogError(sEmitResponse, -1);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.ToString(), -1);
+                    _logger.LogDebug(sEmitResponse, -1);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString(), -1);
+            }
+            return null;
         }
         SiteStats SetStats(WolfBetStats Stats)
         {
@@ -199,7 +282,7 @@ namespace Gambler.Bot.Core.Sites
                         this.Stats.Losses = int.Parse(stat.lose);
                         this.Stats.Wagered = decimal.Parse(stat.waggered, System.Globalization.NumberFormatInfo.InvariantInfo);
                         this.Stats.Profit = decimal.Parse(stat.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
-                        
+
                     }
                 }
 
@@ -211,9 +294,83 @@ namespace Gambler.Bot.Core.Sites
                 this.Stats.Losses = 0;
                 this.Stats.Wagered = 0;
                 this.Stats.Profit = 0;
-                
+
             }
             return this.Stats;
+        }
+
+        public async Task<LimboBet> PlaceLimboBet(PlaceLimboBet bet)
+        {
+            try
+            {
+
+                decimal tmpchance = Math.Round(bet.Payout, 2);
+                WolfPlaceLimboBet tmp = new WolfPlaceLimboBet
+                {
+                    amount = bet.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo),
+                    currency = CurrentCurrency,
+                    multiplier = tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo)                    
+                };
+                string LoginString = JsonSerializer.Serialize(tmp);
+                HttpContent cont = new StringContent(LoginString);
+                cont.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                HttpResponseMessage resp2 = await Client.PostAsync("/api/v2/limbo/manual/play", cont);
+
+                string sEmitResponse = resp2.Content.ReadAsStringAsync().Result;
+                if (!resp2.IsSuccessStatusCode)
+                {
+
+                }
+
+                try
+                {
+                    WolfLimboBetResult result = JsonSerializer.Deserialize<WolfLimboBetResult>(sEmitResponse);
+                    if (result.bet != null)
+                    {
+                        LimboBet tmpRsult = new LimboBet()
+                        {
+
+                            TotalAmount = decimal.Parse(result.bet.amount, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            
+                            ClientSeed = result.bet.user_seed,
+                            DateValue = DateTime.Now,
+                            Currency = CurrentCurrency,
+                            Guid = bet.GUID,
+                            Nonce = result.bet.nonce,
+                            BetID = result.bet.hash,                            
+                            Payout = decimal.Parse(result.bet.multiplier, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Result = decimal.Parse(result.bet.result_value, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Profit = decimal.Parse(result.bet.profit, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            ServerHash = result.bet.server_seed_hashed
+                        };
+                        Stats.Bets++;
+                        tmpRsult.IsWin = tmpRsult.Result>=tmpRsult.Payout;
+                        if (tmpRsult.IsWin)
+                            Stats.Wins++;
+                        else Stats.Losses++;
+                        Stats.Wagered += tmpRsult.TotalAmount;
+                        Stats.Profit += tmpRsult.Profit;
+                        Stats.Balance = decimal.Parse(result.userBalance.amount, CultureInfo.InvariantCulture);
+
+                        callBetFinished(tmpRsult);
+                        return tmpRsult;
+                    }
+                    else
+                    {
+                        _logger.LogError(sEmitResponse, -1);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.ToString(), -1);
+                    _logger.LogDebug(sEmitResponse, -1);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString(), -1);
+            }
+            return null;
         }
 
         public class WolfBetLogin
@@ -330,13 +487,32 @@ namespace Gambler.Bot.Core.Sites
         public class WolfPlaceBet
         {
             public string currency { get; set; }
-            public string game { get; set; }
             public string amount { get; set; }
+            public string game { get; set; }
+            public int auto { get; set; } = 1;
+        }
+
+        public class WolfPlaceDiceBet: WolfPlaceBet
+        {
+            public WolfPlaceDiceBet()
+            {
+                game = "dice";
+            }
             public string rule { get; set; }
             public string multiplier { get; set; }
             public string bet_value { get; set; }
         }
-        public class WBBet
+
+        public class WolfPlaceLimboBet:WolfPlaceBet
+        {
+            public WolfPlaceLimboBet()
+            {
+                game = "limbo";
+            }
+            public string multiplier { get; set; }
+        }
+
+        public class WBBaseBet
         {
             public string hash { get; set; }
             public int nonce { get; set; }
@@ -344,28 +520,48 @@ namespace Gambler.Bot.Core.Sites
             public string currency { get; set; }
             public string amount { get; set; }
             public string profit { get; set; }
+            public string state { get; set; }
+            public long published_at { get; set; }
+            public Game game { get; set; }
+            public User user { get; set; }
+        }
+        public class WBDiceBet: WBBaseBet
+        {
             public string multiplier { get; set; }
             public string bet_value { get; set; }
             public string result_value { get; set; }
-            public string state { get; set; }
-            public int published_at { get; set; }
             public string server_seed_hashed { get; set; }
-            public User user { get; set; }
-            public Game game { get; set; }
+        }
+        public class WBLimboBet : WBBaseBet
+        {
+            public string multiplier { get; set; }            
+            public string result_value { get; set; }
+            public string server_seed_hashed { get; set; }
         }
 
         public class UserBalance
         {
-            public decimal amount { get; set; }
+            public string amount { get; set; }
             public string currency { get; set; }
             public string withdraw_fee { get; set; }
             public string withdraw_minimum_amount { get; set; }
             public bool payment_id_required { get; set; }
+            
         }
 
-        public class WolfBetResult
+        public class WolfBaseBetResult
         {
-            public WBBet bet { get; set; }
+            
+            public UserBalance userBalance { get; set; }
+        }
+        public class WolfDiceBetResult
+        {
+            public WBDiceBet bet { get; set; }
+            public UserBalance userBalance { get; set; }
+        }
+        public class WolfLimboBetResult
+        {
+            public WBLimboBet bet { get; set; }
             public UserBalance userBalance { get; set; }
         }
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Gambler.Bot.Common.Games;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,7 +20,7 @@ namespace Gambler.Bot.Core.Helpers
         }
         public string Img { get {return  $@"Images/Sites/{Name.ToLower()}.png"; } }
         public string[] Currencies { get; set; } = new string[0];
-        public Games.Games[] SupportedGames { get; set; } = new Games.Games[0];
+        public Games[] SupportedGames { get; set; } = new Games[0];
         public string URL { get; set; }
 
         string gamesString = "";
@@ -29,7 +30,7 @@ namespace Gambler.Bot.Core.Helpers
                 if (string.IsNullOrWhiteSpace(gamesString))
                 {
                     gamesString = "";
-                    foreach (Games.Games x in SupportedGames?? new Games.Games[0])
+                    foreach (Games x in SupportedGames?? new Games[0])
                     {
                         if (gamesString != "")
                             gamesString += ", ";

@@ -6,8 +6,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
@@ -15,7 +17,7 @@ using WebSocket4Net;
 
 namespace Gambler.Bot.Core.Sites
 {
-    class NitrogenSports : BaseSite
+    class NitrogenSports : BaseSite, iDice
     {
         string password = "";
         Dictionary<string, int> Requests = new Dictionary<string, int>();
@@ -32,10 +34,13 @@ namespace Gambler.Bot.Core.Sites
         string link = "";
         WebSocket NSSocket = null;
 
+        public DiceConfig DiceSettings { get; set; }
+
         public NitrogenSports(ILogger logger) : base(logger)
         {
+            IsEnabled = false;
             StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("2FA Code", false, false, true, true, true) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "NitrogenSports";
             this.SiteName = "NS";
             this.SiteURL = "https://nitrogensports.eu/r/1435541";
@@ -51,10 +56,11 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = true;
             this.CanVerify = true;
             this.Currencies = new string[] { "btc"};
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
-            this.Currency = 0;
+            SupportedGames = new Games[] { Games.Dice };
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://bitvest.io/bet/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
         }
         string CreateRandomString()
         {
@@ -64,7 +70,7 @@ namespace Gambler.Bot.Core.Sites
             string chars = "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
             while (s.Length < length)
             {
-                s += chars[R.Next(0, chars.Length)];
+                s += chars[Random.Next(0, chars.Length)];
             }
             return s;
         }
@@ -93,7 +99,9 @@ namespace Gambler.Bot.Core.Sites
 
         protected override void _Disconnect()
         {
-            throw new NotImplementedException();
+            iskd = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
@@ -338,7 +346,7 @@ Sec-WebSocket-Version:13*/
                 DateValue = DateTime.Now,
                 ClientSeed = tmpbbet.dice.clientSeed,
                 High = tmpbbet.betCondition == "H",
-                Chance = tmpbbet.betCondition == "H" ? MaxRoll - decimal.Parse(tmpbbet.betTarget, System.Globalization.NumberFormatInfo.InvariantInfo) : decimal.Parse(tmpbbet.betTarget, System.Globalization.NumberFormatInfo.InvariantInfo),
+                Chance = tmpbbet.betCondition == "H" ? DiceSettings.MaxRoll - decimal.Parse(tmpbbet.betTarget, System.Globalization.NumberFormatInfo.InvariantInfo) : decimal.Parse(tmpbbet.betTarget, System.Globalization.NumberFormatInfo.InvariantInfo),
                 Nonce = tmpbbet.nonce,
                 Guid = this.Guid,
                 Roll = decimal.Parse(tmpbbet.roll, System.Globalization.NumberFormatInfo.InvariantInfo),
@@ -399,7 +407,10 @@ Sec-WebSocket-Version:13*/
             //GetStats();
         }
 
-
+        public Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
+        {
+            throw new NotImplementedException();
+        }
 
         public class NSLogin
         {

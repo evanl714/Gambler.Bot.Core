@@ -1,12 +1,11 @@
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Events;
-using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites;
 using Gambler.Bot.Core.Sites.Classes;
 using Gambler.Bot.Core.Tests.Code;
 using Microsoft.Extensions.Configuration;
 using OtpNet;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Web;
 
@@ -314,16 +313,18 @@ namespace Gambler.Bot.Core.Tests
         }
 
         [Fact]
-        public void b2_ResetSeedIfPossible()
+        public async void b2_ResetSeedIfPossible()
         {
             if (_site.CanChangeSeed)
             {
+                //string Client = _site.seed
                 _site.OnResetSeedFinished += (s, e) =>
                 {
                     Assert.True(e.Success);
                 };
 
-                _site.ResetSeed();
+                var seedDetails = await _site.ResetSeed();
+                
             }
             else
             {

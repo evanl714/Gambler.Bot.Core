@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -24,15 +24,18 @@ namespace Gambler.Bot.Core.Sites
         DateTime lastupdate = new DateTime();
         HttpClient Client;// = new HttpClient { BaseAddress = new Uri("https://api.primedice.com/api/") };
         HttpClientHandler ClientHandlr;
-        public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "DASH", "GAS", "Bch", "STRAT", "PPC", "PLAY", "LTC", "XMR", "ETC" };
+        public static string[] sCurrencies = new string[] { "BTC", "Doge", "ETH", "GAS", "Bch", "PLAY", "LTC", "XMR", "ETC","USDC","USDT","SOL","BNB","POL","PEPE","SHIB", };
         string CurrenyHash = "";
+
+        public DiceConfig DiceSettings { get; set; }
+
         public CryptoGames(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
-            this.MaxRoll = 99.999m;
+            //this.MaxRoll = 99.999m;
             this.SiteAbbreviation = "CG";
             this.SiteName = "CryptoGames";
-            this.SiteURL = "https://www.crypto-games.net?i=KaSwpL1Bky";
+            this.SiteURL = "https://www.crypto.games?i=KaSwpL1Bky";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -45,11 +48,12 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = false;
             this.CanVerify = true;
             this.Currencies = sCurrencies;
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
-            this.Currency = 0;
-            this.DiceBetURL = "https://www.crypto-games.net/fair.aspx?coin=BTC&type=3&id={0}";
-            this.Edge = 0.8m;
+            SupportedGames = new Games[] { Games.Dice };
+            CurrentCurrency ="btc";
+            this.DiceBetURL = "https://www.crypto.games/fair.aspx?coin=BTC&type=3&id={0}";
+            //this.Edge = 0.8m;
             NonceBased = true;
+            DiceSettings = new DiceConfig() { Edge = 0.8m, MaxRoll = 99.99m };
         }
 
 
@@ -61,6 +65,8 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             iscg = false;
+            Client = null;
+            ClientHandlr = null;
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
@@ -141,7 +147,7 @@ namespace Gambler.Bot.Core.Sites
         {
 
             string Clients = GenerateNewClientSeed();
-            decimal payout = decimal.Parse(((100m - Edge) / (decimal)BetDetails.Chance).ToString("0.0000"));
+            decimal payout = decimal.Parse(((100m - DiceSettings.Edge) / (decimal)BetDetails.Chance).ToString("0.0000"));
             cgPlaceBet tmpPlaceBet = new cgPlaceBet() { Bet = BetDetails.Amount, ClientSeed = Clients, UnderOver = BetDetails.High, Payout = (decimal)payout };
 
             string post = JsonSerializer.Serialize<cgPlaceBet>(tmpPlaceBet);
@@ -193,9 +199,9 @@ namespace Gambler.Bot.Core.Sites
                     ServerSeed = Response.ServerSeed
                 };
                 if (bet.High)
-                    bet.Chance = (decimal)MaxRoll - bet.Chance;
+                    bet.Chance = (decimal)DiceSettings.MaxRoll - bet.Chance;
                 this.CurrenyHash = Response.NextServerSeedHash;
-                bool Win = (((bool)bet.High ? (decimal)bet.Roll > (decimal)MaxRoll - (decimal)(bet.Chance) : (decimal)bet.Roll < (decimal)(bet.Chance)));
+                bool Win = (((bool)bet.High ? (decimal)bet.Roll > (decimal)DiceSettings.MaxRoll - (decimal)(bet.Chance) : (decimal)bet.Roll < (decimal)(bet.Chance)));
                 if (Win)
                     Stats.Wins++;
                 else

@@ -1,16 +1,20 @@
-﻿using System;
+﻿using Gambler.Bot.Common.Enums;
+using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Helpers;
+using Gambler.Bot.Core.Helpers;
+using Gambler.Bot.Core.Sites.Classes;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Gambler.Bot.Core.Enums;
-using Gambler.Bot.Core.Games;
-using Gambler.Bot.Core.Helpers;
-using Gambler.Bot.Core.Sites.Classes;
-using Microsoft.Extensions.Logging;
+using static Gambler.Bot.Core.Sites.Stake;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -32,7 +36,7 @@ namespace Gambler.Bot.Core.Sites
         public PrimeDice(ILogger logger) : base(logger)
         {
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, true) };
-            this.MaxRoll = 99.99m;
+            //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "PD";
             this.SiteName = "PrimeDice";
             this.SiteURL = "https://primedice.com?c=Seuntjie";
@@ -47,11 +51,14 @@ namespace Gambler.Bot.Core.Sites
             this.CanSetClientSeed = false;
             this.CanTip = true;
             this.CanVerify = true;
-            this.Currencies = new string[] { "Btc", "Ltc", "Eth", "Doge", "Bch", "XRP", "TRX" };
-            SupportedGames = new Games.Games[] { Games.Games.Dice };
-            this.Currency = 0;
+            AutoBank = true;
+            this.Currencies = new string[] { "APE","BTC","ETH","BCH","EOS","BNB","BUSD","CRO","DAI","DOGE","LINK","LTC","POL","SAND","SHIB","SOL","TRUMP",
+                "TRX","UNI","USDC","XRP","USDT", };
+            SupportedGames = new Games[] { Games.Dice };
+            CurrentCurrency ="btc";
             this.DiceBetURL = "https://primedice.com/bet/{0}";
-            this.Edge = 1;
+            //this.Edge = 1;
+            DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
         }
 
@@ -63,6 +70,8 @@ namespace Gambler.Bot.Core.Sites
         protected override void _Disconnect()
         {
             ispd = false;
+            Client = null;
+            
         }
         string userid = "";
         async Task OnWSConnected(GraphQL.Client.Http.GraphQLHttpClient client)
@@ -122,6 +131,13 @@ namespace Gambler.Bot.Core.Sites
 
                 var resp = await Client.PostAsync(URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    await Task.Delay(106);
+                    content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
+                    resp = await Client.PostAsync(URL, content);
+                    respostring = await resp.Content.ReadAsStringAsync();
+                }
                 var Resp = JsonSerializer.Deserialize< Payload>(respostring);
                 pdUser user = Resp.data.user;
                 userid = user.id;
@@ -131,7 +147,7 @@ namespace Gambler.Bot.Core.Sites
                 {
                     foreach (Statistic x in user.statistic)
                     {
-                        if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
+                        if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {
                             this.Stats.Bets = (int)x.bets;
                             this.Stats.Wins = (int)x.wins;
@@ -144,7 +160,7 @@ namespace Gambler.Bot.Core.Sites
                     }
                     foreach (Balance x in user.balances)
                     {
-                        if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                        if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
                         {
                             this.Stats.Balance = x.available.amount ?? 0;
                             break;
@@ -195,6 +211,8 @@ namespace Gambler.Bot.Core.Sites
         int retrycount = 0;
         DateTime Lastbet = DateTime.Now;
 
+        public DiceConfig DiceSettings { get; set; }
+
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
             try
@@ -206,9 +224,9 @@ namespace Gambler.Bot.Core.Sites
                 {
                     Thread.Sleep((int)(500.0 - (DateTime.Now - Lastbet).TotalMilliseconds));
                 }*/
-                decimal tmpchance = High ? MaxRoll - chance : chance;
+                decimal tmpchance = High ? DiceSettings.MaxRoll - chance : chance;
 
-                //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + Currencies[Currency].ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
+                //string query = "mutation {" + RolName + "(amount:" + amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo) + ", target:" + tmpchance.ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) + ",condition:" + (High ? "above" : "below") + ",currency:" + CurrentCurrency.ToLower() + ") { id iid nonce currency amount payout state { ... on " + GameName + " { result target condition } } createdAt serverSeed{seedHash seed nonce} clientSeed{seed} user{balances{available{amount currency}} statistic{game bets wins losses amount profit currency}}}}";
                 //var primediceRoll = GQLClient.SendMutationAsync<dynamic>(new GraphQLRequest { Query = query }).Result;
                 GraphqlRequestPayload betresult = new GraphqlRequestPayload
                 {
@@ -218,8 +236,8 @@ namespace Gambler.Bot.Core.Sites
                         amount = amount,
                         target = tmpchance,
                         condition = (High ? "above" : "below"),
-                        currency = Currencies[base.Currency].ToLower(),
-                        identifier = R.Next().ToString()
+                        currency = CurrentCurrency.ToLower(),
+                        identifier = Random.Next().ToString()
                     }
                     ,
                     operationName = "DiceBotDiceBet"
@@ -257,10 +275,10 @@ namespace Gambler.Bot.Core.Sites
                     lastupdate = DateTime.Now;
                     /*foreach (Statistic x in tmp.user?.statistic)
                     {
-                        if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
+                        if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
                     DiceBet tmpbet = tmp.ToBet();
-                    tmpbet.IsWin = tmpbet.GetWin(this);
+                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
                     this.Stats.Bets++; ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0; ;
                     this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;
@@ -271,7 +289,7 @@ namespace Gambler.Bot.Core.Sites
                 }*/
                     /*foreach (Balance x in tmp.user.balances)
                     {
-                        if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                        if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
                         {*/
                     this.Stats.Balance += tmpbet.Profit;
                     /*break;
@@ -317,7 +335,7 @@ namespace Gambler.Bot.Core.Sites
 
                 foreach (Statistic x in user.statistic)
                 {
-                    if (x.currency.ToLower() == Currencies[Currency].ToLower() && x.game == StatGameName)
+                    if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                     {
                         this.Stats.Bets = (int)x.bets;
                         this.Stats.Wins = (int)x.wins;
@@ -329,7 +347,7 @@ namespace Gambler.Bot.Core.Sites
                 }
                 foreach (Balance x in user.balances)
                 {
-                    if (x.available.currency.ToLower() == Currencies[Currency].ToLower())
+                    if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
                     {
                         this.Stats.Balance = x.available.amount ?? 0;
                         break;
@@ -349,7 +367,42 @@ namespace Gambler.Bot.Core.Sites
             return 100 - (int)(DateTime.Now - Lastbet).TotalMilliseconds;
 
         }
-
+        protected override async Task<bool> _Bank(decimal Amount)
+        {
+            try
+            {
+                GraphqlRequestPayload payload = new GraphqlRequestPayload
+                {
+                    query = "mutation CreateVaultDeposit($currency: CurrencyEnum!, $amount: Float!) {\n  createVaultDeposit(currency: $currency, amount: $amount) {\n    id\n    amount\n    currency\n    user {\n      id\n      balances {\n        available {\n          amount\n          currency\n          __typename\n        }\n        vault {\n          amount\n          currency\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
+                    variables = new
+                    {
+                        currency = CurrentCurrency.ToLower(),
+                        amount = Amount
+                    }
+                };
+                var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    callError("An error occured while trying to bank your funds: ", false, ErrorType.Bank);
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+                    await UpdateStats();
+                    return false;
+                }
+                else
+                {
+                    Stats.Balance = ResponsePayload.data.createVaultDeposit.user.balances.FirstOrDefault(x => x.available.currency.ToLower() == CurrentCurrency.ToLower()).available.amount??0;
+                }
+                    return true;
+            }
+            catch (Exception ex)
+            {
+                callError("An error occured while trying to bank your funds.", false, ErrorType.Bank);
+                _logger?.LogError(ex.ToString());
+            }
+            return false;
+        }
 
         public class Sender
         {
@@ -500,8 +553,14 @@ namespace Gambler.Bot.Core.Sites
             public RollDice primediceRoll { get; set; }
             public pdUser user { get; set; }
             public RollDice bet { get; set; }
+            public StakeVaultDepost createVaultDeposit { get; set; }
         }
-
+        public class PDVaultDepost
+        {
+            public string currency { get; set; }
+            public decimal amount { get; set; }
+            public pdUser user { get; set; }
+        }
         public class Payload
         {
             public Data data { get; set; }
