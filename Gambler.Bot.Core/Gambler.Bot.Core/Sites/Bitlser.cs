@@ -388,18 +388,21 @@ devise:btc*/
                     IsBitsler = true;
                     Thread t = new Thread(GetBalanceThread);
                     t.Start();
+                    callLoginFinished(true);
                     return true;
                 }
                 else
                 {
                     if (bsbase.error != null)
                         callNotify(bsbase.error);
+                    callLoginFinished(false);
                 }
 
             }
             catch (Exception e)
             {
                 _logger?.LogError(e.ToString());
+                callLoginFinished(false);
             }
             return false;
         }
