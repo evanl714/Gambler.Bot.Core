@@ -114,7 +114,7 @@ stages:
     - task: DotNetCoreCLI@2
       inputs:
         command: 'push'
-        packagesToPush: 'Gambler.Bot.Core\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
+        packagesToPush: '$(System.ArtifactsDirectory)\**Gambler.Bot.Core\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
         nuGetFeedType: 'external'
         publishVstsFeed: 'https://api.nuget.org/v3/index.json'
         apiKey: '$(NuGetApiKey)'
