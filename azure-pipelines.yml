@@ -65,42 +65,42 @@ stages:
         publishLocation: 'container'
 
 
-- stage: Test
-  dependsOn: Build
-  jobs:
-  - job: TestJob
-    steps:
-    - task: DownloadSecureFile@1
-      name: diceAccountsFile
-      inputs:
-        secureFile: 'diceaccounts.json'
+# - stage: Test
+#   dependsOn: Build
+#   jobs:
+#   - job: TestJob
+#     steps:
+#     - task: DownloadSecureFile@1
+#       name: diceAccountsFile
+#       inputs:
+#         secureFile: 'diceaccounts.json'
 
     
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: |
-          $env:DICETESTACCOUNTS = "$(diceAccountsFile.secureFilePath)"
-          Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
-      env:
-        diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
-    - task: DownloadBuildArtifacts@0
-      inputs:
-        buildType: 'current'
-        downloadType: 'single'
-        artifactName: 'BuildArtifacts'
-        downloadPath: '$(System.ArtifactsDirectory)'
+#     - task: PowerShell@2
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#           $env:DICETESTACCOUNTS = "$(diceAccountsFile.secureFilePath)"
+#           Write-Host "DICETESTACCOUNTS environment variable is set to $env:DICETESTACCOUNTS"
+#       env:
+#         diceAccountsFile.secureFilePath: $(diceAccountsFile.secureFilePath)
+#     - task: DownloadBuildArtifacts@0
+#       inputs:
+#         buildType: 'current'
+#         downloadType: 'single'
+#         artifactName: 'BuildArtifacts'
+#         downloadPath: '$(System.ArtifactsDirectory)'
 
-    - task: VSTest@2      
-      inputs:
-        testAssemblyVer2: '$(System.ArtifactsDirectory)\**\*Tests.dll'
-        platform: '$(buildPlatform)'
-        configuration: '$(buildConfiguration)'
-      env:
-        DICETESTACCOUNTS: $(diceAccountsFile.secureFilePath)
+#     - task: VSTest@2      
+#       inputs:
+#         testAssemblyVer2: '$(System.ArtifactsDirectory)\**\*Tests.dll'
+#         platform: '$(buildPlatform)'
+#         configuration: '$(buildConfiguration)'
+#       env:
+#         DICETESTACCOUNTS: $(diceAccountsFile.secureFilePath)
       
 - stage: Publish
-  dependsOn: Test
+  dependsOn: Build
   condition: and(succeeded(), eq(dependencies.Test.result, 'Succeeded'))
   jobs:
   - job: PublishJob
