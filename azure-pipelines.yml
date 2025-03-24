@@ -51,7 +51,7 @@ stages:
 
     - script: |
         mkdir $(Build.ArtifactStagingDirectory)\Artifacts
-        xcopy /I /E /Y "Gambler.Bot.Core\Gambler.Bot.Core\bin\Release\net8.0\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
+        xcopy /I /E /Y "Gambler.Bot.Core\Gambler.Bot.Core\bin\Release\*" "$(Build.ArtifactStagingDirectory)\Artifacts"
       displayName: 'Copy Artifacts to a Common Directory'
     
     - script: |
