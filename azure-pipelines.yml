@@ -99,23 +99,23 @@ stages:
 #       env:
 #         DICETESTACCOUNTS: $(diceAccountsFile.secureFilePath)
       
-- stage: Publish
-  dependsOn: Build
-  #condition: and(succeeded(), eq(dependencies.Test.result, 'Succeeded'))
-  jobs:
-  - job: PublishJob
-    steps:
-    - task: DownloadBuildArtifacts@0
-      inputs:
-        buildType: 'current'
-        downloadType: 'single'
-        artifactName: 'BuildArtifacts'
-        downloadPath: '$(System.ArtifactsDirectory)'
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: 'push'
-        packagesToPush: '$(System.ArtifactsDirectory)\**Gambler.Bot.Core\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
-        nuGetFeedType: 'external'
-        publishVstsFeed: 'https://api.nuget.org/v3/index.json'
-        apiKey: '$(NuGetApiKey)'
+# - stage: Publish
+#   dependsOn: Build
+#   #condition: and(succeeded(), eq(dependencies.Test.result, 'Succeeded'))
+#   jobs:
+#   - job: PublishJob
+#     steps:
+#     - task: DownloadBuildArtifacts@0
+#       inputs:
+#         buildType: 'current'
+#         downloadType: 'single'
+#         artifactName: 'BuildArtifacts'
+#         downloadPath: '$(System.ArtifactsDirectory)'
+#     - task: DotNetCoreCLI@2
+#       inputs:
+#         command: 'push'
+#         packagesToPush: '$(System.ArtifactsDirectory)\**Gambler.Bot.Core\**\bin\Release\*.nupkg' # Update this to the path of your .nupkg file
+#         nuGetFeedType: 'external'
+#         publishVstsFeed: 'https://api.nuget.org/v3/index.json'
+#         apiKey: '$(NuGetApiKey)'
     
