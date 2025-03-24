@@ -22,17 +22,17 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.csproj" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*Core.csproj" -Recurse | Select-Object -First 1 -ExpandProperty FullName
           [xml]$csproj = Get-Content -Path $csprojPath
           $versionNode = $csproj.SelectNodes("//Project/PropertyGroup/Version") | Select-Object -First 1
           if ($versionNode -eq $null) {
             $propertyGroup = $csproj.CreateElement("PropertyGroup")
             $versionNode = $csproj.CreateElement("Version")
-            $versionNode.InnerText = "$(Build.BuildNumber)"
+            $versionNode.InnerText = "1.0.$(Build.BuildNumber)"
             $propertyGroup.AppendChild($versionNode)
             $csproj.DocumentElement.AppendChild($propertyGroup)
           } else {
-            $versionNode.InnerText = "$(Build.BuildNumber)"
+            $versionNode.InnerText = "1.0.$(Build.BuildNumber)"
           }
           $csproj.Save($csprojPath)
 
