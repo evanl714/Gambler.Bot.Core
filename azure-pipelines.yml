@@ -28,11 +28,11 @@ stages:
           if ($versionNode -eq $null) {
             $propertyGroup = $csproj.CreateElement("PropertyGroup")
             $versionNode = $csproj.CreateElement("Version")
-            $versionNode.InnerText = "1.0.$(Build.BuildNumber)"
+            $versionNode.InnerText = "$(Build.BuildNumber)"
             $propertyGroup.AppendChild($versionNode)
             $csproj.DocumentElement.AppendChild($propertyGroup)
           } else {
-            $versionNode.InnerText = "1.0.$(Build.BuildNumber)"
+            $versionNode.InnerText = "$(Build.BuildNumber)"
           }
           $csproj.Save($csprojPath)
 
