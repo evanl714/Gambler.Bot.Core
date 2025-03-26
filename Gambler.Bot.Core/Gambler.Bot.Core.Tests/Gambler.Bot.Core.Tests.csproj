@@ -10,7 +10,11 @@
     <UserSecretsId>f6e125c8-8589-454b-a53b-e08bf6eb2671</UserSecretsId>
     <OutputType>Library</OutputType>
   </PropertyGroup>
-
+	<PropertyGroup Condition="'$(OS)' == 'Linux' Or '$(OS)' == 'OSX'">
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
+	</PropertyGroup>
+	
+	
   <ItemGroup>
     <None Remove="Code\google_auth.proto" />
   </ItemGroup>
