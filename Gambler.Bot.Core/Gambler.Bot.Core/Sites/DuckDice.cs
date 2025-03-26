@@ -286,11 +286,13 @@ namespace Gambler.Bot.Core.Sites
                     QuackBankResponse resp = JsonSerializer.Deserialize<QuackBankResponse>(sEmitResponse);
                     Stats.Balance = decimal.Parse(resp.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                     callStatsUpdated(Stats);
+                    callBankFinished(true, "");
                     return true;
                 }
                 else
                 {
                     callError(sEmitResponse,false, ErrorType.Bank);
+                    callBankFinished(false, "");
                     return false;
                 }
                 

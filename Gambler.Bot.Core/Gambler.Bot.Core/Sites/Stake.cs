@@ -532,6 +532,7 @@ namespace Gambler.Bot.Core.Sites
                     callError("An error occured while trying to bank your funds: ", false, ErrorType.Bank);
                     _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
                     await UpdateStats();
+                    callBankFinished(false, string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
                     return false;
                 } else
                 {
@@ -540,6 +541,7 @@ namespace Gambler.Bot.Core.Sites
                             .available.amount ??
                         0;
                     callStatsUpdated(Stats);
+                    callBankFinished(true, "");
                 }
                 return true;
             } catch(Exception ex)

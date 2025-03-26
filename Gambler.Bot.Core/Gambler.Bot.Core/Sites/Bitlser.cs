@@ -627,12 +627,14 @@ devise:btc*/
                 {
                     Stats.Balance -= Amount;
                     callStatsUpdated(Stats);
+                    callBankFinished(true, "");
                     return true;
                 }
                 else
                 {
                     callError("Could not bank funds: "+result.error, false, ErrorType.Bank);
                     _logger.LogError(result.error);
+                    callBankFinished(false, result.error);
                     return false;
                 }
                 //

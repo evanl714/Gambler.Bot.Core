@@ -316,6 +316,7 @@ namespace Gambler.Bot.Core.Sites
                             {                                
                                 Stats.Balance = balance.amount;
                                 callStatsUpdated(Stats);
+                                callBankFinished(true,"");
                                 return true;
                             }
                         }
@@ -324,6 +325,7 @@ namespace Gambler.Bot.Core.Sites
                     {
                         _logger.LogWarning($"Failed to bank :{wDVaultResponse.message}");
                         callError($"Failed to bank funds: {wDVaultResponse.message}", false, ErrorType.Bank);
+                        callBankFinished(false, wDVaultResponse.message);
                     }
                 }  
                 else
