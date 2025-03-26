@@ -31,7 +31,7 @@ namespace Gambler.Bot.Core.Tests
                 bool loggediin = false;
                 bool finished = false;
                 _site.LoginFinished += (sender, args) => { loggediin = args.Success; finished = true; };
-                _site.LogIn(BaseSiteTests.GetParams(_site.SiteName, "a4_LogInWit2faWhenRequiredShouldLogIn"));
+                _site.LogIn(_site.Mirrors[0], BaseSiteTests.GetParams(_site.SiteName, "a4_LogInWit2faWhenRequiredShouldLogIn"));
                 DateTime start = DateTime.Now;
                 while (!finished && (DateTime.Now - start).TotalSeconds < 30)
                 {

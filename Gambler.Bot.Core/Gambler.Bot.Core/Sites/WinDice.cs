@@ -41,6 +41,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "WD";
             this.SiteName = "WinDice";
             this.SiteURL = "https://windice.io/?r=08406hjdd";
+            this.Mirrors.Add("/?r=08406hjdd");
+            AffiliateCode = "?c=Seuntjie";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -179,7 +181,7 @@ namespace Gambler.Bot.Core.Sites
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://windice.io/api/v1/api/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri($"{URLInUse}/api/v1/api/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             Client.DefaultRequestHeaders.Add("UserAgent", "DiceBot");

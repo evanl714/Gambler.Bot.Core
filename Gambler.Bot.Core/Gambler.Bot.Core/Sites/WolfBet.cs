@@ -28,7 +28,6 @@ namespace Gambler.Bot.Core.Sites
         DateTime lastupdate = new DateTime();
         HttpClient Client;
         HttpClientHandler ClientHandlr;
-        string URL = "https://wolf.bet";
 
         public DiceConfig DiceSettings { get; set; }
         public LimboConfig LimboSettings { get; set; }
@@ -46,6 +45,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "WB";
             this.SiteName = "Wolf.Bet";
             this.SiteURL = "https://wolf.bet?c=Seuntjie";
+            this.Mirrors.Add("https://wolf.bet");
+            AffiliateCode = "?c=Seuntjie";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -85,11 +86,11 @@ namespace Gambler.Bot.Core.Sites
         {
 
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URL + "/api/v1/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URLInUse + "/api/v1/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             Client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36");
-            Client.DefaultRequestHeaders.Add("Origin", "https://wolf.bet");
+            Client.DefaultRequestHeaders.Add("Origin", URLInUse);
             Client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             try
             {

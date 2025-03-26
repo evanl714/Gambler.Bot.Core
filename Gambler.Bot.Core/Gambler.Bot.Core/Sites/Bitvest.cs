@@ -17,6 +17,7 @@ using Gambler.Bot.Common.Helpers;
 using Gambler.Bot.Core.Helpers;
 using Gambler.Bot.Core.Sites.Classes;
 using Microsoft.Extensions.Logging;
+using static System.Net.WebRequestMethods;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -46,6 +47,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "BV";
             this.SiteName = "Bitvest";
             this.SiteURL = "https://bitvest.io?r=46534";
+            this.Mirrors.Add("https://bitvest.io");
+            AffiliateCode = "?r=46534";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -89,7 +92,7 @@ namespace Gambler.Bot.Core.Sites
         {
             //ServicePointManager.SecurityProtocol &= SecurityProtocolType.Ssl3;
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip/*, Proxy = this.Prox, UseProxy = Prox != null*/ };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://bitvest.io/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URLInUse) };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
 
@@ -112,7 +115,7 @@ namespace Gambler.Bot.Core.Sites
                 List<KeyValuePair<string, string>> pairs = new List<KeyValuePair<string, string>>();
                 pairs.Add(new KeyValuePair<string, string>("type", "secret"));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                var response = await Client.PostAsync("https://bitvest.io/login.php", Content);
+                var response = await Client.PostAsync($"{URLInUse}/login.php", Content);
                 resp = await response.Content.ReadAsStringAsync();
                 bitvestLoginBase tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(resp.Replace("-", "_"));
                 bitvestLogin tmplogin = tmpblogin.data;
@@ -125,7 +128,7 @@ namespace Gambler.Bot.Core.Sites
                 pairs.Add(new KeyValuePair<string, string>("u", "0"));
                 //pairs.Add(new KeyValuePair<string, string>("self_only", "1"));
                 Content = new FormUrlEncodedContent(pairs);
-                response = await Client.PostAsync("https://bitvest.io/update.php", Content);
+                response = await Client.PostAsync($"{URLInUse}/update.php", Content);
                 resp = await response.Content.ReadAsStringAsync();
 
                 string tmpresp = resp.Replace("-", "_");
@@ -143,7 +146,7 @@ namespace Gambler.Bot.Core.Sites
                         new KeyValuePair<string, string>("secret", secret),
                     ];
                     Content = new FormUrlEncodedContent(pairs);
-                    response = await Client.PostAsync("https://bitvest.io/login.php", Content);
+                    response = await Client.PostAsync($"{URLInUse}/login.php", Content);
                     resp = await response.Content.ReadAsStringAsync();
                     tmpresp = resp.Replace("-", "_");
                     tmpblogin = JsonSerializer.Deserialize<bitvestLoginBase>(tmpresp);
@@ -389,7 +392,7 @@ namespace Gambler.Bot.Core.Sites
                 }
 
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
-                resp1 = await Client.PostAsync("https://bitvest.io/update.php", Content);
+                resp1 = await Client.PostAsync($"{URLInUse}/update.php", Content);
                 string sEmitResponse = await resp1.Content.ReadAsStringAsync();
                 sEmitResponse = sEmitResponse.Replace("r-", "r_").Replace("n-", "n_");
 

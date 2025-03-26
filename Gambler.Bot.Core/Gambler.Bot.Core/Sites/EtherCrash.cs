@@ -39,6 +39,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "EC";
             this.SiteName = "EtherCrash";
             this.SiteURL = "https://www.EtherCrash.io/play";
+            this.Mirrors.Add("https://www.EtherCrash.io");
+            AffiliateCode = "";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -98,38 +100,38 @@ namespace Gambler.Bot.Core.Sites
             var bypassResult = CallBypassRequired(SiteURL, "cf_clearance");
             Cookies = bypassResult.Cookies;
             ClientHandlr = new HttpClientHandler { UseCookies = true, CookieContainer = Cookies, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip }; ;
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://www.ethercrash.io") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URLInUse) };
             //Client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
 
             Client.DefaultRequestHeaders.UserAgent.ParseAdd(bypassResult.UserAgent);
-            Client.DefaultRequestHeaders.Add("referer", "https://www.ethercrash.io/");
-            Client.DefaultRequestHeaders.Add("origin", "https://www.ethercrash.io");
+            Client.DefaultRequestHeaders.Add("referer", URLInUse);
+            Client.DefaultRequestHeaders.Add("origin", URLInUse);
             try
             {
-                var webresponse = await Client.GetAsync("https://www.ethercrash.io/play");
+                var webresponse = await Client.GetAsync($"{URLInUse}/play");
                 string Response = await webresponse.Content.ReadAsStringAsync();
                 if (!webresponse.IsSuccessStatusCode)
                 {
                     Thread.Sleep(100);
-                    webresponse = await Client.GetAsync("https://www.ethercrash.io/play");
+                    webresponse = await Client.GetAsync($"{URLInUse}/play");
                 }
                 Response = await webresponse.Content.ReadAsStringAsync();
                 Thread.Sleep(10);
                 int counter = 0;
                 string iochat = "";
 
-                Response = await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
+                Response = await Client.GetStringAsync($"{URLInUse}/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
                 //while (counter++ < 3)
                 Response = Response.Substring(4);
                 SocketIOInit chatinit = JsonSerializer.Deserialize<SocketIOInit>(Response);
                 iochat = chatinit.sid;
-                 webresponse = await Client.GetAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
+                 webresponse = await Client.GetAsync($"{URLInUse}/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
                 Response = await webresponse.Content.ReadAsStringAsync();
                 webresponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookies);
                 Cookies.Add(new Cookie("io", iochat, "/", "www.ethercrash.io"));
 
                 
-                webresponse = await Client.GetAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
+                webresponse = await Client.GetAsync($"{URLInUse.Replace("www","gs")}/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
                 Response = await webresponse.Content.ReadAsStringAsync();
                 if (!webresponse.IsSuccessStatusCode)
                 {
@@ -137,12 +139,12 @@ namespace Gambler.Bot.Core.Sites
                 }
                 else
                 {
-                    webresponse = await Client.GetAsync("https://gs.ethercrash.io/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
+                    webresponse = await Client.GetAsync($"{URLInUse.Replace("www", "gs")}/socket.io/?EIO=3&transport=polling&t=" + Epoch.CurrentDate());
                     Response = await webresponse.Content.ReadAsStringAsync();
                     //break;
                 }
                 
-                foreach (Cookie c in Cookies.GetCookies(new Uri("https://www.ethercrash.io")))
+                foreach (Cookie c in Cookies.GetCookies(new Uri($"{URLInUse}")))
                 {
                     if (c.Name == "cf_clearance")
                     {
@@ -154,7 +156,7 @@ namespace Gambler.Bot.Core.Sites
 
                 Cookies.Add(new Cookie("id", APIKey, "/", "ethercrash.io"));
                 StringContent ottcontent = new StringContent("");
-                HttpResponseMessage RespMsg = await Client.PostAsync("https://www.ethercrash.io/ott", ottcontent);
+                HttpResponseMessage RespMsg = await Client.PostAsync($"{URLInUse}", ottcontent);
 
                 Response = await RespMsg.Content.ReadAsStringAsync();
                 if (RespMsg.IsSuccessStatusCode)
@@ -175,22 +177,22 @@ namespace Gambler.Bot.Core.Sites
                 body = "420[\"join\",[\"english\"]]";
                 body = body.Length + ":" + body;
                 StringContent stringContent2 = new StringContent(body, UnicodeEncoding.UTF8, "text/plain");
-                RespMsg = await Client.PostAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent2);
+                RespMsg = await Client.PostAsync($"{URLInUse}/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate(), stringContent2);
                 Response = await RespMsg.Content.ReadAsStringAsync();
 
-                Response = await Client.GetStringAsync("https://www.ethercrash.io/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
+                Response = await Client.GetStringAsync($"{URLInUse}/socket.io/?EIO=3&sid=" + iochat + "&transport=polling&t=" + Epoch.CurrentDate());
 
                 List<KeyValuePair<string, string>> wscookies = new List<KeyValuePair<string, string>>();
                 wscookies.Add(new KeyValuePair<string, string>("cf_clearance", cfuid));
                 wscookies.Add(new KeyValuePair<string, string>("io", iochat));
                 wscookies.Add(new KeyValuePair<string, string>("id", APIKey));
 
-                ChatSock = new WebSocket("wss://www.ethercrash.io/socket.io/?EIO=3&transport=websocket&sid=" + iochat,
+                ChatSock = new WebSocket($"{URLInUse.Replace("https","wss")}/socket.io/?EIO=3&transport=websocket&sid=" + iochat,
                    null,
                    wscookies,
                    null,
                    bypassResult.UserAgent,
-                   "https://www.ethercrash.io"/*,
+                   $"{URLInUse}"/*,
                     WebSocketVersion.None*/);
                 ChatSock.Opened += Sock_Opened;
                 ChatSock.Error += Sock_Error;
