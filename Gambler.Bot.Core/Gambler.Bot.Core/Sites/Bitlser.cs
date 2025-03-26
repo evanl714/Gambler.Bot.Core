@@ -49,10 +49,11 @@ namespace Gambler.Bot.Core.Sites
             Currencies = sCurrencies;
             DiceBetURL = "https://www.bitsler.com/?ref=seuntjie/";
             SiteURL = "https://www.bitsler.com/?ref=seuntjie";
+            this.Mirrors.Add("https://www.bitsler.com");
+            AffiliateCode = "?ref=seuntjie";
             //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "BS";
             this.SiteName = "Bitsler";
-            this.SiteURL = "https://bitvest.io?r=46534";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -332,7 +333,7 @@ devise:btc*/
                     APIKey = x.Value?.Trim();
             }
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://www.bitsler.com/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URLInUse) };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             Client.DefaultRequestHeaders.Add("User-Agent", "DiceBot");
@@ -340,7 +341,7 @@ devise:btc*/
             try
             {
 
-                HttpResponseMessage resp = await Client.GetAsync("https://www.bitsler.com");
+                HttpResponseMessage resp = await Client.GetAsync(URLInUse);
                 string s1 = "";
 
 
@@ -626,12 +627,14 @@ devise:btc*/
                 {
                     Stats.Balance -= Amount;
                     callStatsUpdated(Stats);
+                    callBankFinished(true, "");
                     return true;
                 }
                 else
                 {
                     callError("Could not bank funds: "+result.error, false, ErrorType.Bank);
                     _logger.LogError(result.error);
+                    callBankFinished(false, result.error);
                     return false;
                 }
                 //

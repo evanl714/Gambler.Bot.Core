@@ -152,7 +152,7 @@ namespace Gambler.Bot.Core.Tests
 
             DateTime start = DateTime.Now;
 
-            _site.LogIn(GetParams(_site.SiteName));
+            _site.LogIn(_site.Mirrors[0], GetParams(_site.SiteName));
 
             while (!finished && (DateTime.Now-start).TotalSeconds<90)
             {
@@ -186,7 +186,7 @@ namespace Gambler.Bot.Core.Tests
 
             DateTime start = DateTime.Now;
 
-            _site.LogIn(GetParams(_site.SiteName));
+            _site.LogIn(_site.Mirrors[0], GetParams(_site.SiteName));
 
             while (!finished && (DateTime.Now - start).TotalSeconds < 30)
             {
@@ -213,7 +213,7 @@ namespace Gambler.Bot.Core.Tests
 
             DateTime start = DateTime.Now;
 
-            _site.LogIn(GetParams(_site.SiteName));
+            _site.LogIn(_site.Mirrors[0], GetParams(_site.SiteName));
 
             while (!finished && (DateTime.Now - start).TotalSeconds < 30)
             {
@@ -246,7 +246,7 @@ namespace Gambler.Bot.Core.Tests
 
             DateTime start = DateTime.Now;
 
-            _site.LogIn(GetParams(_site.SiteName));
+            _site.LogIn(_site.Mirrors[0], GetParams(_site.SiteName));
 
             while (!finished && (DateTime.Now - start).TotalSeconds < 30)
             {
@@ -278,7 +278,7 @@ namespace Gambler.Bot.Core.Tests
 
             DateTime start = DateTime.Now;
 
-            _site.LogIn(GetParams(_site.SiteName));
+            _site.LogIn(_site.Mirrors[0], GetParams(_site.SiteName));
 
             while (!finished && (DateTime.Now - start).TotalSeconds < 30)
             {

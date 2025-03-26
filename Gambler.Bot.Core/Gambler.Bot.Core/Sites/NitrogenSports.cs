@@ -44,6 +44,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "NitrogenSports";
             this.SiteName = "NS";
             this.SiteURL = "https://nitrogensports.eu/r/1435541";
+            this.Mirrors.Add("https://nitrogensports.eu");
+            AffiliateCode = "/r/1435541";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;

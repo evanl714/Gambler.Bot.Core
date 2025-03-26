@@ -36,6 +36,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "CG";
             this.SiteName = "CryptoGames";
             this.SiteURL = "https://www.crypto.games?i=KaSwpL1Bky";
+            this.Mirrors.Add("https://www.crypto.games");
+            AffiliateCode = "?i=KaSwpL1Bk";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -72,7 +74,7 @@ namespace Gambler.Bot.Core.Sites
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://api.crypto.games/v1/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri($"{URLInUse.Replace("www","api")}/v1/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             try

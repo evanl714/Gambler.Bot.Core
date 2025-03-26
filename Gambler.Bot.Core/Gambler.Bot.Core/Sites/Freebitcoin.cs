@@ -35,6 +35,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "FBtc";
             this.SiteName = "FreeBitcoin";
             this.SiteURL = "https://freebitco.in/?r=2310118";
+            this.Mirrors.Add("https://freebitco.in/");
+            AffiliateCode = "?r=2310118";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -85,7 +87,7 @@ namespace Gambler.Bot.Core.Sites
                     otp = x.Value;
             }
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://freebitco.in/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URLInUse) };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             ClientHandlr.CookieContainer = Cookies;
@@ -112,7 +114,7 @@ namespace Gambler.Bot.Core.Sites
 
                     }
                 }
-                foreach (Cookie x in Cookies.GetCookies(new Uri("https://freebitco.in")))
+                foreach (Cookie x in Cookies.GetCookies(new Uri(URLInUse)))
                 {
                     if (x.Name == "csrf_token")
                     {
@@ -136,11 +138,11 @@ namespace Gambler.Bot.Core.Sites
                     {
                         address = messages[1];
                         accesstoken = messages[2];
-                        Cookies.Add(new Cookie("btc_address", address, "/", "freebitco.in"));
-                        Cookies.Add(new Cookie("password", accesstoken, "/", "freebitco.in"));
-                        Cookies.Add(new Cookie("have_account", "1", "/", "freebitco.in"));
+                        Cookies.Add(new Cookie("btc_address", address, "/", URLInUse));
+                        Cookies.Add(new Cookie("password", accesstoken, "/", URLInUse));
+                        Cookies.Add(new Cookie("have_account", "1", "/", URLInUse));
 
-                        s =await Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats");
+                        s =await Client.GetStringAsync($"{URLInUse}/cgi-bin/api.pl?op=get_user_stats");
                         FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(s);
                         if (stats != null)
                         {
@@ -178,7 +180,7 @@ namespace Gambler.Bot.Core.Sites
             try
             {
                 lastupdate = DateTime.Now;
-                string s = await Client.GetStringAsync("https://freebitco.in/cgi-bin/api.pl?op=get_user_stats");
+                string s = await Client.GetStringAsync($"{URLInUse}/cgi-bin/api.pl?op=get_user_stats");
                 FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(s);
                 if (stats != null)
                 {
@@ -239,7 +241,7 @@ namespace Gambler.Bot.Core.Sites
                 string Params = string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "m={0}&client_seed={1}&jackpot=0&stake={2}&multiplier={3}&rand={5}&csrf_token={4}",
                     High ? "hi" : "lo", clientseed, amount, (100m - DiceSettings.Edge) / chance, csrf, Random.Next(0, 9999999) / 10000000);
 
-                var betresult =await Client.GetAsync("https://freebitco.in/cgi-bin/bet.pl?" + Params);
+                var betresult =await Client.GetAsync($"{URLInUse}/cgi-bin/bet.pl?" + Params);
                 if (betresult.IsSuccessStatusCode)
                 {
 

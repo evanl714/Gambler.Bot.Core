@@ -43,6 +43,10 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "DD";
             this.SiteName = "DuckDice";
             this.SiteURL = "https://duckdice.io/?c=53ea652da4";
+            this.Mirrors.Add("https://duckdice.io");
+            this.Mirrors.Add("https://duckdice.me");
+            this.Mirrors.Add("https://duckdice.net");
+            AffiliateCode = "?c=53ea652da4";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -95,7 +99,7 @@ namespace Gambler.Bot.Core.Sites
         {
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             ClientHandlr.CookieContainer = new CookieContainer();
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri("https://duckdice.io/api/") };
+            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri($"{URLInUse}/api/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
             Client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0");
@@ -282,11 +286,13 @@ namespace Gambler.Bot.Core.Sites
                     QuackBankResponse resp = JsonSerializer.Deserialize<QuackBankResponse>(sEmitResponse);
                     Stats.Balance = decimal.Parse(resp.balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                     callStatsUpdated(Stats);
+                    callBankFinished(true, "");
                     return true;
                 }
                 else
                 {
                     callError(sEmitResponse,false, ErrorType.Bank);
+                    callBankFinished(false, "");
                     return false;
                 }
                 

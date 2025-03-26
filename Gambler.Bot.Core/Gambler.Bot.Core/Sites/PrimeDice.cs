@@ -20,7 +20,7 @@ namespace Gambler.Bot.Core.Sites
 {
     public class PrimeDice : BaseSite, iDice
     {
-        protected string URL = "https://primedice.com/_api/graphql";
+        protected string URL = "/_api/graphql";
         protected string RolName = "primediceRoll";
         protected string GameName = "CasinoGamePrimedice";
         protected string StatGameName = "primedice";
@@ -40,6 +40,10 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "PD";
             this.SiteName = "PrimeDice";
             this.SiteURL = "https://primedice.com?c=Seuntjie";
+            this.Mirrors.Add("https://primedice.com");
+            this.Mirrors.Add("https://primedice.blue");
+            this.Mirrors.Add("https://primedice.games");
+            AffiliateCode = "?c=Seuntjie";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -99,7 +103,7 @@ namespace Gambler.Bot.Core.Sites
                 }
                 //CookieContainer cookies = new CookieContainer();
                 string requiredCookie = "__cf_bm";
-                var cookies = CallBypassRequired(SiteURL, requiredCookie);
+                var cookies = CallBypassRequired(URLInUse, requiredCookie);
 
                 HttpClientHandler handler = new HttpClientHandler
                 {
@@ -110,9 +114,9 @@ namespace Gambler.Bot.Core.Sites
                 };
                 Client = new HttpClient(handler);
 
-                Client.DefaultRequestHeaders.Add("referrer", SiteURL);
+                Client.DefaultRequestHeaders.Add("referrer", URLInUse);
                 Client.DefaultRequestHeaders.Add("accept", "*/*");
-                Client.DefaultRequestHeaders.Add("origin", SiteURL);
+                Client.DefaultRequestHeaders.Add("origin", URLInUse);
                 Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
                 Client.DefaultRequestHeaders.Add("x-access-token", APIKey);
                 Client.DefaultRequestHeaders.Add("authorization", "Bearer " + APIKey);
@@ -129,13 +133,13 @@ namespace Gambler.Bot.Core.Sites
 
                 StringContent content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
 
-                var resp = await Client.PostAsync(URL, content);
+                var resp = await Client.PostAsync(URLInUse+URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
                 if (!resp.IsSuccessStatusCode)
                 {
                     await Task.Delay(106);
                     content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
-                    resp = await Client.PostAsync(URL, content);
+                    resp = await Client.PostAsync(URLInUse + URL, content);
                     respostring = await resp.Content.ReadAsStringAsync();
                 }
                 var Resp = JsonSerializer.Deserialize< Payload>(respostring);
@@ -242,7 +246,7 @@ namespace Gambler.Bot.Core.Sites
                     ,
                     operationName = "DiceBotDiceBet"
                 };
-                var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(betresult), Encoding.UTF8, "application/json"));
+                var response = await Client.PostAsync(URLInUse + URL, new StringContent(JsonSerializer.Serialize(betresult), Encoding.UTF8, "application/json"));
                 var responsestring = await response.Content.ReadAsStringAsync();
                 Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
                 if (ResponsePayload.errors!=null && ResponsePayload.errors.Length > 0)
@@ -380,7 +384,7 @@ namespace Gambler.Bot.Core.Sites
                         amount = Amount
                     }
                 };
-                var response = await Client.PostAsync(URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var response = await Client.PostAsync(URLInUse + URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
                 var responsestring = await response.Content.ReadAsStringAsync();
                 Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
                 if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
@@ -388,11 +392,13 @@ namespace Gambler.Bot.Core.Sites
                     callError("An error occured while trying to bank your funds: ", false, ErrorType.Bank);
                     _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
                     await UpdateStats();
+                    callBankFinished(false, string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
                     return false;
                 }
                 else
                 {
                     Stats.Balance = ResponsePayload.data.createVaultDeposit.user.balances.FirstOrDefault(x => x.available.currency.ToLower() == CurrentCurrency.ToLower()).available.amount??0;
+                    callBankFinished(true, "");
                 }
                     return true;
             }

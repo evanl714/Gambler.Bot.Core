@@ -34,6 +34,8 @@ namespace Gambler.Bot.Core.Sites
         public LoginParameter[] StaticLoginParams = new LoginParameter[] { new LoginParameter("Username", false, true, false, false), new LoginParameter("Password", true, true, false, true), new LoginParameter("Two Factor Code", false, false, true, true,true) };
         
         public LoginParameter[] LoginParams { get { return StaticLoginParams; } }
+        public List<string> Mirrors { get; set; } = new List<string>();
+        public string AffiliateCode { get; set; }
         #region Properties
         public bool IsEnabled { get; set; } = true;
 
@@ -206,7 +208,7 @@ namespace Gambler.Bot.Core.Sites
             _logger = logger;
         }
 
-
+        public string URLInUse { get; protected set; }
 
         #region Required Methods
 
@@ -220,9 +222,10 @@ namespace Gambler.Bot.Core.Sites
         /// Logs the user into the site if correct details were provided
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
-        public async Task<bool> LogIn(LoginParamValue[] LoginParams)
+        public async Task<bool> LogIn(string url, LoginParamValue[] LoginParams)
         {
             bool success = false;
+            URLInUse = url;
             await Task.Run(async ()=> { success = await _Login(LoginParams); });
             if (success)
             {
@@ -477,7 +480,7 @@ namespace Gambler.Bot.Core.Sites
                 {
                     success = await _Bank(Amount);
                 });
-
+                
                 await UpdateStats();
             }
             else
@@ -647,6 +650,7 @@ namespace Gambler.Bot.Core.Sites
         public event EventHandler<GenericEventArgs> Action;
         public event EventHandler<GenericEventArgs> ChatReceived;
         public event EventHandler<GenericEventArgs> OnWithdrawalFinished;
+        public event EventHandler<GenericEventArgs> OnBankFinished;
         public event EventHandler<GenericEventArgs> OnTipFinished;
         public event EventHandler<GenericEventArgs> OnResetSeedFinished;
         public event EventHandler<GenericEventArgs> OnDonationFinished;
@@ -719,6 +723,13 @@ namespace Gambler.Bot.Core.Sites
             {
                 ChatReceived(this, new GenericEventArgs { Message = Message });
             }
+        }
+        protected void callBankFinished(bool Success, string Message)
+        {
+            if (ActiveActions.Contains(SiteAction.Bank))
+                ActiveActions.Remove(SiteAction.Bank);
+            ForceUpdateStats = true;
+            OnBankFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
         protected void callWithdrawalFinished(bool Success, string Message)
         {

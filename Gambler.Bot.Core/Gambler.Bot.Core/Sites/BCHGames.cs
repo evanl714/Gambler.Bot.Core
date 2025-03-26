@@ -49,6 +49,8 @@ namespace Gambler.Bot.Core.Sites
             LimboSettings = new LimboConfig() { Edge = 2, MinChance = 0.000098m };
             CrashSettings = new CrashConfig() { Edge = 1, IsMultiplayer = true };
             NonceBased = true;
+            this.Mirrors.Add("https://bch.games");
+            AffiliateCode = "/play/Seuntjie";
         }
 
         public Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
