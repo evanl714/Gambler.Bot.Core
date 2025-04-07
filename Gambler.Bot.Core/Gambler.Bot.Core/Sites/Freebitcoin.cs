@@ -35,7 +35,7 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "FBtc";
             this.SiteName = "FreeBitcoin";
             this.SiteURL = "https://freebitco.in/?r=2310118";
-            this.Mirrors.Add("https://freebitco.in/");
+            this.Mirrors.Add("https://freebitco.in");
             AffiliateCode = "?r=2310118";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
@@ -95,25 +95,22 @@ namespace Gambler.Bot.Core.Sites
             {
                 string s1 = "";
                 HttpResponseMessage resp = await Client.GetAsync("");
-                if (resp.IsSuccessStatusCode)
+                /*if (resp.IsSuccessStatusCode)
                 {
                     s1 = await resp.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     if (resp.StatusCode == HttpStatusCode.ServiceUnavailable)
-                    {
+                    {*/
                         s1 = await resp.Content.ReadAsStringAsync();
                         //cflevel = 0;
-                        System.Threading.Tasks.Task.Factory.StartNew(() =>
-                        {
-                            callNotify("freebitcoin has their cloudflare protection on HIGH\n\nThis will cause a slight delay in logging in. Please allow up to a minute.");
-                        });
+                        
                         var thing = CallBypassRequired(this.SiteURL, "__cf_bm");
 
-
+                /*
                     }
-                }
+                }*/
                 foreach (Cookie x in Cookies.GetCookies(new Uri(URLInUse)))
                 {
                     if (x.Name == "csrf_token")

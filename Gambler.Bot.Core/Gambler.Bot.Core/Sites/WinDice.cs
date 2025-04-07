@@ -41,8 +41,8 @@ namespace Gambler.Bot.Core.Sites
             this.SiteAbbreviation = "WD";
             this.SiteName = "WinDice";
             this.SiteURL = "https://windice.io/?r=08406hjdd";
-            this.Mirrors.Add("/?r=08406hjdd");
-            AffiliateCode = "?c=Seuntjie";
+            this.Mirrors.Add("https://windice.io");
+            AffiliateCode = "/?r=08406hjdd";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
