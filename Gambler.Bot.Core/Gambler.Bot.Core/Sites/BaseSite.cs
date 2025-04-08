@@ -109,10 +109,20 @@ namespace Gambler.Bot.Core.Sites
         /// </summary>
         public string DiceBetURL { get; protected set; }
 
+        string currency = "";
         /// <summary>
         /// The name/abbreviation of the currency currently in use
         /// </summary>
-        public string CurrentCurrency { get; set; }
+        public string CurrentCurrency { get { return currency; }
+            set 
+            {
+                if (currency != value)
+                {
+                    currency = value;
+                    UpdateStats();
+                }
+            } 
+        }
               
 
         /// <summary>
@@ -165,6 +175,18 @@ namespace Gambler.Bot.Core.Sites
                         SiteDetails.edge = dice.DiceSettings.Edge;
                         SiteDetails.maxroll = dice.DiceSettings.MaxRoll;
                         SiteDetails.GameSettings.Add("Dice", dice.DiceSettings);
+                    }
+                    if (this is iLimbo limbo)
+                    {                        
+                        SiteDetails.GameSettings.Add("Limbo", limbo.LimboSettings);
+                    }
+                    if (this is iTwist twist)
+                    {
+                        SiteDetails.GameSettings.Add("Twist", twist.TwistSettings);
+                    }
+                    if (this is iCrash crash)
+                    {
+                        SiteDetails.GameSettings.Add("Crash", crash.CrashSettings);
                     }
                 }
                 return siteDetails;
@@ -264,7 +286,8 @@ namespace Gambler.Bot.Core.Sites
         {
             ForceUpdateStats = false;
             SiteStats stats = null;
-            await Task.Run(async () => stats= await _UpdateStats());
+            if (LoggedIn)
+                await Task.Run(async () => stats= await _UpdateStats());
 
             StatsUpdated?.Invoke(this, new StatsUpdatedEventArgs(this.Stats));
             return stats;

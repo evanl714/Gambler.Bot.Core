@@ -135,12 +135,18 @@ namespace Gambler.Bot.Core.Sites
 
                 var resp = await Client.PostAsync(URLInUse+URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
-                if (!resp.IsSuccessStatusCode)
+                int retriees = 0;
+                while (!resp.IsSuccessStatusCode && retriees++ < 5)
                 {
-                    await Task.Delay(106);
+                    await Task.Delay(Random.Next(50, 150) * retriees);
                     content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
                     resp = await Client.PostAsync(URLInUse + URL, content);
                     respostring = await resp.Content.ReadAsStringAsync();
+                }
+                if (!resp.IsSuccessStatusCode)
+                {
+                    await Task.Delay(106);
+                    
                 }
                 var Resp = JsonSerializer.Deserialize< Payload>(respostring);
                 pdUser user = Resp.data.user;

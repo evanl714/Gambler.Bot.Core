@@ -145,6 +145,7 @@ namespace Gambler.Bot.Core.Sites
                     CookieContainer = cookies.Cookies,
                 };
                 Client = new HttpClient(handler);
+                Client.BaseAddress = new Uri(URLInUse + URL);
 
                 Client.DefaultRequestHeaders.Add("referrer", URLInUse);
                 Client.DefaultRequestHeaders.Add("accept", "*/*");
@@ -170,9 +171,10 @@ namespace Gambler.Bot.Core.Sites
 
                 var resp = await Client.PostAsync(URLInUse+URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
-                if(!resp.IsSuccessStatusCode)
+                int retriees = 0;
+                while (!resp.IsSuccessStatusCode && retriees++<5)
                 {
-                    await Task.Delay(106);
+                    await Task.Delay(Random.Next(50,150)*retriees);
                     content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
 
                     resp = await Client.PostAsync(URLInUse + URL, content);
@@ -375,7 +377,7 @@ namespace Gambler.Bot.Core.Sites
                 string respostring = await Resp.Content.ReadAsStringAsync();
                 pdUser user = JsonSerializer.Deserialize<Payload>(respostring)?.data.user;
                 //GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
-
+                if (user.statistic!=null)
                 foreach(Statistic x in user.statistic)
                 {
                     if(x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)

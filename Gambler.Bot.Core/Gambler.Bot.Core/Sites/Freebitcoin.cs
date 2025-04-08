@@ -126,7 +126,14 @@ namespace Gambler.Bot.Core.Sites
                 pairs.Add(new KeyValuePair<string, string>("tfa_code", otp));
                 FormUrlEncodedContent Content = new FormUrlEncodedContent(pairs);
                 var EmitResponse = await Client.PostAsync("" + accesstoken, Content);
-
+                int retriees = 0;
+                while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
+                {
+                    string sresponse = await EmitResponse.Content.ReadAsStringAsync();
+                    await Task.Delay(Random.Next(50, 150) * retriees);
+                    Thread.Sleep(100);
+                    EmitResponse = await Client.PostAsync("" + accesstoken, Content);
+                }
                 if (EmitResponse.IsSuccessStatusCode)
                 {
                     string s = await EmitResponse.Content.ReadAsStringAsync();
