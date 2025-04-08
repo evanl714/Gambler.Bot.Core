@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -133,12 +134,14 @@ namespace Gambler.Bot.Core.Sites
 
                 EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
                 string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
-                if (!EmitResponse.IsSuccessStatusCode)
+                int retriees = 0;
+                while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
                 {
-                    await Task.Delay(107);
+                    await Task.Delay(Random.Next(50, 150) * retriees);
                     EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
                     sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 }
+                
                 if (EmitResponse.IsSuccessStatusCode)
                 {
                     Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);

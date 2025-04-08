@@ -8,6 +8,7 @@ namespace Gambler.Bot.Common.Helpers
     {
         [Key]
         public string name { get; set; }
+        public string Name { get=>name; set=>name=value; }
         public decimal edge { get; set; }
         public decimal maxroll { get; set; }
         public bool cantip { get; set; }

@@ -110,8 +110,10 @@ namespace Gambler.Bot.Core.Sites
             {
                 var webresponse = await Client.GetAsync($"{URLInUse}/play");
                 string Response = await webresponse.Content.ReadAsStringAsync();
-                if (!webresponse.IsSuccessStatusCode)
+                int retriees = 0;
+                while (!webresponse.IsSuccessStatusCode && retriees++ < 5)
                 {
+                    await Task.Delay(Random.Next(50, 150) * retriees);
                     Thread.Sleep(100);
                     webresponse = await Client.GetAsync($"{URLInUse}/play");
                 }
