@@ -43,13 +43,13 @@ namespace Gambler.Bot.Core.Sites
             //this.MaxRoll = 100m;
             this.SiteAbbreviation = "ST";
             this.SiteName = "Stake";
-            this.SiteURL = "https://stake.com/?c=sdicebot";
+            this.SiteURL = "https://stake.com/?c=dicebot";
             this.Mirrors = new List<string>
             {
                 "https://stake.com", "https://stake.bet", "https://stake.games", "https://staketr.com", "https://staketr2.com", "https://staketr3.com", "https://staketr4.com", "https://staketr5.com", "https://stake.bz", "https://stake.jp",
                 "https://stake.ac", "https://stake.icu", "https://stake.us", "https://stake.kim"
             };
-            AffiliateCode = "?c=sdicebot";
+            AffiliateCode = "?c=dicebot";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
