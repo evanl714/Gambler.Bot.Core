@@ -298,7 +298,12 @@ namespace Gambler.Bot.Core.Sites
                     } else if(error.StartsWith("Maximum bet exceeded"))
                     {
                         errorType = ErrorType.InvalidBet;
-                    } else if(error.StartsWith("You do not have enough balance to do that."))
+                    }
+                    else if (error.StartsWith("Amount too small"))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("You do not have enough balance to do that."))
                     {
                         errorType = ErrorType.BalanceTooLow;
                     }

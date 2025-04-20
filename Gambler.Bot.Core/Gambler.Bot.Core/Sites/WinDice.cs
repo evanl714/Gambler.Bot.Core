@@ -36,7 +36,7 @@ namespace Gambler.Bot.Core.Sites
 
         public WinDice(ILogger logger) : base(logger)
         {
-            StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
+            StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", true, true, false, false) };
             //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "WD";
             this.SiteName = "WinDice";
@@ -66,7 +66,7 @@ namespace Gambler.Bot.Core.Sites
 
         public async Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
         {
-            
+            _logger.LogDebug("WinDice placing dice bet");
             decimal low = 0;
             decimal high = 0;
             if (BetDetails.High)
@@ -81,7 +81,7 @@ namespace Gambler.Bot.Core.Sites
             }
             string loginjson = JsonSerializer.Serialize<WDPlaceBet>(new WDPlaceBet()
             {
-                curr = CurrentCurrency,
+                curr = CurrentCurrency.ToLower(),
                 bet = BetDetails.Amount,
                 game = "in",
                 high = (int)high,
@@ -95,6 +95,7 @@ namespace Gambler.Bot.Core.Sites
             if (resp2.IsSuccessStatusCode)
             {
                 string response = await resp2.Content.ReadAsStringAsync();
+                _logger.LogDebug("WinDice bet result:" + response);
                 WDBaseResponse statusMessage = JsonSerializer.Deserialize<WDBaseResponse>(response);
                 if (statusMessage.status == "error")
                 {
@@ -180,6 +181,7 @@ namespace Gambler.Bot.Core.Sites
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
         {
+            _logger.LogDebug("WinDice Logging in");
             ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri($"{URLInUse}/api/v1/api/") };
             Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
@@ -190,12 +192,17 @@ namespace Gambler.Bot.Core.Sites
             {
                 if (await getbalance())
                 {
+                    await Task.Delay(50);
                     await getstats();
+
+                    await Task.Delay(50);
                     await getseed();
+
+                    await Task.Delay(50);
                     ispd = true;
                     lastupdate = DateTime.Now;
 
-                    new Thread(new ThreadStart(GetBalanceThread)).Start();
+                    //new Thread(new ThreadStart(GetBalanceThread)).Start();
                     //lasthash = tmpblogin.server_hash;
                     callLoginFinished(true);
                     return true;
@@ -236,6 +243,7 @@ namespace Gambler.Bot.Core.Sites
         }
         async Task<bool> getbalance()
         {
+            _logger.LogDebug("WinDice getbalance");
             string response = await Client.GetStringAsync("user");
             WDUserResponse tmpBalance = JsonSerializer.Deserialize<WDUserResponse>(response);
             if (tmpBalance.data != null)
@@ -251,6 +259,7 @@ namespace Gambler.Bot.Core.Sites
         }
         async Task<bool> getstats()
         {
+            _logger.LogDebug("WinDice GetStats");
             string response = await Client.GetStringAsync("stats");
             WDStatsResponse tmpBalance = JsonSerializer.Deserialize<WDStatsResponse>(response);
             if (tmpBalance.data != null)
@@ -273,6 +282,7 @@ namespace Gambler.Bot.Core.Sites
         }
         async Task<bool> getseed()
         {
+            _logger.LogDebug("WinDice GetSeed");
             string response = await Client.GetStringAsync("seed");
             WDGetSeed tmpBalance = JsonSerializer.Deserialize<WDGetSeed>(response);
             if (tmpBalance.data != null)
