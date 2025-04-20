@@ -1,6 +1,7 @@
 ﻿using Gambler.Bot.Common.Games.Dice;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Gambler.Bot.Common.Helpers
 {
@@ -8,6 +9,7 @@ namespace Gambler.Bot.Common.Helpers
     {
         [Key]
         public string name { get; set; }
+        [NotMapped]
         public string Name { get=>name; set=>name=value; }
         public decimal edge { get; set; }
         public decimal maxroll { get; set; }

@@ -109,10 +109,10 @@ namespace Gambler.Bot.Core.Sites
 
                 accesstoken = LoginParams[0].Value;
 
-                HttpResponseMessage EmitResponse = await Client.GetAsync("https://dickdice.io");
+                HttpResponseMessage EmitResponse = await Client.GetAsync(URLInUse);
                 //if (!EmitResponse.IsSuccessStatusCode)
                 {
-                    var cookies = CallBypassRequired(SiteURL, "__cf_bm");
+                    var cookies = CallBypassRequired(URLInUse, "__cf_bm");
 
                     HttpClientHandler handler = new HttpClientHandler
                     {
@@ -121,7 +121,7 @@ namespace Gambler.Bot.Core.Sites
                         CookieContainer = cookies.Cookies,
 
                     };
-                    Client = new HttpClient(handler) { BaseAddress = new Uri("https://duckdice.io/api/") }; ;
+                    Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse+"/api/") }; ;
                     Client.DefaultRequestHeaders.Add("referrer", SiteURL);
                     Client.DefaultRequestHeaders.Add("accept", "*/*");
                     Client.DefaultRequestHeaders.Add("origin", SiteURL);

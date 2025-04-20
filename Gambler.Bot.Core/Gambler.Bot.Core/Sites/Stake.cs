@@ -317,7 +317,7 @@ namespace Gambler.Bot.Core.Sites
                         {
                             if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                             {*/
-                    DiceBet tmpbet = tmp.ToBet();
+                    DiceBet tmpbet = tmp.ToBet(DiceSettings.MaxRoll);
                     tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
                     this.Stats.Bets++;
                     ;
@@ -715,13 +715,13 @@ namespace Gambler.Bot.Core.Sites
 
             public DiceState state { get; set; }
 
-            public DiceBet ToBet()
+            public DiceBet ToBet(decimal maxroll)
             {
                 DiceBet bet = new DiceBet
                 {
                     TotalAmount = amount,
                     Chance =
-                        state.condition.ToLower() == "above" ? 99.99m - (decimal)state.target : (decimal)state.target,
+                        state.condition.ToLower() == "above" ? maxroll - (decimal)state.target : (decimal)state.target,
                     High = state.condition.ToLower() == "above",
                     Currency = currency,
                     DateValue = DateTime.Now,
