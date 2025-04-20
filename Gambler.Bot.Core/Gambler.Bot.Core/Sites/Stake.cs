@@ -298,7 +298,12 @@ namespace Gambler.Bot.Core.Sites
                     } else if(error.StartsWith("Maximum bet exceeded"))
                     {
                         errorType = ErrorType.InvalidBet;
-                    } else if(error.StartsWith("You do not have enough balance to do that."))
+                    }
+                    else if (error.StartsWith("Amount too small"))
+                    {
+                        errorType = ErrorType.InvalidBet;
+                    }
+                    else if (error.StartsWith("You do not have enough balance to do that."))
                     {
                         errorType = ErrorType.BalanceTooLow;
                     }
@@ -317,7 +322,7 @@ namespace Gambler.Bot.Core.Sites
                         {
                             if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                             {*/
-                    DiceBet tmpbet = tmp.ToBet();
+                    DiceBet tmpbet = tmp.ToBet(DiceSettings.MaxRoll);
                     tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
                     this.Stats.Bets++;
                     ;
@@ -414,7 +419,7 @@ namespace Gambler.Bot.Core.Sites
             try
             {
                 decimal amount = BetDetails.Amount;
-                decimal payout = BetDetails.Payout;
+                decimal payout = ((100m - LimboSettings.Edge) / BetDetails.Chance);
 
                 /*if (amount < 10000 && (DateTime.Now - Lastbet).TotalMilliseconds < 500)
                 {
@@ -473,7 +478,7 @@ namespace Gambler.Bot.Core.Sites
                     {
                         if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
-                    LimboBet tmpbet = tmp.ToBet();
+                    LimboBet tmpbet = tmp.ToBet(LimboSettings.Edge);
                     tmpbet.IsWin = tmpbet.GetWin();
                     this.Stats.Bets++;
                     ;
@@ -715,13 +720,13 @@ namespace Gambler.Bot.Core.Sites
 
             public DiceState state { get; set; }
 
-            public DiceBet ToBet()
+            public DiceBet ToBet(decimal maxroll)
             {
                 DiceBet bet = new DiceBet
                 {
                     TotalAmount = amount,
                     Chance =
-                        state.condition.ToLower() == "above" ? 99.99m - (decimal)state.target : (decimal)state.target,
+                        state.condition.ToLower() == "above" ? maxroll - (decimal)state.target : (decimal)state.target,
                     High = state.condition.ToLower() == "above",
                     Currency = currency,
                     DateValue = DateTime.Now,
@@ -816,12 +821,12 @@ namespace Gambler.Bot.Core.Sites
         {
             public StakeLimboState state { get; set; }
 
-            public LimboBet ToBet()
+            public LimboBet ToBet(decimal edge)
             {
                 LimboBet bet = new LimboBet
                 {
                     TotalAmount = amount,
-                    Payout = state.multiplierTarget,
+                    Chance =(100m-edge)/ state.multiplierTarget,
 
                     Currency = currency,
                     DateValue = DateTime.Now,

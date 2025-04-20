@@ -354,7 +354,7 @@ namespace Gambler.Bot.Core.Sites
                         callError("Bet cannot be < 0.", false, ErrorType.BetTooLow);
                         return;
                     }
-                    callNotify($"Placing Limbo Bet: {limbobet.Amount:0.00######} with {limbobet.Payout:0.0000}% payout");
+                    callNotify($"Placing Limbo Bet: {limbobet.Amount:0.00######} with {limbobet.Chance:0.0000}% chance");
                     result = await limbosite.PlaceLimboBet(limbobet);
                 }
                 if (BetDetails is PlaceTwistBet twistbet && this is iTwist twistsite)
