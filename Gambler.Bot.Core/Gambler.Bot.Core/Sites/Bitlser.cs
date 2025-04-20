@@ -50,6 +50,7 @@ namespace Gambler.Bot.Core.Sites
             DiceBetURL = "https://www.bitsler.com/?ref=seuntjie/";
             SiteURL = "https://www.bitsler.com/?ref=seuntjie";
             this.Mirrors.Add("https://www.bitsler.com");
+            Mirrors.Add("https://bitsler.io");
             AffiliateCode = "?ref=seuntjie";
             //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "BS";
