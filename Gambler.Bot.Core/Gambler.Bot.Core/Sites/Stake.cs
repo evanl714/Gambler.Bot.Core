@@ -414,7 +414,7 @@ namespace Gambler.Bot.Core.Sites
             try
             {
                 decimal amount = BetDetails.Amount;
-                decimal payout = BetDetails.Payout;
+                decimal payout = ((100m - LimboSettings.Edge) / BetDetails.Chance);
 
                 /*if (amount < 10000 && (DateTime.Now - Lastbet).TotalMilliseconds < 500)
                 {
@@ -473,7 +473,7 @@ namespace Gambler.Bot.Core.Sites
                     {
                         if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
-                    LimboBet tmpbet = tmp.ToBet();
+                    LimboBet tmpbet = tmp.ToBet(LimboSettings.Edge);
                     tmpbet.IsWin = tmpbet.GetWin();
                     this.Stats.Bets++;
                     ;
@@ -816,12 +816,12 @@ namespace Gambler.Bot.Core.Sites
         {
             public StakeLimboState state { get; set; }
 
-            public LimboBet ToBet()
+            public LimboBet ToBet(decimal edge)
             {
                 LimboBet bet = new LimboBet
                 {
                     TotalAmount = amount,
-                    Payout = state.multiplierTarget,
+                    Chance =(100m-edge)/ state.multiplierTarget,
 
                     Currency = currency,
                     DateValue = DateTime.Now,

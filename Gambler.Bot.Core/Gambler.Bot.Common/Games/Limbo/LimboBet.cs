@@ -9,7 +9,7 @@ namespace Gambler.Bot.Common.Games.Limbo
         {
             Game = Games.Limbo;
         }
-        public decimal Payout { get; set; }
+        public decimal Chance { get; set; }
         public decimal Result { get; set; }
         public long Nonce { get; set; }
         public string? ServerHash { get; set; }
@@ -18,11 +18,11 @@ namespace Gambler.Bot.Common.Games.Limbo
         public int WinnableType { get; set; }
         public override PlaceBet CreateRetry()
         {
-            return new PlaceLimboBet(TotalAmount, Payout);
+            return new PlaceLimboBet(TotalAmount, Chance);
         }
         public bool GetWin()
         {
-            return Result >= Payout;
+            return Result >= Chance;
         }
     }
 }

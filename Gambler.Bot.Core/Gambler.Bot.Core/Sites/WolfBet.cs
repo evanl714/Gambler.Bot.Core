@@ -305,7 +305,7 @@ namespace Gambler.Bot.Core.Sites
             try
             {
 
-                decimal tmpchance = Math.Round(bet.Payout, 2);
+                decimal tmpchance = Math.Round(((100m - LimboSettings.Edge) / bet.Chance), 2);
                 WolfPlaceLimboBet tmp = new WolfPlaceLimboBet
                 {
                     amount = bet.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo),
@@ -339,13 +339,13 @@ namespace Gambler.Bot.Core.Sites
                             Guid = bet.GUID,
                             Nonce = result.bet.nonce,
                             BetID = result.bet.hash,                            
-                            Payout = decimal.Parse(result.bet.multiplier, System.Globalization.NumberFormatInfo.InvariantInfo),
+                            Chance = (100 - LimboSettings.Edge) / decimal.Parse(result.bet.multiplier, System.Globalization.NumberFormatInfo.InvariantInfo),
                             Result = decimal.Parse(result.bet.result_value, System.Globalization.NumberFormatInfo.InvariantInfo),
                             Profit = decimal.Parse(result.bet.profit, System.Globalization.NumberFormatInfo.InvariantInfo),
                             ServerHash = result.bet.server_seed_hashed
                         };
                         Stats.Bets++;
-                        tmpRsult.IsWin = tmpRsult.Result>=tmpRsult.Payout;
+                        tmpRsult.IsWin = tmpRsult.Result>= decimal.Parse(result.bet.multiplier, System.Globalization.NumberFormatInfo.InvariantInfo);
                         if (tmpRsult.IsWin)
                             Stats.Wins++;
                         else Stats.Losses++;

@@ -840,7 +840,7 @@ devise:btc*/
         {
             try
             {
-                if ((100m- LimboSettings.Edge)/ bet.Payout < LimboSettings.MinChance)
+                if ((100m- LimboSettings.Edge)/ bet.Chance < LimboSettings.MinChance)
                 {
                     callError("Chance must be more than "+ LimboSettings.MinChance, false, ErrorType.InvalidBet);
                     return null;
@@ -858,7 +858,7 @@ devise:btc*/
                 //pairs.Add(new KeyValuePair<string, string>("type", "dice"));
                 pairs.Add(new KeyValuePair<string, string>("amount", bet.Amount.ToString("0.00000000", System.Globalization.NumberFormatInfo.InvariantInfo)));
                 
-                pairs.Add(new KeyValuePair<string, string>("payout", (bet.Payout).ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) ));
+                pairs.Add(new KeyValuePair<string, string>("payout", ((100m-LimboSettings.Edge)/bet.Chance).ToString("0.00", System.Globalization.NumberFormatInfo.InvariantInfo) ));
                 pairs.Add(new KeyValuePair<string, string>("currency", CurrentCurrency));
                 pairs.Add(new KeyValuePair<string, string>("api_key", "0b2edbfe44e98df79665e52896c22987445683e78"));
                 pairs.Add(new KeyValuePair<string, string>("jp_optin", "0"));
@@ -884,7 +884,7 @@ devise:btc*/
                         Stats.Balance = decimal.Parse(bsbase.new_balance, System.Globalization.NumberFormatInfo.InvariantInfo);
                         lastupdate = DateTime.Now;
                         LimboBet tmp = bsbase.ToLimboBet();
-                        tmp.Payout = bet.Payout;
+                        tmp.Chance = bet.Chance;
                         tmp.Guid = bet.GUID;
                         Stats.Profit += (decimal)tmp.Profit;
                         Stats.Wagered += (decimal)tmp.TotalAmount;
