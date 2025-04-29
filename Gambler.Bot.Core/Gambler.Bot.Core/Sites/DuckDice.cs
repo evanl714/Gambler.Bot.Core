@@ -47,6 +47,7 @@ namespace Gambler.Bot.Core.Sites
             this.Mirrors.Add("https://duckdice.io");
             this.Mirrors.Add("https://duckdice.me");
             this.Mirrors.Add("https://duckdice.net");
+            this.GameModes.Add("Faucet");
             AffiliateCode = "?c=53ea652da4";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
@@ -151,6 +152,14 @@ namespace Gambler.Bot.Core.Sites
                     currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
                     if (balance != null && _Stats != null)
                     {
+                        if (this.SelectedGameMode == "Normal")
+                        {
+                            Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        }
+                        else
+                        {
+                            Stats.Balance = decimal.Parse(balance.user.balances.faucet, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        }
                         Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
                         Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
                         Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
@@ -189,7 +198,16 @@ namespace Gambler.Bot.Core.Sites
 
                 string sEmitResponse = await Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
                 Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
-                Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
+                if (this.SelectedGameMode == "Normal")
+                {
+                    Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
+
+                }
+                else
+                {
+                    Stats.Balance = decimal.Parse(balance.user.balances.faucet, System.Globalization.NumberFormatInfo.InvariantInfo);
+
+                }
                 sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
                 QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
                 Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
@@ -212,7 +230,7 @@ namespace Gambler.Bot.Core.Sites
             decimal amount = BetDetails.Amount;
             decimal chance = BetDetails.Chance;
             bool High = BetDetails.High;
-            StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"amount\":\"{0:0.00000000}\",\"symbol\":\"{1}\",\"chance\":{2:0.00},\"isHigh\":{3}}}", amount, CurrentCurrency, chance, High ? "true" : "false"), Encoding.UTF8, "application/json");
+            StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"amount\":\"{0:0.00000000}\",\"symbol\":\"{1}\",\"chance\":{2:0.00},\"isHigh\":{3},\"faucet\":{4},}}", amount, CurrentCurrency, chance, High ? "true" : "false", (SelectedGameMode=="Faucet").ToString().ToLower()), Encoding.UTF8, "application/json");
             try
             {
                 var response = await Client.PostAsync("play" + "?api_key=" + accesstoken, Content);

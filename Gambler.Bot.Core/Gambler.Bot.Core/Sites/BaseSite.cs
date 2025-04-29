@@ -35,6 +35,8 @@ namespace Gambler.Bot.Core.Sites
         
         public LoginParameter[] LoginParams { get { return StaticLoginParams; } }
         public List<string> Mirrors { get; set; } = new List<string>();
+        public List<string> GameModes { get; set; } = new List<string>() { "Normal" };
+        public string SelectedGameMode { get; set; } = "Normal";
         public string AffiliateCode { get; set; }
         #region Properties
         public bool IsEnabled { get; set; } = true;
