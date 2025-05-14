@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static Gambler.Bot.Core.Sites.Bitvest;
 using static Gambler.Bot.Core.Sites.Stake;
 
 namespace Gambler.Bot.Core.Sites
@@ -59,7 +60,7 @@ namespace Gambler.Bot.Core.Sites
             this.Currencies = new string[] { "APE","BTC","ETH","BCH","EOS","BNB","BUSD","CRO","DAI","DOGE","LINK","LTC","POL","SAND","SHIB","SOL","TRUMP",
                 "TRX","UNI","USDC","XRP","USDT", };
             SupportedGames = new Games[] { Games.Dice };
-            CurrentCurrency ="btc";
+            CurrentCurrency = "btc";
             this.DiceBetURL = "https://primedice.com/bet/{0}";
             //this.Edge = 1;
             DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
@@ -75,7 +76,7 @@ namespace Gambler.Bot.Core.Sites
         {
             ispd = false;
             Client = null;
-            
+
         }
         string userid = "";
         async Task OnWSConnected(GraphQL.Client.Http.GraphQLHttpClient client)
@@ -133,7 +134,7 @@ namespace Gambler.Bot.Core.Sites
 
                 StringContent content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
 
-                var resp = await Client.PostAsync(URLInUse+URL, content);
+                var resp = await Client.PostAsync(URLInUse + URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
                 int retriees = 0;
                 while (!resp.IsSuccessStatusCode && retriees++ < 5)
@@ -146,9 +147,9 @@ namespace Gambler.Bot.Core.Sites
                 if (!resp.IsSuccessStatusCode)
                 {
                     await Task.Delay(106);
-                    
+
                 }
-                var Resp = JsonSerializer.Deserialize< Payload>(respostring);
+                var Resp = JsonSerializer.Deserialize<Payload>(respostring);
                 pdUser user = Resp.data.user;
                 userid = user.id;
                 if (string.IsNullOrWhiteSpace(userid))
@@ -255,7 +256,7 @@ namespace Gambler.Bot.Core.Sites
                 var response = await Client.PostAsync(URLInUse + URL, new StringContent(JsonSerializer.Serialize(betresult), Encoding.UTF8, "application/json"));
                 var responsestring = await response.Content.ReadAsStringAsync();
                 Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
-                if (ResponsePayload.errors!=null && ResponsePayload.errors.Length > 0)
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
                 {
                     string error = ResponsePayload.errors[0].message;
                     ErrorType errorType = ErrorType.Unknown;
@@ -273,7 +274,7 @@ namespace Gambler.Bot.Core.Sites
                         errorType = ErrorType.BalanceTooLow;
                     }
 
-                    callError(error,false, errorType);
+                    callError(error, false, errorType);
                     return null;
                 }
                 RollDice tmp = ResponsePayload.data.primediceRoll;
@@ -338,8 +339,8 @@ namespace Gambler.Bot.Core.Sites
                     operationName = "DiceBotGetBalance",
                     query = "query DiceBotGetBalance{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}"
                 };
-                var Resp =await Client.PostAsync("", new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json"));
-                string respostring =await Resp.Content.ReadAsStringAsync();
+                var Resp = await Client.PostAsync("", new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json"));
+                string respostring = await Resp.Content.ReadAsStringAsync();
                 pdUser user = JsonSerializer.Deserialize<Payload>(respostring)?.data.user;
                 //GraphQLResponse< pdUser> Resp = GQLClient.SendMutationAsync< pdUser>(LoginReq).Result;
 
@@ -377,6 +378,47 @@ namespace Gambler.Bot.Core.Sites
             return 100 - (int)(DateTime.Now - Lastbet).TotalMilliseconds;
 
         }
+
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            try
+            {
+                string clientseed = GenerateNewClientSeed();
+                GraphqlRequestPayload payload = new GraphqlRequestPayload
+                {
+                    operationName = "DiceBotRotateSeed",
+                    query = "mutation DiceBotRotateSeed ($seed: String!){rotateServerSeed{ seed seedHash nonce } changeClientSeed(seed: $seed){seed}}",
+                    variables = new
+                    {
+                        seed = clientseed
+                    }
+                };
+                var response = await Client.PostAsync(URLInUse + URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    callError("An error occured while trying to reset your seet: ", false, ErrorType.ResetSeed);
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+
+                    callResetSeedFinished(false, string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+                    return null;
+                }
+                else
+                {
+                    callResetSeedFinished(true, ResponsePayload.data.rotateServerSeed.seedHash);
+                    return new SeedDetails(ResponsePayload.data.changeClientSeed.seed, ResponsePayload.data.rotateServerSeed.seedHash);
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                callError("An error occured while trying to bank your funds.", false, ErrorType.ResetSeed);
+                _logger?.LogError(ex.ToString());
+            }
+            return null;
+        }
+
         protected override async Task<bool> _Bank(decimal Amount)
         {
             try
@@ -403,10 +445,10 @@ namespace Gambler.Bot.Core.Sites
                 }
                 else
                 {
-                    Stats.Balance = ResponsePayload.data.createVaultDeposit.user.balances.FirstOrDefault(x => x.available.currency.ToLower() == CurrentCurrency.ToLower()).available.amount??0;
+                    Stats.Balance = ResponsePayload.data.createVaultDeposit.user.balances.FirstOrDefault(x => x.available.currency.ToLower() == CurrentCurrency.ToLower()).available.amount ?? 0;
                     callBankFinished(true, "");
                 }
-                    return true;
+                return true;
             }
             catch (Exception ex)
             {
@@ -557,6 +599,19 @@ namespace Gambler.Bot.Core.Sites
             public string __typename { get; set; }
         }
 
+
+        public class Rotateserverseed
+        {
+            public object seed { get; set; }
+            public string seedHash { get; set; }
+            public int nonce { get; set; }
+        }
+
+        public class Changeclientseed
+        {
+            public string seed { get; set; }
+        }
+
         public class Data
         {
             public ChatMessages chatMessages { get; set; }
@@ -566,6 +621,8 @@ namespace Gambler.Bot.Core.Sites
             public pdUser user { get; set; }
             public RollDice bet { get; set; }
             public StakeVaultDepost createVaultDeposit { get; set; }
+            public Rotateserverseed rotateServerSeed { get; set; }
+            public Changeclientseed changeClientSeed { get; set; }
         }
         public class PDVaultDepost
         {

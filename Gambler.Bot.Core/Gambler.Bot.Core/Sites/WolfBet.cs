@@ -374,6 +374,31 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            var response = await Client.GetAsync("game/seed/refresh");
+            string Resuult = await response.Content.ReadAsStringAsync();
+           
+            Resuult = await response.Content.ReadAsStringAsync();
+            try
+            {
+                Game tmp = JsonSerializer.Deserialize<Game>(Resuult);
+                if (tmp != null)
+                {
+                    SeedDetails tmpSeed = new SeedDetails();
+                   
+                    callResetSeedFinished(true, "");
+                    return tmpSeed;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+                callResetSeedFinished(false, e.ToString());
+            }
+            return null;
+        }
+
         public class WolfBetLogin
         {
             public string access_token { get; set; }

@@ -19,6 +19,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using static Gambler.Bot.Core.Sites.Bitsler;
 using static Gambler.Bot.Core.Sites.Bitvest;
+using static Gambler.Bot.Core.Sites.PrimeDice;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -559,6 +560,46 @@ namespace Gambler.Bot.Core.Sites
             return false;
         }
 
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            try
+            {
+                string clientseed = GenerateNewClientSeed();
+                GraphqlRequestPayload payload = new GraphqlRequestPayload
+                {
+                    operationName = "DiceBotRotateSeed",
+                    query = "mutation DiceBotRotateSeed ($seed: String!){rotateServerSeed{ seed seedHash nonce } changeClientSeed(seed: $seed){seed}}",
+                    variables = new
+                    {
+                        seed = clientseed
+                    }
+                };
+                var response = await Client.PostAsync(URLInUse + URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    callError("An error occured while trying to reset your seet: ", false, ErrorType.ResetSeed);
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+
+                    callResetSeedFinished(false, string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+                    return null;
+                }
+                else
+                {
+                    callResetSeedFinished(true, ResponsePayload.data.rotateServerSeed.seedHash);
+                    return new SeedDetails(ResponsePayload.data.changeClientSeed.seed, ResponsePayload.data.rotateServerSeed.seedHash);
+
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                callError("An error occured while trying to bank your funds.", false, ErrorType.ResetSeed);
+                _logger?.LogError(ex.ToString());
+            }
+            return null;
+        }
         public class StakeVaultDepost
         {
             public string currency { get; set; }
@@ -795,6 +836,8 @@ namespace Gambler.Bot.Core.Sites
             public StakeLimboBet limboBet { get; set; }
 
             public StakeVaultDepost createVaultDeposit { get; set; }
+            public Rotateserverseed rotateServerSeed { get; set; }
+            public Changeclientseed changeClientSeed { get; set; }
         }
 
         public class Payload
