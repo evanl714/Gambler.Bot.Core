@@ -44,13 +44,13 @@ namespace Gambler.Bot.Core.Sites
             //this.MaxRoll = 100m;
             this.SiteAbbreviation = "ST";
             this.SiteName = "Stake";
-            this.SiteURL = "https://stake.com/?c=dicebot";
+            this.SiteURL = "https://stake.com/?c=sdicebot";
             this.Mirrors = new List<string>
             {
                 "https://stake.com", "https://stake.bet", "https://stake.games", "https://staketr.com", "https://staketr2.com", "https://staketr3.com", "https://staketr4.com", "https://staketr5.com", "https://stake.bz", "https://stake.jp",
                 "https://stake.ac", "https://stake.icu", "https://stake.us", "https://stake.kim"
             };
-            AffiliateCode = "?c=dicebot";
+            AffiliateCode = "?c=sdicebot";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -600,6 +600,32 @@ namespace Gambler.Bot.Core.Sites
             }
             return null;
         }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string msg = ClientSeed + "-" + Nonce.ToString();
+            string hex = Hash.HMAC512(ServerSeed, msg).ToLowerInvariant();
+            int charstouse = 5;
+            if (Game == Games.Dice)
+            {
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    if (lucky < 1000000)
+                    {
+                        lucky %= 10000;
+                        return new DiceResult { Roll = lucky / 100 };
+
+                    }
+                }
+            }
+            return null;
+
+        }
+
         public class StakeVaultDepost
         {
             public string currency { get; set; }

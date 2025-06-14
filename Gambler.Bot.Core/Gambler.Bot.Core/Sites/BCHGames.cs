@@ -87,6 +87,11 @@ namespace Gambler.Bot.Core.Sites
         {
             throw new NotImplementedException();
         }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

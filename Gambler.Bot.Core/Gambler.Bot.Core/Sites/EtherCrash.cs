@@ -467,6 +467,10 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            throw new NotImplementedException();
+        }
 
         public class SocketIOInit
         {

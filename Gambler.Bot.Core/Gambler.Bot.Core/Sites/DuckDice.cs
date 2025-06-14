@@ -353,6 +353,25 @@ namespace Gambler.Bot.Core.Sites
             return false;
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string hex = Hash.SHA512(ServerSeed + ClientSeed + Nonce.ToString());
+            int charstouse = 5;
+            for (int i = 0; i < hex.Length; i += charstouse)
+            {
+
+                string s = hex.ToString().Substring(i, charstouse);
+
+                decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                if (lucky < 1000000)
+                {
+                    decimal tmp = (lucky % 10000) / 100m;
+                    return new DiceResult { Roll = tmp }; 
+                }
+            }
+            return null;
+        }
+
         public class QuackLogin
         {
             public string token { get; set; }

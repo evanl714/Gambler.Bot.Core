@@ -222,6 +222,30 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string hex = Hash.SHA256(ServerSeed + ClientSeed);
+            int charstouse = 5;
+
+            if (Game == Games.Dice)
+            {
+
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    if (lucky < 1000000)
+                    {
+                        //return lucky / 10000;
+                        string tmps = lucky.ToString("000000").Substring(lucky.ToString("000000").Length - 5);
+                        return new DiceResult { Roll = decimal.Parse(tmps) / 1000.0m };
+                    }
+                }
+            }
+            return null;
+        }
 
         public class cgBalance
         {

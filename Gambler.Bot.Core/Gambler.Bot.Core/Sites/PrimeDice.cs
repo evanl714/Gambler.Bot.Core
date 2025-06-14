@@ -458,6 +458,31 @@ namespace Gambler.Bot.Core.Sites
             return false;
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string msg = ClientSeed + "-" + Nonce.ToString();
+            string hex = Hash.HMAC512(ServerSeed, msg).ToLowerInvariant(); 
+            int charstouse = 5;
+            if (Game == Games.Dice)
+            {
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    if (lucky < 1000000)
+                    {
+                        lucky %= 10000;
+                        return new DiceResult { Roll = lucky / 100 };
+
+                    }
+                }
+            }
+            return null;
+            
+        }
+
         public class Sender
         {
             public string name { get; set; }

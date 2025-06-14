@@ -337,6 +337,29 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            ServerSeed = Nonce + ":" + ServerSeed + ":" + Nonce;
+            string msg = Nonce + ":" + ClientSeed + ":" + Nonce;
+            string hex = Hash.HMAC512(ServerSeed, msg);
+            int charstouse = 8;
+            if (Game == Games.Dice)
+            {
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = long.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    /*if (lucky < 1000000)
+                        return lucky / 10000;*/
+                    lucky = Math.Round(lucky / 429496.7295m);
+                    return new DiceResult { Roll = lucky / 100 };
+                }
+            }
+            return null;
+        }
+
         public class FreebtcStats
         {
             public long wagered { get; set; }

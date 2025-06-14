@@ -13,4 +13,10 @@ namespace Gambler.Bot.Common.Games
         public string Message { get; }
 
     }
+
+    public interface IGameResult
+    {
+        Games Game { get; }
+
+    }
 }

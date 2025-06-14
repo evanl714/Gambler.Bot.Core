@@ -549,7 +549,7 @@ devise:btc*/
 
 
 
-        public static decimal sGetLucky(string server, string client, int nonce)
+        public static IGameResult sGetLucky(string server, string client, int nonce, Games game)
         {
             SHA1 betgenerator = SHA1.Create();
             string Seed = server + "-" + client + "-" + nonce;
@@ -565,21 +565,21 @@ devise:btc*/
                 serverb = betgenerator.ComputeHash(serverb.ToArray());
                 StringBuilder hex = new StringBuilder(serverb.Length * 2);
                 foreach (byte b in serverb)
-                    hex.AppendFormat("{0:x2}", b);
+                    hex.AppendFormat("{0:x2}", b); 
 
                 string s = hex.ToString().Substring(0, 8);
                 Lucky = long.Parse(s, System.Globalization.NumberStyles.HexNumber);
-            } while (Lucky > 4294960000);
+            } while (Lucky > 999999);
             Lucky = (Lucky % 10000.0m) / 100.0m;
             if (Lucky < 0)
-                return -Lucky;
-            return Lucky;
+                return new DiceResult { Roll = -Lucky };
+            return new DiceResult { Roll = Lucky }; 
         }
 
-        protected override decimal _GetLucky( string server, string client, int nonce)
+        protected override IGameResult _GetLucky( string server, string client, int nonce, Games game)
         {
 
-            return sGetLucky( server, client, nonce);
+            return sGetLucky( server, client, nonce, game);
         }
 
 

@@ -399,6 +399,23 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string msg = ClientSeed + "_" + Nonce.ToString();
+            int charstouse = 5;
+            string hex = Hash.HMAC512(ServerSeed, msg);
+            for (int i = 0; i < hex.Length; i += charstouse)
+            {
+
+                string s = hex.ToString().Substring(i, charstouse);
+
+                decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                if (lucky < 1000000)
+                    return new DiceResult { Roll = lucky % 10000 / 100m };
+            }
+            return null;
+        }
+
         public class WolfBetLogin
         {
             public string access_token { get; set; }

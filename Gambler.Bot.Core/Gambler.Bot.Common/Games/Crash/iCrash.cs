@@ -8,4 +8,10 @@ namespace Gambler.Bot.Common.Games.Crash
         Task<CrashBet> PlaceCrashBet(PlaceCrashBet BetDetails);
         CrashConfig CrashSettings { get; set; }
     }
+    public class DiceResult : IGameResult
+    {
+        public decimal Result { get; set; }
+
+        public Games Game { get => Games.Dice; }
+    }
 }

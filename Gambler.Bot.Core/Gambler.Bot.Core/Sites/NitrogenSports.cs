@@ -414,6 +414,11 @@ Sec-WebSocket-Version:13*/
             throw new NotImplementedException();
         }
 
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            throw new NotImplementedException();
+        }
+
         public class NSLogin
         {
             public int errno { get; set; }

@@ -1,4 +1,5 @@
-﻿using Gambler.Bot.Common.Helpers;
+﻿using Gambler.Bot.Common.Games;
+using Gambler.Bot.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Gambler.Bot.Common.Interfaces
 {
     public interface IProvablyFair
     {
-        decimal GetLucky(string ServerSeed, string ClientSeed, int Nonce);
+        IGameResult GetLucky(string ServerSeed, string ClientSeed, int Nonce, Gambler.Bot.Common.Games.Games Game);
         string GetHash(string ServerSeed);
         string GenerateNewClientSeed();
         GRandom Random { get; }

@@ -8,4 +8,11 @@ namespace Gambler.Bot.Common.Games.Dice
         DiceConfig DiceSettings { get; set; }
 
     }
+
+    public class DiceResult:IGameResult
+    {
+        public decimal Roll { get; set; }
+
+        public Games Game{ get => Games.Dice; }
+    }
 }

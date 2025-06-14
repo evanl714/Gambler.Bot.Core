@@ -10,4 +10,10 @@ namespace Gambler.Bot.Common.Games.HiLo
     public interface iHiLo
     {
     }
+    public class DiceResult : IGameResult
+    {
+        public bool High { get; set; }
+
+        public Games Game { get => Games.Dice; }
+    }
 }

@@ -485,28 +485,26 @@ namespace Gambler.Bot.Core.Sites
             }
             return false;
         }
-        protected override decimal _GetLucky(string ServerSeed, string ClientSeed, int Nonce)
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games game)
         {
-            SHA512 betgenerator = SHA512.Create();
+            //HMACSHA512 betgenerator = HMACSHA512.Create();
             int charstouse = 5;
             string source = ServerSeed + "|" + ClientSeed;
-            byte[] hash = betgenerator.ComputeHash(Encoding.UTF8.GetBytes(source));
+            string hex = Hash.HMAC512(ServerSeed, $"{ClientSeed}|{Nonce}");
 
-            StringBuilder hex = new StringBuilder(hash.Length * 2);
-            foreach (byte b in hash)
-                hex.AppendFormat("{0:x2}", b);
-
-
-            for (int i = 0; i < hex.Length; i += charstouse)
+            if (game == Games.Dice)
             {
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
 
-                string s = hex.ToString().Substring(i, charstouse);
+                    string s = hex.ToString().Substring(i, charstouse);
 
-                decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
-                if (lucky < 1000000)
-                    return lucky / 10000m;
+                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    if (lucky < 1000000)
+                        return new DiceResult { Roll = lucky / 10000m };
+                }
             }
-            return 0;
+            return null;
         }
 
         protected override async Task<bool> _SendTip(string Username, decimal Amount)

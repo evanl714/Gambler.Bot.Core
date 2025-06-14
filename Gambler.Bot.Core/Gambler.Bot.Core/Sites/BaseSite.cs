@@ -540,11 +540,13 @@ namespace Gambler.Bot.Core.Sites
         }
         protected virtual async Task<bool> _Register(string Username, string Password) { return false; }
 
-        public decimal GetLucky(string ServerSeed, string ClientSeed, int Nonce)
+        public IGameResult GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
-            return _GetLucky(ServerSeed, ClientSeed, Nonce);
+            return _GetLucky(ServerSeed, ClientSeed, Nonce, Game);
         }
-        protected virtual decimal _GetLucky(string ServerSeed, string ClientSeed, int Nonce)
+        protected abstract IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game);
+
+        protected static decimal defaultRNG(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
             HMACSHA512 betgenerator = new HMACSHA512();
 
