@@ -603,24 +603,30 @@ namespace Gambler.Bot.Core.Sites
 
         protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
-            string msg = ClientSeed + "-" + Nonce.ToString();
-            string hex = Hash.HMAC512(ServerSeed, msg).ToLowerInvariant();
-            int charstouse = 5;
+            string msg = $"{ClientSeed}:{Nonce}:0";
+            string hex = Hash.HMAC256( msg, ServerSeed).ToLowerInvariant();
+            int charstouse = 2;
+            decimal number = 0;
+            for (int i = 0; i < 4; i++)
+            {
+
+                string s = hex.ToString().Substring(i * charstouse, charstouse);
+                decimal part = ((decimal)int.Parse(s, System.Globalization.NumberStyles.HexNumber)) / (decimal)(Math.Pow(256, i + 1));
+                number += part;
+                
+            }
             if (Game == Games.Dice)
             {
-                for (int i = 0; i < hex.Length; i += charstouse)
-                {
+                decimal lucky = Math.Floor(number * 10001) / 100m;
+                return new DiceResult { Roll = lucky };
 
-                    string s = hex.ToString().Substring(i, charstouse);
-
-                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
-                    if (lucky < 1000000)
-                    {
-                        lucky %= 10000;
-                        return new DiceResult { Roll = lucky / 100 };
-
-                    }
-                }
+            }
+            if (Game == Games.Limbo)
+            {
+                
+                decimal floatPoint = 1e8m / (number * 1e8m) * (100-LimboSettings.Edge);
+                decimal crashPoint = Math.Floor(floatPoint ) /100;
+                return new LimboResult { Result = Math.Max(crashPoint, 1) };
             }
             return null;
 

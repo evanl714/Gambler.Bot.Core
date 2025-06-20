@@ -10,7 +10,7 @@ namespace Gambler.Bot.Common.Games.HiLo
     public interface iHiLo
     {
     }
-    public class DiceResult : IGameResult
+    public class HiLoResult : IGameResult
     {
         public bool High { get; set; }
 

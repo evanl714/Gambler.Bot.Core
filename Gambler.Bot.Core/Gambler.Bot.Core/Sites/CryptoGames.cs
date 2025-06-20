@@ -224,7 +224,7 @@ namespace Gambler.Bot.Core.Sites
 
         protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
-            string hex = Hash.SHA256(ServerSeed + ClientSeed);
+            string hex = Hash.SHA512(ServerSeed + ClientSeed);
             int charstouse = 5;
 
             if (Game == Games.Dice)

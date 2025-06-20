@@ -461,7 +461,7 @@ namespace Gambler.Bot.Core.Sites
         protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
             string msg = ClientSeed + "-" + Nonce.ToString();
-            string hex = Hash.HMAC512(ServerSeed, msg).ToLowerInvariant(); 
+            string hex = Hash.HMAC512(msg, ServerSeed).ToLowerInvariant(); 
             int charstouse = 5;
             if (Game == Games.Dice)
             {
