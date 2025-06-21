@@ -192,6 +192,10 @@ namespace Gambler.Bot.Core.Sites
             callLoginFinished(false);
             return false;
         }
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
 
         protected override async Task<SiteStats> _UpdateStats()
         {
@@ -372,6 +376,7 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        
         public class QuackLogin
         {
             public string token { get; set; }

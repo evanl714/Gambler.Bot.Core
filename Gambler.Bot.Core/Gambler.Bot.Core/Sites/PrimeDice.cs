@@ -483,6 +483,11 @@ namespace Gambler.Bot.Core.Sites
             
         }
 
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
+
         public class Sender
         {
             public string name { get; set; }

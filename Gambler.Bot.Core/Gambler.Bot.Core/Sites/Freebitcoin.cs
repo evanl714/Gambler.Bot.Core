@@ -360,6 +360,11 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
+
         public class FreebtcStats
         {
             public long wagered { get; set; }

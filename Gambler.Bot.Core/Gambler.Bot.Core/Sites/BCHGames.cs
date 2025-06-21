@@ -8,6 +8,7 @@ using Gambler.Bot.Core.Sites.Classes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -89,6 +90,11 @@ namespace Gambler.Bot.Core.Sites
         }
 
         protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Task<bool> _Login(HttpClient client)
         {
             throw new NotImplementedException();
         }

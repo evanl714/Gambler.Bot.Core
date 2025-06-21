@@ -419,6 +419,11 @@ Sec-WebSocket-Version:13*/
             throw new NotImplementedException();
         }
 
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
+
         public class NSLogin
         {
             public int errno { get; set; }

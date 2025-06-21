@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -243,6 +244,12 @@ namespace Gambler.Bot.Core.Sites
         protected abstract Task<bool> _Login(LoginParamValue[] LoginParams);
 
         /// <summary>
+        /// Interface with site to handle login.
+        /// </summary>
+        /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
+        protected abstract Task<bool> _Login(HttpClient client);
+
+        /// <summary>
         /// Logs the user into the site if correct details were provided
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
@@ -259,7 +266,24 @@ namespace Gambler.Bot.Core.Sites
             
         }
 
-       
+        // <summary>
+        /// Logs the user into the site if correct details were provided
+        /// </summary>
+        /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
+        public  async Task<bool> LogIn(string url, HttpClient client)
+        {
+            bool success = false;
+            URLInUse = url;
+            await Task.Run(async () => { success = await _Login(client); });
+            if (success)
+            {
+                await UpdateStats();
+            }
+            return success;
+
+        }
+
+
         /// <summary>
         /// Interface with site to disconnect and dispose of applicable objects
         /// </summary>

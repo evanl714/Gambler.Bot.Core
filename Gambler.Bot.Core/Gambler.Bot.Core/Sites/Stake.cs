@@ -632,6 +632,11 @@ namespace Gambler.Bot.Core.Sites
 
         }
 
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
+
         public class StakeVaultDepost
         {
             public string currency { get; set; }

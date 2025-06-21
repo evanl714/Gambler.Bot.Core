@@ -472,6 +472,11 @@ namespace Gambler.Bot.Core.Sites
             throw new NotImplementedException();
         }
 
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
+
         public class SocketIOInit
         {
             public string sid { get; set; }

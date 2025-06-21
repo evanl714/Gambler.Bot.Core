@@ -575,6 +575,11 @@ namespace Gambler.Bot.Core.Sites
             return ClientSeed;
         }
 
+        protected override Task<bool> _Login(HttpClient client)
+        {
+            throw new NotImplementedException();
+        }
+
         public class bitvestLoginBase
         {
             public int update_interval { get; set; }
