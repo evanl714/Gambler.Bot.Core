@@ -25,9 +25,9 @@ namespace Gambler.Bot.Common.Games.Dice
             return new PlaceTwistBet(TotalAmount, High, Chance);
         }
 
-        public bool GetWin(decimal maxRoll)
+        public override bool GetWin(IGameConfig config)
         {
-            return High ? Roll > maxRoll - Chance : Roll < Chance;
+            return High ? Roll > (config as TwistConfig).MaxRoll - Chance : Roll < Chance;
         }
 
         public int CalculateWinnableType(decimal maxroll)
@@ -53,6 +53,12 @@ namespace Gambler.Bot.Common.Games.Dice
             //else if win
             //else if loss
             return WinnableType;
+        }
+
+        public override string ToCSV(IGameConfig gamecofig, long TotalBetsPlaced, decimal Balance)
+        {
+            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}"
+                        , TotalBetsPlaced, Roll, Chance, "N/A", GetWin(gamecofig) ? "win" : "lose", TotalAmount, Profit, Balance, Profit);
         }
     }
 }

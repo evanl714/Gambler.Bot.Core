@@ -10,7 +10,7 @@ namespace Gambler.Bot.Core.Tests
     [TestCaseOrderer("Gambler.Bot.Core.Tests.Code.AlphabeticalOrderer", "Gambler.Bot.Core.Tests")]
     public abstract class DiceTests: IAsyncLifetime
     {
-        BaseSite _site;
+        protected BaseSite _site;
 
         public DiceTests(BaseSite site)
         {

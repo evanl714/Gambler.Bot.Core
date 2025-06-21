@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using static Gambler.Bot.Core.Sites.Bitvest;
+using static Gambler.Bot.Core.Sites.NitrogenSports;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -33,6 +34,7 @@ namespace Gambler.Bot.Core.Sites
             "BCH","BNB","SHIB","USDC","ADA","DASH","SOL","ATOM","ETC","EOS","XMR","BTTC","POL","ZEC","DOT","RVN","LINK","DAI",
             "TUSD","AVAX","NEAR","ZEN","AAVE","ENA","UNI","TON","FDUSD","TRUMP","WBTC","INR","PKR","USD","VND","GHS","KZT","BDT",
         "KGS","CAD","UZS","AZN","CLP","IDR","KES","MXN","MYR","NGN","THB"};
+        string apiversion = "1.1.1";
         QuackSeed currentseed = null;
 
         public DiceConfig DiceSettings { get; set; }
@@ -230,7 +232,7 @@ namespace Gambler.Bot.Core.Sites
             decimal amount = BetDetails.Amount;
             decimal chance = BetDetails.Chance;
             bool High = BetDetails.High;
-            StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"amount\":\"{0:0.00000000}\",\"symbol\":\"{1}\",\"chance\":{2:0.00},\"isHigh\":{3},\"faucet\":{4},}}", amount, CurrentCurrency, chance, High ? "true" : "false", (SelectedGameMode=="Faucet").ToString().ToLower()), Encoding.UTF8, "application/json");
+            StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"amount\":\"{0:0.00000000}\",\"symbol\":\"{1}\",\"chance\":{2:0.00},\"isHigh\":{3},\"faucet\":{4}}}", amount, CurrentCurrency, chance, High ? "true" : "false", (SelectedGameMode=="Faucet").ToString().ToLower()), Encoding.UTF8, "application/json");
             try
             {
                 var response = await Client.PostAsync("play" + "?api_key=" + accesstoken, Content);
@@ -294,6 +296,31 @@ namespace Gambler.Bot.Core.Sites
             return null;
         }
 
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            try
+            {
+                var seed = GenerateNewClientSeed();
+                StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"clientSeed\":\"{0}\"}}", seed), Encoding.UTF8, "application/json");
+                var response = await Client.PostAsync("randomize" + "?api_key=" + accesstoken, Content);
+                    string sresponse = await response.Content.ReadAsStringAsync();
+                var responseseed  = JsonSerializer.Deserialize<QuackSeed>(sresponse);
+                currentseed = responseseed.current;
+                return new SeedDetails
+                {
+                    Nonce = 0,
+                    ServerHash = currentseed.serverSeedHash,
+                    ClientSeed = seed
+                };
+                
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+                return null;
+            }
+        }
+
         protected override async Task<bool> _Bank(decimal Amount)
         {
             QuackBank bnk = new QuackBank { amount = Amount, symbol = CurrentCurrency.ToUpper() };
@@ -324,6 +351,25 @@ namespace Gambler.Bot.Core.Sites
                 callError("Failed to bank funds.", false, ErrorType.Bank);
             }
             return false;
+        }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string hex = Hash.SHA512(ServerSeed + ClientSeed + Nonce.ToString());
+            int charstouse = 5;
+            for (int i = 0; i < hex.Length; i += charstouse)
+            {
+
+                string s = hex.ToString().Substring(i, charstouse);
+
+                decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                if (lucky < 1000000)
+                {
+                    decimal tmp = (lucky % 10000) / 100m;
+                    return new DiceResult { Roll = tmp }; 
+                }
+            }
+            return null;
         }
 
         public class QuackLogin

@@ -48,7 +48,7 @@ namespace Gambler.Bot.Core.Sites
             this.AutoInvest = false;
             this.AutoWithdraw = false;
             AutoBank = true;
-            this.CanChangeSeed = false;
+            this.CanChangeSeed = true;
             this.CanChat = false;
             this.CanGetSeed = false;
             this.CanRegister = false;
@@ -303,6 +303,55 @@ namespace Gambler.Bot.Core.Sites
             }
         }
 
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            string seed = "";
+            while (seed.Length < 12)
+            {
+                seed += R.Next(0, int.MaxValue).ToString();
+            }
+            string loginjson = JsonSerializer.Serialize<WDResetSeed>(new WDResetSeed()
+            {
+                value = seed
+            });
+
+            HttpContent cont = new StringContent(loginjson);
+            cont.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            HttpResponseMessage resp2 = await Client.PostAsync("seed", cont);
+
+            if (resp2.IsSuccessStatusCode)
+            {
+                string response = await resp2.Content.ReadAsStringAsync();
+                WDGetSeed tmpBalance = JsonSerializer.Deserialize<WDGetSeed>(response);
+                string currentseed = "";
+                if (tmpBalance.status == "success")
+                    currentseed = await getcurrentSeed();
+                callResetSeedFinished(true, currentseed);
+                return new SeedDetails(this.currentseed.client, this.currentseed.hash);
+                
+            }
+            else
+            {
+                string errorresponse = await resp2.Content.ReadAsStringAsync();
+                _logger.LogError($"Failed to reset seed: {errorresponse}");
+                callError("Failed to reset seed", false, ErrorType.ResetSeed);
+                callResetSeedFinished(false, errorresponse);
+                return null;
+            }
+        }
+
+        protected async Task<string> getcurrentSeed()
+        {
+           
+            string response = Client.GetStringAsync("seed").Result;
+            WDGetSeed tmpBalance = JsonSerializer.Deserialize<WDGetSeed>(response);
+            if (tmpBalance.data != null)
+            {
+                currentseed = tmpBalance.data;
+            }
+            return currentseed.client;
+        }
+
         protected override async Task<bool> _Bank(decimal Amount)
         {
             try
@@ -350,6 +399,27 @@ namespace Gambler.Bot.Core.Sites
             }
             return false;
         }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string msg = ServerSeed + ClientSeed + Nonce; 
+            int charstouse = 5;
+            string hex = Hash.SHA512(msg);
+            if (Game == Games.Dice)
+            {
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    if (lucky < 1000000)
+                        return new DiceResult { Roll = lucky % 10000 / 100m };
+                }
+            }
+            return null;
+        }
+
         public class WDCurrencyBalance
         {
             public string curr { get; set; }

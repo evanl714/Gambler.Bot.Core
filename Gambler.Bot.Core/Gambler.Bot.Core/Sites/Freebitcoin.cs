@@ -296,7 +296,7 @@ namespace Gambler.Bot.Core.Sites
                             Roll = decimal.Parse(msgs[2], System.Globalization.NumberFormatInfo.InvariantInfo) / 100.0m
 
                         };
-                        tmp.IsWin = tmp.GetWin(this.DiceSettings.MaxRoll);
+                        tmp.IsWin = tmp.GetWin(this.DiceSettings);
                         Stats.Balance = decimal.Parse(msgs[3], System.Globalization.NumberFormatInfo.InvariantInfo);
                         if (msgs[1] == "w")
                             Stats.Wins++;
@@ -333,6 +333,29 @@ namespace Gambler.Bot.Core.Sites
             {
                 _logger?.LogError(e.ToString());
                 callError("An internal error occured. Retrying in 30 seconds.",true, ErrorType.Unknown);
+            }
+            return null;
+        }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            ServerSeed = Nonce + ":" + ServerSeed + ":" + Nonce;
+            string msg = Nonce + ":" + ClientSeed + ":" + Nonce;
+            string hex = Hash.HMAC512(ServerSeed, msg);
+            int charstouse = 8;
+            if (Game == Games.Dice)
+            {
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = long.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    /*if (lucky < 1000000)
+                        return lucky / 10000;*/
+                    lucky = Math.Round(lucky / 429496.7295m);
+                    return new DiceResult { Roll = lucky / 100 };
+                }
             }
             return null;
         }

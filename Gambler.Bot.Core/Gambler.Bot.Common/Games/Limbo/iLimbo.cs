@@ -14,4 +14,10 @@ namespace Gambler.Bot.Common.Games.Limbo
         public Task<LimboBet> PlaceLimboBet(PlaceLimboBet bet);
         public LimboConfig LimboSettings { get; set; }
     }
+    public class LimboResult : IGameResult
+    {
+        public decimal Result { get; set; }
+
+        public Games Game { get => Games.Limbo; }
+    }
 }

@@ -540,11 +540,13 @@ namespace Gambler.Bot.Core.Sites
         }
         protected virtual async Task<bool> _Register(string Username, string Password) { return false; }
 
-        public decimal GetLucky(string ServerSeed, string ClientSeed, int Nonce)
+        public IGameResult GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
-            return _GetLucky(ServerSeed, ClientSeed, Nonce);
+            return _GetLucky(ServerSeed, ClientSeed, Nonce, Game);
         }
-        protected virtual decimal _GetLucky(string ServerSeed, string ClientSeed, int Nonce)
+        protected abstract IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game);
+
+        protected static decimal defaultRNG(string ServerSeed, string ClientSeed, int Nonce, Games Game)
         {
             HMACSHA512 betgenerator = new HMACSHA512();
 
@@ -693,10 +695,14 @@ namespace Gambler.Bot.Core.Sites
         protected void callBetFinished(Bet NewBet)
         {
             NewBet.Site = this.SiteName;
+            NewBet.IsWin = NewBet.GetWin(this.SiteDetails.GameSettings[NewBet.Game.ToString()]);
             if (NewBet is DiceBet dicebet && this is iDice site)
             {
-                dicebet.IsWin = dicebet.GetWin(site.DiceSettings.MaxRoll);
                 dicebet.CalculateWinnableType(site.DiceSettings.MaxRoll);                
+            }
+            if (NewBet is TwistBet twistbet && this is iTwist tsite)
+            {
+                twistbet.CalculateWinnableType(tsite.TwistSettings.MaxRoll);
             }
             if (BetFinished != null)
             {

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gambler.Bot.Core.Tests.CryptoGamesT
 {
-    public class CryptoGamesDiceTests:DiceTests, IClassFixture<CryptoGames>
+    public class CryptoGamesDiceTests:DiceTests, IClassFixture<CryptoGamesFixture>
     {
         public CryptoGamesDiceTests(CryptoGamesFixture site):base(site.site)
         {

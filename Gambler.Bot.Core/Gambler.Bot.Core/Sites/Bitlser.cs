@@ -21,6 +21,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using static Gambler.Bot.Core.Sites.Bitvest;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -549,37 +550,48 @@ devise:btc*/
 
 
 
-        public static decimal sGetLucky(string server, string client, int nonce)
+        public static IGameResult sGetLucky(string server, string client, int nonce, Games game)
         {
-            SHA1 betgenerator = SHA1.Create();
-            string Seed = server + "-" + client + "-" + nonce;
-            byte[] serverb = new byte[Seed.Length];
-
-            for (int i = 0; i < Seed.Length; i++)
+           string hex = Hash.HMAC512($"{client},{nonce}",server);
+            if (game == Games.Dice || game == Games.Twist)
             {
-                serverb[i] = Convert.ToByte(Seed[i]);
+                int charstouse = 5;
+                int offset = 0;
+                decimal Lucky = 0;
+                do
+                {
+                    string s = hex.ToString().Substring(offset, charstouse);
+                    Lucky = long.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    offset += charstouse;
+                } while (Lucky > 999999);
+                if (game == Games.Dice)
+                {
+                    Lucky = (Lucky % 10000.0m) / 100.0m;
+
+                    return new DiceResult { Roll = Lucky };
+                }
+                else if (game == Games.Twist)
+                {
+                    Lucky=Lucky % 100;
+                    return new TwistResult { Roll = Lucky };
+                }
             }
-            decimal Lucky = 0;
-            do
+            else if(game == Games.Limbo)
             {
-                serverb = betgenerator.ComputeHash(serverb.ToArray());
-                StringBuilder hex = new StringBuilder(serverb.Length * 2);
-                foreach (byte b in serverb)
-                    hex.AppendFormat("{0:x2}", b);
+                string part = hex.Substring( 0, 52 / 4);
+                decimal number = long.Parse(part, System.Globalization.NumberStyles.HexNumber) / (decimal)Math.Pow(2, 52);
 
-                string s = hex.ToString().Substring(0, 8);
-                Lucky = long.Parse(s, System.Globalization.NumberStyles.HexNumber);
-            } while (Lucky > 4294960000);
-            Lucky = (Lucky % 10000.0m) / 100.0m;
-            if (Lucky < 0)
-                return -Lucky;
-            return Lucky;
+                decimal multiplier = Math.Floor(98 / (1 - number)) / 100;
+
+                return new LimboResult{ Result= Math.Max(1, Math.Min(multiplier, 1000000))};
+            }
+            return null;
         }
 
-        protected override decimal _GetLucky( string server, string client, int nonce)
+        protected override IGameResult _GetLucky( string server, string client, int nonce, Games game)
         {
 
-            return sGetLucky( server, client, nonce);
+            return sGetLucky( server, client, nonce, game);
         }
 
 
@@ -771,7 +783,7 @@ devise:btc*/
                         Stats.Profit += (decimal)tmp.Profit;
                         Stats.Wagered += (decimal)tmp.TotalAmount;
                         tmp.DateValue = DateTime.Now;
-                        tmp.IsWin = tmp.GetWin(TwistSettings.MaxRoll);
+                        tmp.IsWin = tmp.GetWin(TwistSettings);
 
                         //set win
                         if (tmp.IsWin)
@@ -890,7 +902,7 @@ devise:btc*/
                         Stats.Profit += (decimal)tmp.Profit;
                         Stats.Wagered += (decimal)tmp.TotalAmount;
                         tmp.DateValue = DateTime.Now;
-                        tmp.IsWin = tmp.GetWin();
+                        tmp.IsWin = tmp.GetWin(LimboSettings);
                         
                         //set win
                         if (tmp.IsWin)

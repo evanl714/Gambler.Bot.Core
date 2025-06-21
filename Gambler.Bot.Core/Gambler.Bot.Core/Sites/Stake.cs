@@ -19,6 +19,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using static Gambler.Bot.Core.Sites.Bitsler;
 using static Gambler.Bot.Core.Sites.Bitvest;
+using static Gambler.Bot.Core.Sites.PrimeDice;
 
 namespace Gambler.Bot.Core.Sites
 {
@@ -43,13 +44,13 @@ namespace Gambler.Bot.Core.Sites
             //this.MaxRoll = 100m;
             this.SiteAbbreviation = "ST";
             this.SiteName = "Stake";
-            this.SiteURL = "https://stake.com/?c=dicebot";
+            this.SiteURL = "https://stake.com/?c=sdicebot";
             this.Mirrors = new List<string>
             {
                 "https://stake.com", "https://stake.bet", "https://stake.games", "https://staketr.com", "https://staketr2.com", "https://staketr3.com", "https://staketr4.com", "https://staketr5.com", "https://stake.bz", "https://stake.jp",
                 "https://stake.ac", "https://stake.icu", "https://stake.us", "https://stake.kim"
             };
-            AffiliateCode = "?c=dicebot";
+            AffiliateCode = "?c=sdicebot";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
             this.AutoInvest = false;
@@ -323,7 +324,7 @@ namespace Gambler.Bot.Core.Sites
                             if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                             {*/
                     DiceBet tmpbet = tmp.ToBet(DiceSettings.MaxRoll);
-                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
+                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings);
                     this.Stats.Bets++;
                     ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0;
@@ -479,7 +480,7 @@ namespace Gambler.Bot.Core.Sites
                         if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
                     LimboBet tmpbet = tmp.ToBet(LimboSettings.Edge);
-                    tmpbet.IsWin = tmpbet.GetWin();
+                    tmpbet.IsWin = tmpbet.GetWin(LimboSettings);
                     this.Stats.Bets++;
                     ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0;
@@ -557,6 +558,78 @@ namespace Gambler.Bot.Core.Sites
                 _logger?.LogError(ex.ToString());
             }
             return false;
+        }
+
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            try
+            {
+                string clientseed = GenerateNewClientSeed();
+                GraphqlRequestPayload payload = new GraphqlRequestPayload
+                {
+                    operationName = "DiceBotRotateSeed",
+                    query = "mutation DiceBotRotateSeed ($seed: String!){rotateServerSeed{ seed seedHash nonce } changeClientSeed(seed: $seed){seed}}",
+                    variables = new
+                    {
+                        seed = clientseed
+                    }
+                };
+                var response = await Client.PostAsync(URLInUse + URL, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var responsestring = await response.Content.ReadAsStringAsync();
+                Payload ResponsePayload = System.Text.Json.JsonSerializer.Deserialize<Payload>(responsestring);
+                if (ResponsePayload.errors != null && ResponsePayload.errors.Length > 0)
+                {
+                    callError("An error occured while trying to reset your seet: ", false, ErrorType.ResetSeed);
+                    _logger.LogError(string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+
+                    callResetSeedFinished(false, string.Join(Environment.NewLine, ResponsePayload.errors.Select(x => x.ToString())));
+                    return null;
+                }
+                else
+                {
+                    callResetSeedFinished(true, ResponsePayload.data.rotateServerSeed.seedHash);
+                    return new SeedDetails(ResponsePayload.data.changeClientSeed.seed, ResponsePayload.data.rotateServerSeed.seedHash);
+
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                callError("An error occured while trying to bank your funds.", false, ErrorType.ResetSeed);
+                _logger?.LogError(ex.ToString());
+            }
+            return null;
+        }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            string msg = $"{ClientSeed}:{Nonce}:0";
+            string hex = Hash.HMAC256( msg, ServerSeed).ToLowerInvariant();
+            int charstouse = 2;
+            decimal number = 0;
+            for (int i = 0; i < 4; i++)
+            {
+
+                string s = hex.ToString().Substring(i * charstouse, charstouse);
+                decimal part = ((decimal)int.Parse(s, System.Globalization.NumberStyles.HexNumber)) / (decimal)(Math.Pow(256, i + 1));
+                number += part;
+                
+            }
+            if (Game == Games.Dice)
+            {
+                decimal lucky = Math.Floor(number * 10001) / 100m;
+                return new DiceResult { Roll = lucky };
+
+            }
+            if (Game == Games.Limbo)
+            {
+                
+                decimal floatPoint = 1e8m / (number * 1e8m) * (100-LimboSettings.Edge);
+                decimal crashPoint = Math.Floor(floatPoint ) /100;
+                return new LimboResult { Result = Math.Max(crashPoint, 1) };
+            }
+            return null;
+
         }
 
         public class StakeVaultDepost
@@ -795,6 +868,8 @@ namespace Gambler.Bot.Core.Sites
             public StakeLimboBet limboBet { get; set; }
 
             public StakeVaultDepost createVaultDeposit { get; set; }
+            public Rotateserverseed rotateServerSeed { get; set; }
+            public Changeclientseed changeClientSeed { get; set; }
         }
 
         public class Payload

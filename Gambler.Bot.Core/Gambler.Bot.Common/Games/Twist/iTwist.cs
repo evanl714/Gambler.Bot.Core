@@ -9,4 +9,10 @@ namespace Gambler.Bot.Common.Games.Dice
         TwistConfig TwistSettings { get; set; }
 
     }
+    public class TwistResult : IGameResult
+    {
+        public decimal Roll { get; set; }
+
+        public Games Game { get => Games.Twist; }
+    }
 }

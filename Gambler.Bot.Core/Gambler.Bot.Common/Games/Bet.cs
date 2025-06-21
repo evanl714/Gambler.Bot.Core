@@ -1,6 +1,8 @@
-﻿using Gambler.Bot.Common.Helpers;
+﻿using Gambler.Bot.Common.Games.Dice;
+using Gambler.Bot.Common.Helpers;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Threading.Channels;
 
 namespace Gambler.Bot.Common.Games
 {
@@ -23,5 +25,8 @@ namespace Gambler.Bot.Common.Games
         public bool IsWin { get; set; }
         public abstract PlaceBet CreateRetry();
         public string Site { get; set; }
+
+        public abstract string ToCSV(IGameConfig gamecofig, long TotalBetsPlaced, decimal Balance);
+        public abstract bool GetWin(IGameConfig config);
     }
 }

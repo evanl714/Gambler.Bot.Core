@@ -65,6 +65,7 @@ namespace Gambler.Bot.Core.Sites
             this.DiceBetURL = "https://wolf.bet?c=Seuntjie/{0}";
             //this.Edge = 1;
             DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
+            LimboSettings = new LimboConfig { Edge = 1, MinChance = 0.000099m };
             NonceBased = true;
 
         }
@@ -372,6 +373,75 @@ namespace Gambler.Bot.Core.Sites
                 _logger.LogError(e.ToString(), -1);
             }
             return null;
+        }
+
+        protected override async Task<SeedDetails> _ResetSeed()
+        {
+            var response = await Client.GetAsync("game/seed/refresh");
+            string Resuult = await response.Content.ReadAsStringAsync();
+           
+            Resuult = await response.Content.ReadAsStringAsync();
+            try
+            {
+                Game tmp = JsonSerializer.Deserialize<Game>(Resuult);
+                if (tmp != null)
+                {
+                    SeedDetails tmpSeed = new SeedDetails();
+                   
+                    callResetSeedFinished(true, "");
+                    return tmpSeed;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+                callResetSeedFinished(false, e.ToString());
+            }
+            return null;
+        }
+
+        protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            
+            if (Game == Games.Dice)
+            {
+                string msg = ClientSeed + "_" + Nonce.ToString();
+                int charstouse = 5;
+                string hex = Hash.HMAC256(msg, ServerSeed);
+                for (int i = 0; i < hex.Length; i += charstouse)
+                {
+
+                    string s = hex.ToString().Substring(i, charstouse);
+
+                    decimal lucky = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                    if (lucky < 1000000)
+                        return new DiceResult { Roll = lucky % 10000 / 100m };
+                }
+            }
+            else if (Game == Games.Limbo)
+            {
+                string msg = $"{ClientSeed}_{Nonce}_0";
+                
+                string hex = Hash.HMAC256(ServerSeed, msg);
+                int charstouse = 2;
+                decimal number = 0;
+                for (int i = 0; i < 4; i++)
+                {
+
+                    string s = hex.ToString().Substring(i * charstouse, charstouse);
+                    decimal part = Math.Round(((decimal)int.Parse(s, System.Globalization.NumberStyles.HexNumber)) / (decimal)(Math.Pow(256, i + 1)),10);
+                    number += part;
+
+                }
+                number = number * 1e8m;
+                decimal normalizedFloat = Math.Max(number, 0.01m);
+                decimal floatPoint = 1e8m / normalizedFloat * (1 - LimboSettings.Edge / 100m);                
+                decimal clampedFloatPoint = Math.Min(floatPoint, 9900000);         
+                decimal crashPoint = Math.Floor(clampedFloatPoint * 100) / 100;               
+                return new LimboResult { Result = Math.Max(crashPoint, 1) };
+               
+            }
+                return null;
         }
 
         public class WolfBetLogin
