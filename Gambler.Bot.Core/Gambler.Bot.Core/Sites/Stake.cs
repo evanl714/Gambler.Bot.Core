@@ -324,7 +324,7 @@ namespace Gambler.Bot.Core.Sites
                             if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                             {*/
                     DiceBet tmpbet = tmp.ToBet(DiceSettings.MaxRoll);
-                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
+                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings);
                     this.Stats.Bets++;
                     ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0;
@@ -480,7 +480,7 @@ namespace Gambler.Bot.Core.Sites
                         if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
                     LimboBet tmpbet = tmp.ToBet(LimboSettings.Edge);
-                    tmpbet.IsWin = tmpbet.GetWin();
+                    tmpbet.IsWin = tmpbet.GetWin(LimboSettings);
                     this.Stats.Bets++;
                     ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0;

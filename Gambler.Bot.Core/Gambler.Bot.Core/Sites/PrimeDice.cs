@@ -289,7 +289,7 @@ namespace Gambler.Bot.Core.Sites
                         if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
                         {*/
                     DiceBet tmpbet = tmp.ToBet();
-                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings.MaxRoll);
+                    tmpbet.IsWin = tmpbet.GetWin(this.DiceSettings);
                     this.Stats.Bets++; ;
                     this.Stats.Wins += tmpbet.IsWin ? 1 : 0; ;
                     this.Stats.Losses += tmpbet.IsWin ? 0 : 1; ;

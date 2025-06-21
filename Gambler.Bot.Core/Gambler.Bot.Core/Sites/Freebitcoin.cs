@@ -296,7 +296,7 @@ namespace Gambler.Bot.Core.Sites
                             Roll = decimal.Parse(msgs[2], System.Globalization.NumberFormatInfo.InvariantInfo) / 100.0m
 
                         };
-                        tmp.IsWin = tmp.GetWin(this.DiceSettings.MaxRoll);
+                        tmp.IsWin = tmp.GetWin(this.DiceSettings);
                         Stats.Balance = decimal.Parse(msgs[3], System.Globalization.NumberFormatInfo.InvariantInfo);
                         if (msgs[1] == "w")
                             Stats.Wins++;

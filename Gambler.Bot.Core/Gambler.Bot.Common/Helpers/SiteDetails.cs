@@ -25,5 +25,6 @@ namespace Gambler.Bot.Common.Helpers
         public bool NonceBased { get; set; }
         public Dictionary<string,IGameConfig> GameSettings { get; set; }
 
+       
     }
 }

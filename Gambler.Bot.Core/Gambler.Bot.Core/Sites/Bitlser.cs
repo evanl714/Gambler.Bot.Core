@@ -783,7 +783,7 @@ devise:btc*/
                         Stats.Profit += (decimal)tmp.Profit;
                         Stats.Wagered += (decimal)tmp.TotalAmount;
                         tmp.DateValue = DateTime.Now;
-                        tmp.IsWin = tmp.GetWin(TwistSettings.MaxRoll);
+                        tmp.IsWin = tmp.GetWin(TwistSettings);
 
                         //set win
                         if (tmp.IsWin)
@@ -902,7 +902,7 @@ devise:btc*/
                         Stats.Profit += (decimal)tmp.Profit;
                         Stats.Wagered += (decimal)tmp.TotalAmount;
                         tmp.DateValue = DateTime.Now;
-                        tmp.IsWin = tmp.GetWin();
+                        tmp.IsWin = tmp.GetWin(LimboSettings);
                         
                         //set win
                         if (tmp.IsWin)
