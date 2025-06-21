@@ -240,7 +240,7 @@ namespace Gambler.Bot.Core.Tests
             Assert.Equal(high, resultingbet.High);
             bool ShouldBeWin = (((bool)high ? (decimal)resultingbet.Roll > (decimal)dicesettings.MaxRoll - (decimal)(chance) : (decimal)resultingbet.Roll < (decimal)(chance)));
             Assert.Equal(ShouldBeWin, resultingbet.IsWin);
-            Assert.Equal(ShouldBeWin, resultingbet.GetWin(dicesettings.MaxRoll));
+            Assert.Equal(ShouldBeWin, resultingbet.GetWin(dicesettings));
             if (resultingbet.IsWin)
             {
                 Assert.Equal(balance+resultingbet.Profit, _site.Stats.Balance);
