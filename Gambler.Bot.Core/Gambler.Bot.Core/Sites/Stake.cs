@@ -63,6 +63,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = true;
             this.CanVerify = true;
             this.AutoBank = true;
+            this.SupportsBrowserLogin = true;
             this.Currencies = new string[]
             {
                 "JPY",
@@ -141,22 +142,47 @@ namespace Gambler.Bot.Core.Sites
 
                 HttpClientHandler handler = new HttpClientHandler
                 {
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli,
                     UseCookies = true,
                     CookieContainer = cookies.Cookies,
                 };
                 Client = new HttpClient(handler);
                 Client.BaseAddress = new Uri(URLInUse + URL);
 
-                Client.DefaultRequestHeaders.Add("referrer", URLInUse);
-                Client.DefaultRequestHeaders.Add("accept", "*/*");
-                Client.DefaultRequestHeaders.Add("origin", URLInUse);
+                /*Client.DefaultRequestHeaders.Add("Accept", "* / *");
+                Client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+                Client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+                Client.DefaultRequestHeaders.Add("Access-Control-Allow-Origin", "*");
+                Client.DefaultRequestHeaders.Add("Origin", URLInUse);
+                Client.DefaultRequestHeaders.Add("Priority", "u=1, i");
+                Client.DefaultRequestHeaders.Add("Referrer", URLInUse);
+                Client.DefaultRequestHeaders.UserAgent.Clear();
                 Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
-                Client.DefaultRequestHeaders.Add("x-access-token", APIKey);
-                Client.DefaultRequestHeaders.Add("authorization", "Bearer " + APIKey);
+                Client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
+                Client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
+                if (cookies.UserAgent.ToLower().Contains("windows"))
+                    Client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "Windows");
                 Client.DefaultRequestHeaders.Add("sec-fetch-dest", "empty");
                 Client.DefaultRequestHeaders.Add("sec-fetch-mode", "cors");
                 Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
+
+
+                Client.DefaultRequestHeaders.Add("X-Access-Token", APIKey);
+                Client.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
+                Client.DefaultRequestHeaders.Add("X-Language", "en");*/
+                foreach (var x in cookies.Headers)
+                {
+                    try
+                    {
+                        if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie")
+                            continue;
+                        Client.DefaultRequestHeaders.Add(x.Key, x.Value);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
 
                 GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
                 {
@@ -170,7 +196,9 @@ namespace Gambler.Bot.Core.Sites
                     Encoding.UTF8,
                     "application/json");
 
-                var resp = await Client.PostAsync(URLInUse+URL, content);
+                var tmprequest = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = new Uri(URLInUse + URL), Content = content, Headers = { { "x-operation-name", "DiceBotLogin" }, { "x-operation-type", "query" } } };
+                var resp = await Client.SendAsync(tmprequest);
+
                 string respostring = await resp.Content.ReadAsStringAsync();
                 int retriees = 0;
                 while (!resp.IsSuccessStatusCode && retriees++<5)
@@ -632,9 +660,118 @@ namespace Gambler.Bot.Core.Sites
 
         }
 
-        protected override Task<bool> _Login(HttpClient client)
+        protected override async Task<bool> _BrowserLogin()
         {
-            throw new NotImplementedException();
+            try
+            { 
+            var cookies = CallBypassRequired(URLInUse + AffiliateCode, "session", false, URL);
+                string APIKey = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x => x.Name.ToLower() == "session")?.Value;
+                HttpClientHandler handler = new HttpClientHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli | DecompressionMethods.All , 
+                    UseCookies = true,
+                    CookieContainer = cookies.Cookies,
+                };
+                Client = new HttpClient(handler);
+                Client.BaseAddress = new Uri(URLInUse + URL);
+                foreach (var x in cookies.Headers)
+                {
+                    try
+                    {
+                        if (x.Key.ToLower() == "content-type" 
+                            || x.Key.ToLower() == "cookie"
+                            || x.Key.ToLower() == "x-operation-name"
+                            || x.Key.ToLower() == "x-operation-type")
+                            continue;
+                        Client.DefaultRequestHeaders.Add(x.Key, x.Value);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+                                
+                GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
+                {
+                    query =
+                        "query DiceBotLogin{user {activeServerSeed { seedHash seed nonce} activeClientSeed{seed} id balances{available{currency amount}} statistic {game bets wins losses betAmount profit currency}}}",
+                    operationName = "DiceBotLogin"
+                };
+
+                StringContent content = new StringContent(
+                    JsonSerializer.Serialize(LoginReq),
+                    Encoding.UTF8,
+                    "application/json");
+                /*x-operation-name: GetFeatureFlagDetails
+x-operation-type: query*/
+                var tmprequest = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = new Uri(URLInUse + URL), Content = content,  Headers = { { "x-operation-name", "DiceBotLogin" }, { "x-operation-type", "query" } } };
+                
+                var resp = await Client.SendAsync(tmprequest);
+                string respostring = await resp.Content.ReadAsStringAsync();
+                if (respostring.Contains("<script>"))
+                {
+                    string script = respostring.Substring(respostring.IndexOf("<script>") + "<script>".Length);
+                    script = script.Substring(0, script.IndexOf("</script>"));
+                    CallInvokeScript(script);
+                }
+                int retriees = 0;
+                while (!resp.IsSuccessStatusCode && retriees++ < 5)
+                {
+                    await Task.Delay(Random.Next(50, 150) * retriees);
+                    content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
+
+                    resp = await Client.PostAsync(URLInUse + URL, content);
+                    respostring = await resp.Content.ReadAsStringAsync();
+                
+                
+                }
+                var Resp = JsonSerializer.Deserialize<Payload>(respostring);
+                pdUser user = Resp.data.user;
+                userid = user.id;
+                if (string.IsNullOrWhiteSpace(userid))
+                    callLoginFinished(false);
+                else
+                {
+                    foreach (Statistic x in user.statistic)
+                    {
+                        if (x.currency.ToLower() == CurrentCurrency.ToLower() && x.game == StatGameName)
+                        {
+                            this.Stats.Bets = (int)x.bets;
+                            this.Stats.Wins = (int)x.wins;
+                            this.Stats.Losses = (int)x.losses;
+                            this.Stats.Profit = x.profit ?? 0;
+                            this.Stats.Wagered = x.amount ?? 0;
+
+                            break;
+                        }
+                    }
+                    foreach (Balance x in user.balances)
+                    {
+                        if (x.available.currency.ToLower() == CurrentCurrency.ToLower())
+                        {
+                            this.Stats.Balance = x.available.amount ?? 0;
+                            break;
+                        }
+                    }
+                    callStatsUpdated(Stats);
+                    callLoginFinished(true);
+                    return true;
+                }
+            }
+            catch (WebException e)
+            {
+                _logger?.LogError(e.ToString());
+                if (e.Response != null)
+                {
+                }
+                callLoginFinished(false);
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e.ToString());
+                callLoginFinished(false);
+            }
+            return false;
         }
 
         public class StakeVaultDepost

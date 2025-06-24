@@ -472,7 +472,7 @@ namespace Gambler.Bot.Core.Sites
             throw new NotImplementedException();
         }
 
-        protected override Task<bool> _Login(HttpClient client)
+        protected override Task<bool> _BrowserLogin()
         {
             throw new NotImplementedException();
         }

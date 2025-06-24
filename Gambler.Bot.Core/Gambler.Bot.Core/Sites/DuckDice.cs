@@ -70,6 +70,7 @@ namespace Gambler.Bot.Core.Sites
             //this.Edge = 1m;
             DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             NonceBased = true;
+            SupportsBrowserLogin = true;
         }
 
         void GetBalanceThread()
@@ -125,10 +126,19 @@ namespace Gambler.Bot.Core.Sites
 
                     };
                     Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse+"/api/") }; ;
-                    Client.DefaultRequestHeaders.Add("referrer", SiteURL);
-                    Client.DefaultRequestHeaders.Add("accept", "*/*");
-                    Client.DefaultRequestHeaders.Add("origin", SiteURL);
+                    Client.DefaultRequestHeaders.Add("Accept", "*/*");
+                    Client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+                    Client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+                    Client.DefaultRequestHeaders.Add("Access-Control-Allow-Origin", "*");
+                    Client.DefaultRequestHeaders.Add("Origin", URLInUse);
+                    Client.DefaultRequestHeaders.Add("Priority", "u=1, i");
+                    Client.DefaultRequestHeaders.Add("Referrer", URLInUse);
+                    Client.DefaultRequestHeaders.UserAgent.Clear();
                     Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
+                    Client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
+                    Client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
+                    if (cookies.UserAgent.ToLower().Contains("windows"))
+                        Client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "Windows");
                     Client.DefaultRequestHeaders.Add("sec-fetch-dest", "empty");
                     Client.DefaultRequestHeaders.Add("sec-fetch-mode", "cors");
                     Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
@@ -192,9 +202,103 @@ namespace Gambler.Bot.Core.Sites
             callLoginFinished(false);
             return false;
         }
-        protected override Task<bool> _Login(HttpClient client)
+        protected override async Task<bool> _BrowserLogin()
         {
-            throw new NotImplementedException();
+            
+           
+            try
+            {
+
+                
+
+                //HttpResponseMessage EmitResponse = await Client.GetAsync(URLInUse);
+                //if (!EmitResponse.IsSuccessStatusCode)
+                {
+                    var cookies = CallBypassRequired(URLInUse, "_at", false,"/api");
+                    accesstoken = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x=>x.Name=="_at")?.Value;
+                    HttpClientHandler handler = new HttpClientHandler
+                    {
+                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli | DecompressionMethods.All,
+                        UseCookies = true,
+                        CookieContainer = cookies.Cookies,
+                         AllowAutoRedirect=true,
+                         
+
+                    };
+                    Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse + "/api/") }; ;
+                    
+                    foreach (var x in cookies.Headers)
+                    {
+                        try
+                        {
+                            if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie")
+                                continue;
+                            Client.DefaultRequestHeaders.Add(x.Key, x.Value);
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    }
+                }
+
+
+                var EmitResponse = await Client.GetAsync("load/" + CurrentCurrency /*+ "?api_key=" + accesstoken*/);
+                string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
+                int retriees = 0;
+                while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
+                {
+                    await Task.Delay(Random.Next(50, 150) * retriees);
+                    EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
+                }
+
+                if (EmitResponse.IsSuccessStatusCode)
+                {
+                    Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
+                    sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
+                    sEmitResponse = await Client.GetStringAsync("randomize" + "?api_key=" + accesstoken);
+                    currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
+                    if (balance != null && _Stats != null)
+                    {
+                        if (this.SelectedGameMode == "Normal")
+                        {
+                            Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        }
+                        else
+                        {
+                            Stats.Balance = decimal.Parse(balance.user.balances.faucet, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        }
+                        Stats.Balance = decimal.Parse(balance.user.balances.main, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
+                        Stats.Bets = _Stats.bets;
+                        Stats.Wins = _Stats.wins;
+                        Stats.Losses = _Stats.bets - _Stats.wins;
+
+
+                        ispd = true;
+                        lastupdate = DateTime.Now;
+                        new Thread(new ThreadStart(GetBalanceThread)).Start();
+                        callLoginFinished(true);
+                        return true;
+                    }
+                }
+                else
+                {
+                    string response = await EmitResponse.Content.ReadAsStringAsync();
+                    callLoginFinished(false);
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                callLoginFinished(false);
+                return false;
+            }
+            callLoginFinished(false);
+            return false;
         }
 
         protected override async Task<SiteStats> _UpdateStats()

@@ -126,7 +126,10 @@ namespace Gambler.Bot.Core.Sites
                 }
             } 
         }
-              
+        /// <summary>
+        /// Indicates whether the site supports logging in via a browser
+        /// </summary>
+        public bool SupportsBrowserLogin { get; set; }
 
         /// <summary>
         /// List of currencies supported by the site
@@ -247,7 +250,7 @@ namespace Gambler.Bot.Core.Sites
         /// Interface with site to handle login.
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
-        protected abstract Task<bool> _Login(HttpClient client);
+        protected abstract Task<bool> _BrowserLogin();
 
         /// <summary>
         /// Logs the user into the site if correct details were provided
@@ -270,11 +273,11 @@ namespace Gambler.Bot.Core.Sites
         /// Logs the user into the site if correct details were provided
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
-        public  async Task<bool> LogIn(string url, HttpClient client)
+        public  async Task<bool> BrowserLogin(string url)
         {
             bool success = false;
             URLInUse = url;
-            await Task.Run(async () => { success = await _Login(client); });
+            await Task.Run(async () => { success = await _BrowserLogin(); });
             if (success)
             {
                 await UpdateStats();
@@ -708,6 +711,7 @@ namespace Gambler.Bot.Core.Sites
         public event EventHandler<GenericEventArgs> OnInvestFinished;
         public event EventHandler<GameMessageEventArgs> OnGameMessage;
         public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
+        public event EventHandler<GenericEventArgs> OnInvokeScript;
 
         protected void callStatsUpdated(SiteStats Stats)
         {
@@ -817,12 +821,20 @@ namespace Gambler.Bot.Core.Sites
             ForceUpdateStats = true;
             OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
-        protected BrowserConfig CallBypassRequired(string URL,string RequiredCookie)
+        protected BrowserConfig CallBypassRequired(string URL, string RequiredCookie, bool withTimeout = true, string headersroute="api")
         {
-            var args = new BypassRequiredArgs { URL = URL, RequiredCookie=RequiredCookie };
+            var args = new BypassRequiredArgs { URL = URL, RequiredCookie=RequiredCookie, HasTimeout=withTimeout, HeadersPath=headersroute };
             OnBrowserBypassRequired?.Invoke(this, args);
             
             return args.Config;
+        }
+
+        protected void CallInvokeScript(string script)
+        {
+            var args = new GenericEventArgs { Message = script };
+            OnInvokeScript?.Invoke(this, args);
+
+            //return args.Config;
         }
 
         public IGameConfig GetGameSettings(Games currentGame)
