@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -124,8 +125,14 @@ namespace Gambler.Bot.Core.Sites
                     UpdateStats();
                 }
             } 
-        }
-              
+        }/// <summary>
+         /// Indicates whether the site supports logging in with login details
+         /// </summary>
+        public bool SupportsNormalLogin { get; set; } = true;
+        /// <summary>
+        /// Indicates whether the site supports logging in via a browser
+        /// </summary>
+        public bool SupportsBrowserLogin { get; set; } = false;
 
         /// <summary>
         /// List of currencies supported by the site
@@ -243,6 +250,12 @@ namespace Gambler.Bot.Core.Sites
         protected abstract Task<bool> _Login(LoginParamValue[] LoginParams);
 
         /// <summary>
+        /// Interface with site to handle login.
+        /// </summary>
+        /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
+        protected abstract Task<bool> _BrowserLogin();
+
+        /// <summary>
         /// Logs the user into the site if correct details were provided
         /// </summary>
         /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
@@ -259,7 +272,24 @@ namespace Gambler.Bot.Core.Sites
             
         }
 
-       
+        // <summary>
+        /// Logs the user into the site if correct details were provided
+        /// </summary>
+        /// <param name="LoginParams">The login details required for logging in. Typically username, passwordm, 2fa in that order, or API Key</param>
+        public  async Task<bool> BrowserLogin(string url)
+        {
+            bool success = false;
+            URLInUse = url;
+            await Task.Run(async () => { success = await _BrowserLogin(); });
+            if (success)
+            {
+                await UpdateStats();
+            }
+            return success;
+
+        }
+
+
         /// <summary>
         /// Interface with site to disconnect and dispose of applicable objects
         /// </summary>
@@ -684,6 +714,7 @@ namespace Gambler.Bot.Core.Sites
         public event EventHandler<GenericEventArgs> OnInvestFinished;
         public event EventHandler<GameMessageEventArgs> OnGameMessage;
         public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
+        public event EventHandler<GenericEventArgs> OnCFCaptchaBypass;
 
         protected void callStatsUpdated(SiteStats Stats)
         {
@@ -793,12 +824,20 @@ namespace Gambler.Bot.Core.Sites
             ForceUpdateStats = true;
             OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
-        protected BrowserConfig CallBypassRequired(string URL,string RequiredCookie)
+        protected BrowserConfig CallBypassRequired(string URL, string[] RequiredCookies, bool withTimeout = true, string headersroute="api")
         {
-            var args = new BypassRequiredArgs { URL = URL, RequiredCookie=RequiredCookie };
+            var args = new BypassRequiredArgs { URL = URL, RequiredCookies=RequiredCookies, HasTimeout=withTimeout, HeadersPath=headersroute };
             OnBrowserBypassRequired?.Invoke(this, args);
             
             return args.Config;
+        }
+
+        protected void CallCFCaptchaBypass(string script)
+        {
+            var args = new GenericEventArgs { Message = script };
+            OnCFCaptchaBypass?.Invoke(this, args);
+
+            //return args.Config;
         }
 
         public IGameConfig GetGameSettings(Games currentGame)

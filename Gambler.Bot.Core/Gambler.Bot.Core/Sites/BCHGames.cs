@@ -8,6 +8,7 @@ using Gambler.Bot.Core.Sites.Classes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -51,6 +52,8 @@ namespace Gambler.Bot.Core.Sites
             NonceBased = true;
             this.Mirrors.Add("https://bch.games");
             AffiliateCode = "/play/Seuntjie";
+            SupportsBrowserLogin = true;
+            SupportsNormalLogin = false;
         }
 
         public Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)
@@ -89,6 +92,11 @@ namespace Gambler.Bot.Core.Sites
         }
 
         protected override IGameResult _GetLucky(string ServerSeed, string ClientSeed, int Nonce, Games Game)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Task<bool> _BrowserLogin()
         {
             throw new NotImplementedException();
         }

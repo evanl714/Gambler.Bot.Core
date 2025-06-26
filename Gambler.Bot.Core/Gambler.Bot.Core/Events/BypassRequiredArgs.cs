@@ -7,6 +7,8 @@ namespace Gambler.Bot.Core.Events
     {
         public string URL { get; set; }
         public BrowserConfig Config { get; set; }
-        public string RequiredCookie { get; set; }
+        public string[] RequiredCookies { get; set; }
+        public bool HasTimeout { get; set; }
+        public string HeadersPath { get; set; }
     }
 }

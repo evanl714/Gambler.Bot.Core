@@ -444,6 +444,11 @@ namespace Gambler.Bot.Core.Sites
                 return null;
         }
 
+        protected override Task<bool> _BrowserLogin()
+        {
+            throw new NotImplementedException();
+        }
+
         public class WolfBetLogin
         {
             public string access_token { get; set; }

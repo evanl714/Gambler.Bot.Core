@@ -55,6 +55,8 @@ namespace Gambler.Bot.Core.Sites
             this.DiceBetURL = "https://freebitco.in/?r=2310118&bet={0}";
             //this.Edge = 5m;
             DiceSettings = new DiceConfig() { Edge = 5, MaxRoll = 100m };
+            SupportsNormalLogin = false;
+            SupportsBrowserLogin = true;
         }
 
 
@@ -106,7 +108,7 @@ namespace Gambler.Bot.Core.Sites
                         s1 = await resp.Content.ReadAsStringAsync();
                         //cflevel = 0;
                         
-                        var thing = CallBypassRequired(this.SiteURL, "__cf_bm");
+                        var thing = CallBypassRequired(this.SiteURL, ["__cf_bm"]);
 
                 /*
                     }
@@ -225,7 +227,7 @@ namespace Gambler.Bot.Core.Sites
         {
             string seed = "";
             string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZqwertyuiopasdfghjklzxcvbnm1234567890";
-            while (clientseed.Length < 16)
+            while (seed.Length < 16)
             {
                 seed += chars[Random.Next(0, chars.Length)];
             }
@@ -293,7 +295,8 @@ namespace Gambler.Bot.Core.Sites
                             Nonce = long.Parse(msgs[12], System.Globalization.NumberFormatInfo.InvariantInfo),
                             ServerHash = msgs[10],
                             ServerSeed = msgs[9],
-                            Roll = decimal.Parse(msgs[2], System.Globalization.NumberFormatInfo.InvariantInfo) / 100.0m
+                            Roll = decimal.Parse(msgs[2], System.Globalization.NumberFormatInfo.InvariantInfo) / 100.0m,
+                            Currency = CurrentCurrency
 
                         };
                         tmp.IsWin = tmp.GetWin(this.DiceSettings);
@@ -358,6 +361,83 @@ namespace Gambler.Bot.Core.Sites
                 }
             }
             return null;
+        }
+
+        protected override async Task<bool> _BrowserLogin()
+        {
+            
+            try
+            {
+
+                var cookies = CallBypassRequired(URLInUse + AffiliateCode, ["cf_clearance","password"], false, "/cgi-bin/");
+
+                HttpClientHandler handler = new HttpClientHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli,
+                    UseCookies = true,
+                    CookieContainer = cookies.Cookies,
+                };
+                Client = new HttpClient(handler);
+                Client.BaseAddress = new Uri(URLInUse);
+
+
+                foreach (var x in cookies.Headers)
+                {
+                    try
+                    {
+                        if (x.Key.ToLower() == "content-type"
+                            || x.Key.ToLower() == "cookie"
+                            || x.Key.ToLower() == "authorization"
+                            || x.Key.ToLower() == "x-access-token")
+                            continue;
+                        Client.DefaultRequestHeaders.Add(x.Key, x.Value);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+
+                var response = await Client.GetAsync($"{URLInUse}/cgi-bin/api.pl?op=get_user_stats");
+                string responsestring = await response.Content.ReadAsStringAsync();
+                int retriees = 0;
+                while (!response.IsSuccessStatusCode && retriees++ < 5)
+                {
+                    CallCFCaptchaBypass(responsestring);
+                    await Task.Delay(Random.Next(50, 150) * retriees);
+                    response = await Client.GetAsync($"{URLInUse}/cgi-bin/api.pl?op=get_user_stats");
+                    responsestring = await response.Content.ReadAsStringAsync();
+                }
+                FreebtcStats stats = JsonSerializer.Deserialize<FreebtcStats>(responsestring);
+                if (stats != null)
+                {
+                    Stats.Balance = stats.balance / 100000000m;
+                    Stats.Bets = (int)stats.rolls_played;
+                    Stats.Wins = Stats.Losses = 0;
+                    Stats.Profit = stats.dice_profit / 100000000m;
+                    Stats.Wagered = stats.wagered / 100000000m;
+
+                    lastupdate = DateTime.Now;
+                    ispd = true;
+                    Thread t = new Thread(GetBalanceThread);
+                    t.Start();
+                    callLoginFinished(true);
+                    return true;
+                }
+                callLoginFinished(false);
+                return false;
+
+                
+                callLoginFinished(false);
+                return false;
+                
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e.ToString());
+            }
+            callLoginFinished(false);
+            return false;
         }
 
         public class FreebtcStats
