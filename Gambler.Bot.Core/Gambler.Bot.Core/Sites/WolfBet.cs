@@ -43,9 +43,9 @@ namespace Gambler.Bot.Core.Sites
             StaticLoginParams = new LoginParameter[] { new LoginParameter("API Key", false, true, false, false) };
             //this.MaxRoll = 99.99m;
             this.SiteAbbreviation = "WB";
-            this.SiteName = "Wolf.Bet";
-            this.SiteURL = "https://wolf.bet?c=Seuntjie";
-            this.Mirrors.Add("https://wolf.bet");
+            this.SiteName = "Wolfbet";
+            this.SiteURL = "https://Wolfbet.com?c=Seuntjie";
+            this.Mirrors.Add("https://Wolfbet.com");
             AffiliateCode = "?c=Seuntjie";
             this.Stats = new SiteStats();
             this.TipUsingName = true;
@@ -62,7 +62,7 @@ namespace Gambler.Bot.Core.Sites
             "matic","optim","pepe","shib","sushi","trx","uni","usdt","xlm","xrp"};
             SupportedGames = new Games[] { Games.Dice, Games.Limbo };
             this.CurrentCurrency = "btc";
-            this.DiceBetURL = "https://wolf.bet?c=Seuntjie/{0}";
+            this.DiceBetURL = "https://Wolfbet.com?c=Seuntjie/{0}";
             //this.Edge = 1;
             DiceSettings = new DiceConfig() { Edge = 1, MaxRoll = 99.99m };
             LimboSettings = new LimboConfig { Edge = 1, MinChance = 0.000099m };
