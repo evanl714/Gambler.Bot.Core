@@ -138,7 +138,7 @@ namespace Gambler.Bot.Core.Sites
                         APIKey = x.Value;
                 }
                 //CookieContainer cookies = new CookieContainer();
-                var cookies = CallBypassRequired(URLInUse+AffiliateCode, "__cf_bm");
+                var cookies = CallBypassRequired(URLInUse+AffiliateCode, ["__cf_bm"]);
 
                 HttpClientHandler handler = new HttpClientHandler
                 {
@@ -149,32 +149,15 @@ namespace Gambler.Bot.Core.Sites
                 Client = new HttpClient(handler);
                 Client.BaseAddress = new Uri(URLInUse + URL);
 
-                /*Client.DefaultRequestHeaders.Add("Accept", "* / *");
-                Client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-                Client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
-                Client.DefaultRequestHeaders.Add("Access-Control-Allow-Origin", "*");
-                Client.DefaultRequestHeaders.Add("Origin", URLInUse);
-                Client.DefaultRequestHeaders.Add("Priority", "u=1, i");
-                Client.DefaultRequestHeaders.Add("Referrer", URLInUse);
-                Client.DefaultRequestHeaders.UserAgent.Clear();
-                Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
-                Client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
-                Client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
-                if (cookies.UserAgent.ToLower().Contains("windows"))
-                    Client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "Windows");
-                Client.DefaultRequestHeaders.Add("sec-fetch-dest", "empty");
-                Client.DefaultRequestHeaders.Add("sec-fetch-mode", "cors");
-                Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
-
-
-                Client.DefaultRequestHeaders.Add("X-Access-Token", APIKey);
-                Client.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
-                Client.DefaultRequestHeaders.Add("X-Language", "en");*/
+                
                 foreach (var x in cookies.Headers)
                 {
                     try
                     {
-                        if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie")
+                        if (x.Key.ToLower() == "content-type" 
+                            || x.Key.ToLower() == "cookie"
+                            || x.Key.ToLower() == "authorization"
+                            || x.Key.ToLower() == "x-access-token")
                             continue;
                         Client.DefaultRequestHeaders.Add(x.Key, x.Value);
                     }
@@ -183,7 +166,8 @@ namespace Gambler.Bot.Core.Sites
 
                     }
                 }
-
+                Client.DefaultRequestHeaders.Add("X-Access-Token", APIKey);
+                Client.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
                 GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
                 {
                     query =
@@ -664,7 +648,7 @@ namespace Gambler.Bot.Core.Sites
         {
             try
             { 
-            var cookies = CallBypassRequired(URLInUse + AffiliateCode, "session", false, URL);
+            var cookies = CallBypassRequired(URLInUse + AffiliateCode, ["session", "__cf_bm"], false, URL);
                 string APIKey = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x => x.Name.ToLower() == "session")?.Value;
                 HttpClientHandler handler = new HttpClientHandler
                 {
@@ -707,16 +691,11 @@ x-operation-type: query*/
                 var tmprequest = new HttpRequestMessage { Method = HttpMethod.Post, RequestUri = new Uri(URLInUse + URL), Content = content,  Headers = { { "x-operation-name", "DiceBotLogin" }, { "x-operation-type", "query" } } };
                 
                 var resp = await Client.SendAsync(tmprequest);
-                string respostring = await resp.Content.ReadAsStringAsync();
-                if (respostring.Contains("<script>"))
-                {
-                    string script = respostring.Substring(respostring.IndexOf("<script>") + "<script>".Length);
-                    script = script.Substring(0, script.IndexOf("</script>"));
-                    CallInvokeScript(script);
-                }
+                string respostring = await resp.Content.ReadAsStringAsync();               
                 int retriees = 0;
                 while (!resp.IsSuccessStatusCode && retriees++ < 5)
                 {
+                    CallCFCaptchaBypass(respostring);
                     await Task.Delay(Random.Next(50, 150) * retriees);
                     content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
 

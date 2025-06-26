@@ -52,6 +52,8 @@ namespace Gambler.Bot.Core.Sites
             NonceBased = true;
             this.Mirrors.Add("https://bch.games");
             AffiliateCode = "/play/Seuntjie";
+            SupportsBrowserLogin = true;
+            SupportsNormalLogin = false;
         }
 
         public Task<DiceBet> PlaceDiceBet(PlaceDiceBet BetDetails)

@@ -97,7 +97,7 @@ namespace Gambler.Bot.Core.Sites
                     APIKey = x.Value;
 
             }
-            var bypassResult = CallBypassRequired(SiteURL, "cf_clearance");
+            var bypassResult = CallBypassRequired(SiteURL, ["cf_clearance"]);
             Cookies = bypassResult.Cookies;
             ClientHandlr = new HttpClientHandler { UseCookies = true, CookieContainer = Cookies, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip }; ;
             Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri(URLInUse) };

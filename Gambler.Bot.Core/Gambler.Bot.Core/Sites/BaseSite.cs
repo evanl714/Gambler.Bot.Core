@@ -125,11 +125,14 @@ namespace Gambler.Bot.Core.Sites
                     UpdateStats();
                 }
             } 
-        }
+        }/// <summary>
+         /// Indicates whether the site supports logging in with login details
+         /// </summary>
+        public bool SupportsNormalLogin { get; set; } = true;
         /// <summary>
         /// Indicates whether the site supports logging in via a browser
         /// </summary>
-        public bool SupportsBrowserLogin { get; set; }
+        public bool SupportsBrowserLogin { get; set; } = false;
 
         /// <summary>
         /// List of currencies supported by the site
@@ -711,7 +714,7 @@ namespace Gambler.Bot.Core.Sites
         public event EventHandler<GenericEventArgs> OnInvestFinished;
         public event EventHandler<GameMessageEventArgs> OnGameMessage;
         public event EventHandler<BypassRequiredArgs> OnBrowserBypassRequired;
-        public event EventHandler<GenericEventArgs> OnInvokeScript;
+        public event EventHandler<GenericEventArgs> OnCFCaptchaBypass;
 
         protected void callStatsUpdated(SiteStats Stats)
         {
@@ -821,18 +824,18 @@ namespace Gambler.Bot.Core.Sites
             ForceUpdateStats = true;
             OnInvestFinished?.Invoke(this, new GenericEventArgs { Success = Success, Message = Message });
         }
-        protected BrowserConfig CallBypassRequired(string URL, string RequiredCookie, bool withTimeout = true, string headersroute="api")
+        protected BrowserConfig CallBypassRequired(string URL, string[] RequiredCookies, bool withTimeout = true, string headersroute="api")
         {
-            var args = new BypassRequiredArgs { URL = URL, RequiredCookie=RequiredCookie, HasTimeout=withTimeout, HeadersPath=headersroute };
+            var args = new BypassRequiredArgs { URL = URL, RequiredCookies=RequiredCookies, HasTimeout=withTimeout, HeadersPath=headersroute };
             OnBrowserBypassRequired?.Invoke(this, args);
             
             return args.Config;
         }
 
-        protected void CallInvokeScript(string script)
+        protected void CallCFCaptchaBypass(string script)
         {
             var args = new GenericEventArgs { Message = script };
-            OnInvokeScript?.Invoke(this, args);
+            OnCFCaptchaBypass?.Invoke(this, args);
 
             //return args.Config;
         }

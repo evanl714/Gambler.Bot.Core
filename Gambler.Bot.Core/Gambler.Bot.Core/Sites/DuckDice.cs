@@ -101,66 +101,57 @@ namespace Gambler.Bot.Core.Sites
         }
 
         protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
-        {
-            ClientHandlr = new HttpClientHandler { UseCookies = true, AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip };
-            ClientHandlr.CookieContainer = new CookieContainer();
-            Client = new HttpClient(ClientHandlr) { BaseAddress = new Uri($"{URLInUse}/api/") };
-            Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
-            Client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("deflate"));
-            Client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0");
+        {            
             try
             {
-
-                accesstoken = LoginParams[0].Value;
-
-                HttpResponseMessage EmitResponse = await Client.GetAsync(URLInUse);
-                //if (!EmitResponse.IsSuccessStatusCode)
+                accesstoken = LoginParams[0].Value;        
+                var cookies = CallBypassRequired(URLInUse+AffiliateCode, ["__cf_bm"]);
+                var authcookie = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x => x.Name == "_at");
+                if (authcookie!=null)
                 {
-                    var cookies = CallBypassRequired(URLInUse, "__cf_bm");
+                    authcookie.Expired = true;
+                }    
+                HttpClientHandler handler = new HttpClientHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = true,
+                    CookieContainer = cookies.Cookies,
 
-                    HttpClientHandler handler = new HttpClientHandler
+                };
+                Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse+"/api/") }; ;
+                foreach (var x in cookies.Headers)
+                {
+                    try
                     {
-                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                        UseCookies = true,
-                        CookieContainer = cookies.Cookies,
+                        if (x.Key.ToLower() == "content-type" 
+                            || x.Key.ToLower() == "cookie"
+                            || x.Key.ToLower() == "authorization"
+                            )
+                            continue;
+                        Client.DefaultRequestHeaders.Add(x.Key, x.Value);
+                    }
+                    catch (Exception ex)
+                    {
 
-                    };
-                    Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse+"/api/") }; ;
-                    Client.DefaultRequestHeaders.Add("Accept", "*/*");
-                    Client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-                    Client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
-                    Client.DefaultRequestHeaders.Add("Access-Control-Allow-Origin", "*");
-                    Client.DefaultRequestHeaders.Add("Origin", URLInUse);
-                    Client.DefaultRequestHeaders.Add("Priority", "u=1, i");
-                    Client.DefaultRequestHeaders.Add("Referrer", URLInUse);
-                    Client.DefaultRequestHeaders.UserAgent.Clear();
-                    Client.DefaultRequestHeaders.UserAgent.ParseAdd(cookies.UserAgent);
-                    Client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
-                    Client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
-                    if (cookies.UserAgent.ToLower().Contains("windows"))
-                        Client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "Windows");
-                    Client.DefaultRequestHeaders.Add("sec-fetch-dest", "empty");
-                    Client.DefaultRequestHeaders.Add("sec-fetch-mode", "cors");
-                    Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
+                    }
                 }
-               
-
-                EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                var EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
                 string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 int retriees = 0;
                 while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
                 {
+                    CallCFCaptchaBypass(sEmitResponse);
                     await Task.Delay(Random.Next(50, 150) * retriees);
-                    EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
                     sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 }
                 
                 if (EmitResponse.IsSuccessStatusCode)
                 {
                     Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
-                    sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
                     QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
-                    sEmitResponse = await Client.GetStringAsync("randomize" + "?api_key=" + accesstoken);
+                    sEmitResponse = await Client.GetStringAsync("randomize" + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
                     currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
                     if (balance != null && _Stats != null)
                     {
@@ -202,63 +193,55 @@ namespace Gambler.Bot.Core.Sites
             callLoginFinished(false);
             return false;
         }
+
         protected override async Task<bool> _BrowserLogin()
         {
-            
-           
             try
             {
-
-                
-
-                //HttpResponseMessage EmitResponse = await Client.GetAsync(URLInUse);
-                //if (!EmitResponse.IsSuccessStatusCode)
+                var cookies = CallBypassRequired(URLInUse + AffiliateCode, ["_at", "__cf_bm"], false,"/api");
+                //accesstoken = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x=>x.Name=="_at")?.Value;
+                HttpClientHandler handler = new HttpClientHandler
                 {
-                    var cookies = CallBypassRequired(URLInUse, "_at", false,"/api");
-                    accesstoken = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x=>x.Name=="_at")?.Value;
-                    HttpClientHandler handler = new HttpClientHandler
-                    {
-                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli | DecompressionMethods.All,
-                        UseCookies = true,
-                        CookieContainer = cookies.Cookies,
-                         AllowAutoRedirect=true,
-                         
-
-                    };
-                    Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse + "/api/") }; ;
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli | DecompressionMethods.All,
+                    UseCookies = true,
+                    CookieContainer = cookies.Cookies,
+                    AllowAutoRedirect=true,
+                };
+                Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse + "/api/") }; ;
                     
-                    foreach (var x in cookies.Headers)
+                foreach (var x in cookies.Headers)
+                {
+                    try
                     {
-                        try
-                        {
-                            if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie")
-                                continue;
-                            Client.DefaultRequestHeaders.Add(x.Key, x.Value);
-                        }
-                        catch (Exception ex)
-                        {
+                        if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie")
+                            continue;
+                        Client.DefaultRequestHeaders.Add(x.Key, x.Value);
+                    }
+                    catch (Exception ex)
+                    {
 
-                        }
                     }
                 }
+                
 
 
-                var EmitResponse = await Client.GetAsync("load/" + CurrentCurrency /*+ "?api_key=" + accesstoken*/);
+                var EmitResponse = await Client.GetAsync("load/" + CurrentCurrency /*+ (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken)*/);
                 string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 int retriees = 0;
                 while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
                 {
+                    CallCFCaptchaBypass(sEmitResponse);
                     await Task.Delay(Random.Next(50, 150) * retriees);
-                    EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    EmitResponse = await Client.GetAsync("load/" + CurrentCurrency );
                     sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 }
 
                 if (EmitResponse.IsSuccessStatusCode)
                 {
                     Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
-                    sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
+                    sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency );
                     QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
-                    sEmitResponse = await Client.GetStringAsync("randomize" + "?api_key=" + accesstoken);
+                    sEmitResponse = await Client.GetStringAsync("randomize" );
                     currentseed = JsonSerializer.Deserialize<QuackSeed>(sEmitResponse).current;
                     if (balance != null && _Stats != null)
                     {
@@ -306,7 +289,7 @@ namespace Gambler.Bot.Core.Sites
             try
             {
 
-                string sEmitResponse = await Client.GetStringAsync("load/" + CurrentCurrency + "?api_key=" + accesstoken);
+                string sEmitResponse = await Client.GetStringAsync("load/" + CurrentCurrency +  (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
                 Quackbalance balance = JsonSerializer.Deserialize<Quackbalance>(sEmitResponse);
                 if (this.SelectedGameMode == "Normal")
                 {
@@ -318,7 +301,7 @@ namespace Gambler.Bot.Core.Sites
                     Stats.Balance = decimal.Parse(balance.user.balances.faucet, System.Globalization.NumberFormatInfo.InvariantInfo);
 
                 }
-                sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + "?api_key=" + accesstoken);
+                sEmitResponse = await Client.GetStringAsync("stat/" + CurrentCurrency + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
                 QuackStatsDetails _Stats = JsonSerializer.Deserialize<QuackStatsDetails>(sEmitResponse);
                 Stats.Profit = decimal.Parse(_Stats.profit, System.Globalization.NumberFormatInfo.InvariantInfo);
                 Stats.Wagered = decimal.Parse(_Stats.volume, System.Globalization.NumberFormatInfo.InvariantInfo);
@@ -343,7 +326,7 @@ namespace Gambler.Bot.Core.Sites
             StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"amount\":\"{0:0.00000000}\",\"symbol\":\"{1}\",\"chance\":{2:0.00},\"isHigh\":{3},\"faucet\":{4}}}", amount, CurrentCurrency, chance, High ? "true" : "false", (SelectedGameMode=="Faucet").ToString().ToLower()), Encoding.UTF8, "application/json");
             try
             {
-                var response = await Client.PostAsync("play" + "?api_key=" + accesstoken, Content);
+                var response = await Client.PostAsync("play" + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken), Content);
                 string sEmitResponse = await response.Content.ReadAsStringAsync();
                 QuackBet newbet = JsonSerializer.Deserialize<QuackBet>(sEmitResponse);
                 if (newbet.error != null || newbet.errors!=null)
@@ -410,7 +393,7 @@ namespace Gambler.Bot.Core.Sites
             {
                 var seed = GenerateNewClientSeed();
                 StringContent Content = new StringContent(string.Format(System.Globalization.NumberFormatInfo.InvariantInfo, "{{\"clientSeed\":\"{0}\"}}", seed), Encoding.UTF8, "application/json");
-                var response = await Client.PostAsync("randomize" + "?api_key=" + accesstoken, Content);
+                var response = await Client.PostAsync("randomize" + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken), Content);
                     string sresponse = await response.Content.ReadAsStringAsync();
                 var responseseed  = JsonSerializer.Deserialize<QuackSeed>(sresponse);
                 currentseed = responseseed.current;
@@ -435,7 +418,7 @@ namespace Gambler.Bot.Core.Sites
             StringContent Content = new StringContent(JsonSerializer.Serialize(bnk), Encoding.UTF8, "application/json");
             try
             {
-                var response = await Client.PostAsync("bank/deposit" + "?api_key=" + accesstoken, Content);
+                var response = await Client.PostAsync("bank/deposit" + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken), Content);
                 string sEmitResponse = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {

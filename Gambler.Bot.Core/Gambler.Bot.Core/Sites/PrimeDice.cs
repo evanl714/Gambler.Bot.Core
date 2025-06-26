@@ -105,7 +105,7 @@ namespace Gambler.Bot.Core.Sites
                 }
                 //CookieContainer cookies = new CookieContainer();
                 string requiredCookie = "__cf_bm";
-                var cookies = CallBypassRequired(URLInUse, requiredCookie, true, URL);
+                var cookies = CallBypassRequired(URLInUse + AffiliateCode, [requiredCookie], true, URL);
 
                 HttpClientHandler handler = new HttpClientHandler
                 {
@@ -122,8 +122,8 @@ namespace Gambler.Bot.Core.Sites
                     {
                         if (x.Key.ToLower() == "content-type"
                             || x.Key.ToLower() == "cookie"
-                            || x.Key.ToLower() == "x-operation-name"
-                            || x.Key.ToLower() == "x-operation-type")
+                            || x.Key.ToLower() == "authorization"
+                            || x.Key.ToLower() == "x-access-token")
                             continue;
                         Client.DefaultRequestHeaders.Add(x.Key, x.Value);
                     }
@@ -132,6 +132,8 @@ namespace Gambler.Bot.Core.Sites
 
                     }
                 }
+                Client.DefaultRequestHeaders.Add("X-Access-Token", APIKey);
+                Client.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
 
                 GraphqlRequestPayload LoginReq = new GraphqlRequestPayload
                 {
@@ -147,6 +149,7 @@ namespace Gambler.Bot.Core.Sites
                 int retriees = 0;
                 while (!resp.IsSuccessStatusCode && retriees++ < 5)
                 {
+                    CallCFCaptchaBypass(respostring);
                     await Task.Delay(Random.Next(50, 150) * retriees);
                     content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
                     resp = await Client.PostAsync(URLInUse + URL, content);
@@ -496,7 +499,7 @@ namespace Gambler.Bot.Core.Sites
             
             try
             {
-                var cookies = CallBypassRequired(URLInUse + AffiliateCode, "session", false, URL);
+                var cookies = CallBypassRequired(URLInUse + AffiliateCode, ["session", "__cf_bm"], false, URL);
                 string APIKey = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x => x.Name.ToLower() == "session")?.Value;
                 HttpClientHandler handler = new HttpClientHandler
                 {
@@ -534,15 +537,12 @@ namespace Gambler.Bot.Core.Sites
 
                 var resp = await Client.PostAsync(URLInUse + URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
-                if (respostring.Contains("<script>"))
-                {
-                    string script = respostring.Substring(respostring.IndexOf("<script>") + "<script>".Length);
-                    script = script.Substring(0, script.IndexOf("</script>"));
-                    CallInvokeScript(script);
-                }
+                
                 int retriees = 0;
+                
                 while (!resp.IsSuccessStatusCode && retriees++ < 5)
                 {
+                    CallCFCaptchaBypass(respostring);
                     await Task.Delay(Random.Next(50, 150) * retriees);
                     content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
                     resp = await Client.PostAsync(URLInUse + URL, content);
