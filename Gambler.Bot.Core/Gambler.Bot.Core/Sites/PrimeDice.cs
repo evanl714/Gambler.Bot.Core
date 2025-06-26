@@ -90,8 +90,11 @@ namespace Gambler.Bot.Core.Sites
         {
         }
 
-
-        protected override async Task<bool> _Login(LoginParamValue[] LoginParams)
+        protected override Task<bool> _Login(LoginParamValue[] LoginParams)
+        {
+            return _Login(LoginParams, 0);
+        }
+        protected async Task<bool> _Login(LoginParamValue[] LoginParams, int retry)
         {
             try
             {
@@ -146,15 +149,13 @@ namespace Gambler.Bot.Core.Sites
 
                 var resp = await Client.PostAsync(URLInUse + URL, content);
                 string respostring = await resp.Content.ReadAsStringAsync();
-                int retriees = 0;
-                while (!resp.IsSuccessStatusCode && retriees++ < 5)
+                if (!resp.IsSuccessStatusCode && retry < 5)
                 {
                     CallCFCaptchaBypass(respostring);
-                    await Task.Delay(Random.Next(50, 150) * retriees);
-                    content = new StringContent(JsonSerializer.Serialize(LoginReq), Encoding.UTF8, "application/json");
-                    resp = await Client.PostAsync(URLInUse + URL, content);
-                    respostring = await resp.Content.ReadAsStringAsync();
+                    await Task.Delay(Random.Next(50, 150) * retry);
+                    return await _Login(LoginParams, ++retry);
                 }
+               
                 if (!resp.IsSuccessStatusCode)
                 {
                     await Task.Delay(106);

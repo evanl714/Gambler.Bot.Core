@@ -9,7 +9,10 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
+using System.Security.Authentication;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -105,19 +108,34 @@ namespace Gambler.Bot.Core.Sites
             try
             {
                 accesstoken = LoginParams[0].Value;        
-                var cookies = CallBypassRequired(URLInUse+AffiliateCode, ["__cf_bm"]);
+               
+
+                var handler = new SocketsHttpHandler
+                {
+                    SslOptions = new SslClientAuthenticationOptions
+                    {
+                        EnabledSslProtocols = SslProtocols.Tls12|SslProtocols.Tls13,
+                        
+                    }, 
+                    UseCookies = true,
+                     AllowAutoRedirect=true,
+                      
+
+                };
+
+                var cookies = CallBypassRequired(URLInUse + AffiliateCode, ["__cf_bm"]);
                 var authcookie = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x => x.Name == "_at");
                 if (authcookie!=null)
                 {
                     authcookie.Expired = true;
                 }    
-                HttpClientHandler handler = new HttpClientHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = true,
-                    CookieContainer = cookies.Cookies,
+                //handler = new HttpClientHandler
+                //{
+                //    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                //    UseCookies = true,
+                //    CookieContainer = cookies.Cookies,
 
-                };
+                //};
                 Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse+"/api/") }; ;
                 foreach (var x in cookies.Headers)
                 {
@@ -135,8 +153,9 @@ namespace Gambler.Bot.Core.Sites
 
                     }
                 }
+                
                 var EmitResponse = await Client.GetAsync("load/" + CurrentCurrency + (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken));
-                string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
+                var sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 int retriees = 0;
                 while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
                 {
@@ -198,14 +217,13 @@ namespace Gambler.Bot.Core.Sites
         {
             try
             {
-                var cookies = CallBypassRequired(URLInUse + AffiliateCode, ["_at", "__cf_bm"], false,"/api");
+                var cookies = CallBypassRequired(URLInUse+"/dice" + AffiliateCode, ["_at", "__cf_bm"], false, "/api/load/bets");
                 //accesstoken = cookies.Cookies.GetCookies(new Uri(URLInUse)).FirstOrDefault(x=>x.Name=="_at")?.Value;
                 HttpClientHandler handler = new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli | DecompressionMethods.All,
                     UseCookies = true,
-                    CookieContainer = cookies.Cookies,
-                    AllowAutoRedirect=true,
+                    CookieContainer = cookies.Cookies
                 };
                 Client = new HttpClient(handler) { BaseAddress = new Uri(URLInUse + "/api/") }; ;
                     
@@ -213,7 +231,7 @@ namespace Gambler.Bot.Core.Sites
                 {
                     try
                     {
-                        if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie")
+                        if (x.Key.ToLower() == "content-type" || x.Key.ToLower() == "cookie" || x.Key.ToLower() == "accept" || x.Key.ToLower() == "sentry-trace")
                             continue;
                         Client.DefaultRequestHeaders.Add(x.Key, x.Value);
                     }
@@ -221,11 +239,20 @@ namespace Gambler.Bot.Core.Sites
                     {
 
                     }
-                }
-                
-
-
-                var EmitResponse = await Client.GetAsync("load/" + CurrentCurrency /*+ (string.IsNullOrWhiteSpace(accesstoken)?"": "?api_key=" + accesstoken)*/);
+                }/*
+                  
+                  */
+                Client.DefaultRequestHeaders.Add("sec-fetch-dest", "empty");
+                Client.DefaultRequestHeaders.Add("sec-fetch-mode", "cors");
+                Client.DefaultRequestHeaders.Add("sec-fetch-site", "same-origin");
+                //Client.DefaultRequestHeaders.Add("content-type", "application/json");
+                var tmprequest = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(URLInUse + "/load/" + CurrentCurrency.ToLower()),
+                    Headers = { }
+                };
+                var EmitResponse = await Client.SendAsync(tmprequest);
                 string sEmitResponse = await EmitResponse.Content.ReadAsStringAsync();
                 int retriees = 0;
                 while (!EmitResponse.IsSuccessStatusCode && retriees++ < 5)
