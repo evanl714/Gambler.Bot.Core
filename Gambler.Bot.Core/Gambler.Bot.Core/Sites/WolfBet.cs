@@ -59,7 +59,7 @@ namespace Gambler.Bot.Core.Sites
             this.CanTip = false;
             this.CanVerify = false;
             this.Currencies = new string[] { "ada","bch","bnb","bonk","btc","doge","dot","etc","eth","floki","ltc",
-            "matic","optim","pepe","shib","sushi","trx","uni","usdt","xlm","xrp"};
+            "matic","optim","pepe","shib","sol","sushi","ton","trx","uni","usdt","xlm","xrp"};
             SupportedGames = new Games[] { Games.Dice, Games.Limbo };
             this.CurrentCurrency = "btc";
             this.DiceBetURL = "https://Wolfbet.com?c=Seuntjie/{0}";
