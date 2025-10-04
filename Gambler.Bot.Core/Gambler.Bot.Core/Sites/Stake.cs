@@ -91,7 +91,9 @@ namespace Gambler.Bot.Core.Sites
                 "SAND",
                 "SHIB",
                 "UNI",
-                "POl"
+                "POl",
+                "GOLD",
+                "SWEEPS"
             };
             SupportedGames = new Games[] { Games.Dice, Games.Limbo };
             CurrentCurrency = "btc";
